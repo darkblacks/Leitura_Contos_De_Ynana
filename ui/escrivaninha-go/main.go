@@ -2,13 +2,15 @@
 //
 // Ao abrir, ele se instala em C:\Os_Contos_De_Ynana (Windows), extrai os arquivos
 // da história que ainda não existirem lá (nunca sobrescreve texto do autor),
-// cria atalhos e abre a interface no navegador em http://127.0.0.1:8765.
+// cria atalhos e abre a interface numa janela própria (Edge ou Chrome em modo
+// aplicativo). Fechar a janela encerra o programa.
 //
 // Uso pela linha de comando:
 //
-//	Escrivaninha.exe                       instala (se preciso) e abre a interface
+//	Escrivaninha.exe                       instala (se preciso) e abre a janela
 //	Escrivaninha.exe --pasta D:\Outra      usa outra pasta como base
-//	Escrivaninha.exe --sem-navegador       não abre o navegador
+//	Escrivaninha.exe --navegador           abre numa aba do navegador padrão em vez de janela
+//	Escrivaninha.exe --sem-navegador       só o servidor (para testes)
 //	Escrivaninha.exe tiques capitulos\cap-01.md [--resumo]
 //	                                       varredura mecânica dos guardrails (igual ao checa_tiques.py)
 //
@@ -16,9 +18,12 @@
 package main
 
 import (
+	"context"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"net"
 	"net/http"
@@ -36,18 +41,26 @@ var projeto embed.FS
 const (
 	pastaPadraoWindows = `C:\Os_Contos_De_Ynana`
 	nomeExe            = "Escrivaninha.exe"
-	portaPadrao        = 8765
+	portaInicial       = 8765
+	portaFinal         = 8799
+	assinatura         = "escrivaninha-contos-de-ynana"
 )
+
+// saida recebe as mensagens. No Windows o programa não tem console; vai para um arquivo de log.
+var saida io.Writer = os.Stdout
+
+func logar(formato string, a ...any) { fmt.Fprintf(saida, formato+"\n", a...) }
 
 func main() {
 	args := os.Args[1:]
 	if len(args) > 0 && args[0] == "tiques" {
 		os.Exit(cmdTiques(args[1:]))
 	}
+	prepararLog()
 
 	pasta := ""
-	semNavegador := false
-	porta := portaPadrao
+	modo := "janela"
+	portaFixa := 0
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
 		case "--pasta":
@@ -56,10 +69,12 @@ func main() {
 				i++
 			}
 		case "--sem-navegador":
-			semNavegador = true
+			modo = "nenhum"
+		case "--navegador":
+			modo = "navegador"
 		case "--porta":
 			if i+1 < len(args) {
-				fmt.Sscanf(args[i+1], "%d", &porta)
+				fmt.Sscanf(args[i+1], "%d", &portaFixa)
 				i++
 			}
 		}
@@ -69,56 +84,99 @@ func main() {
 		var err error
 		pasta, err = pastaBase()
 		if err != nil {
-			falhar("Não consegui preparar a pasta: %v", err)
+			falhar("Não consegui preparar a pasta:\n%v", err)
 		}
-	}
-	// pastaBase() pode ter reiniciado o programa a partir da pasta instalada
-	if pasta == "" {
-		return
+		// pastaBase() reiniciou o programa a partir da pasta instalada
+		if pasta == "" {
+			return
+		}
 	}
 
 	novos, err := extrairProjeto(pasta)
 	if err != nil {
-		falhar("Não consegui copiar os arquivos da história para %s: %v", pasta, err)
+		falhar("Não consegui copiar os arquivos da história para %s:\n%v", pasta, err)
 	}
 	if novos > 0 {
-		fmt.Printf("  %d arquivo(s) da história copiados para %s\n", novos, pasta)
+		logar("%d arquivo(s) da história copiados para %s", novos, pasta)
 	}
 
-	endereco := fmt.Sprintf("http://127.0.0.1:%d", porta)
-	ouvinte, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", porta))
-	if err != nil {
-		// Já tem uma Escrivaninha aberta: só abre o navegador.
-		fmt.Println("  A Escrivaninha já está aberta. Abrindo o navegador…")
-		abrirNavegador(endereco)
-		time.Sleep(1500 * time.Millisecond)
+	ouvinte, endereco, jaAberta := escolherPorta(portaFixa, pasta)
+	if jaAberta {
+		// Outra Escrivaninha desta mesma pasta já está rodando: só mostra a janela dela.
+		logar("Escrivaninha já aberta em %s", endereco)
+		if modo != "nenhum" {
+			abrirJanela(endereco, false)
+		}
 		return
+	}
+	if ouvinte == nil {
+		falhar("Não achei nenhuma porta livre entre %d e %d.\nFeche outros programas e tente de novo.", portaInicial, portaFinal)
 	}
 
 	raiz = pasta
 	estatico, _ := fs.Sub(projeto, "embutido/projeto/ui/static")
 	srv := &http.Server{Handler: novoRoteador(estatico)}
+	logar("Contos de Ynana · Escrivaninha")
+	logar("Pasta da história: %s", pasta)
+	logar("Aberta em:         %s", endereco)
 
-	fmt.Println()
-	fmt.Println("  ╭───────────────────────────────────────────────╮")
-	fmt.Println("  │   Contos de Ynana · Escrivaninha               │")
-	fmt.Println("  ╰───────────────────────────────────────────────╯")
-	fmt.Printf("  Pasta da história: %s\n", pasta)
-	fmt.Printf("  Aberta em:         %s\n", endereco)
-	fmt.Println()
-	fmt.Println("  Deixe esta janela aberta enquanto escreve.")
-	fmt.Println("  Para encerrar, feche esta janela.")
-	fmt.Println()
+	go func() {
+		if err := srv.Serve(ouvinte); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			falhar("O servidor parou:\n%v", err)
+		}
+	}()
 
-	if !semNavegador {
-		go func() {
-			time.Sleep(500 * time.Millisecond)
-			abrirNavegador(endereco)
-		}()
+	switch modo {
+	case "nenhum":
+		logar("Modo só servidor. Ctrl+C para encerrar.")
+		select {}
+	case "navegador":
+		abrirNavegador(endereco)
+		aguardarEncerramento(endereco)
+	default:
+		// Bloqueia até a janela fechar; se não houver Edge/Chrome, cai no navegador padrão.
+		abrirJanela(endereco, true)
 	}
-	if err := srv.Serve(ouvinte); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		falhar("O servidor parou: %v", err)
+	ctx, cancelar := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancelar()
+	srv.Shutdown(ctx)
+	logar("Escrivaninha encerrada.")
+}
+
+// escolherPorta acha uma porta livre. Se uma porta já tiver uma Escrivaninha da
+// mesma pasta, devolve jaAberta=true. Portas ocupadas por outros programas são puladas.
+func escolherPorta(fixa int, pasta string) (net.Listener, string, bool) {
+	ini, fim := portaInicial, portaFinal
+	if fixa > 0 {
+		ini, fim = fixa, fixa
 	}
+	for p := ini; p <= fim; p++ {
+		endereco := fmt.Sprintf("http://127.0.0.1:%d", p)
+		ouvinte, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p))
+		if err == nil {
+			return ouvinte, endereco, false
+		}
+		if ehNossa(endereco, pasta) {
+			return nil, endereco, true
+		}
+		logar("Porta %d ocupada por outro programa; tentando a próxima.", p)
+	}
+	return nil, "", false
+}
+
+// ehNossa pergunta ao servidor da porta se ele é uma Escrivaninha desta pasta.
+func ehNossa(endereco, pasta string) bool {
+	cli := http.Client{Timeout: 800 * time.Millisecond}
+	r, err := cli.Get(endereco + "/api/ping")
+	if err != nil {
+		return false
+	}
+	defer r.Body.Close()
+	var d map[string]string
+	if json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&d) != nil {
+		return false
+	}
+	return d["app"] == assinatura && strings.EqualFold(filepath.Clean(d["pasta"]), filepath.Clean(pasta))
 }
 
 // pastaBase decide onde a história mora. No Windows, se o exe não estiver em
@@ -138,7 +196,7 @@ func pastaBase() (string, error) {
 		return dirExe, nil
 	}
 
-	fmt.Printf("  Instalando em %s …\n", pastaPadraoWindows)
+	logar("Instalando em %s …", pastaPadraoWindows)
 	if err := os.MkdirAll(pastaPadraoWindows, 0o755); err != nil {
 		return "", err
 	}
@@ -150,11 +208,9 @@ func pastaBase() (string, error) {
 		}
 	}
 	criarAtalhos(destino)
-	fmt.Println("  Instalado. Abrindo…")
 
 	cmd := exec.Command(destino, os.Args[1:]...)
 	cmd.Dir = pastaPadraoWindows
-	cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
 	if err := cmd.Start(); err != nil {
 		return "", err
 	}
@@ -219,12 +275,13 @@ foreach ($d in @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFold
     $s.Save()
   }
 }`, alvo, filepath.Dir(alvo))
-	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script)
+	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-Command", script)
+	esconderJanela(cmd)
 	if err := cmd.Run(); err != nil {
-		fmt.Println("  (não consegui criar os atalhos; abra direto pelo Escrivaninha.exe na pasta)")
+		logar("Não consegui criar os atalhos: %v", err)
 		return
 	}
-	fmt.Println("  Atalho \"Contos de Ynana\" criado na Área de Trabalho e no Menu Iniciar.")
+	logar("Atalho \"Contos de Ynana\" criado na Área de Trabalho e no Menu Iniciar.")
 }
 
 func abrirNavegador(url string) {
@@ -238,13 +295,4 @@ func abrirNavegador(url string) {
 		cmd = exec.Command("xdg-open", url)
 	}
 	_ = cmd.Start()
-}
-
-func falhar(formato string, a ...any) {
-	fmt.Printf("\n  ERRO: "+formato+"\n\n", a...)
-	if runtime.GOOS == "windows" {
-		fmt.Println("  Pressione Enter para fechar.")
-		fmt.Scanln()
-	}
-	os.Exit(1)
 }

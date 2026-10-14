@@ -16,6 +16,7 @@ import mimetypes
 import re
 import sys
 import threading
+import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -30,6 +31,7 @@ ARQUIVOS_SOLTOS = ["ferramentas/tiques.json", "CLAUDE.md"]
 EXT_TEXTO = {".md", ".txt", ".json"}
 EXT_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 
+ASSINATURA = "escrivaninha-contos-de-ynana"
 DECIDIR = re.compile(r"^\s*(?:[-*]\s+)?\[DECIDIR\]\s*(.+)")  # só itens de lista, não menções no texto
 PROPOSTA = "Proposta do Claude"
 OPCOES = re.compile(r"\(opções:\s*(.+?)\)\s*\.?\s*$", re.IGNORECASE)
@@ -353,6 +355,8 @@ class Manipulador(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         try:
+            if url.path == "/api/ping":
+                return self._json({"app": ASSINATURA, "pasta": str(RAIZ)})
             if url.path == "/api/arvore":
                 return self._json(arvore())
             if url.path == "/api/estado":
@@ -417,12 +421,36 @@ class Manipulador(BaseHTTPRequestHandler):
             return self._json({"erro": str(e)}, 400)
 
 
+def eh_nossa(endereco):
+    """A porta ocupada é uma Escrivaninha desta pasta (e não outro programa)?"""
+    try:
+        with urllib.request.urlopen(endereco + "/api/ping", timeout=0.8) as r:
+            d = json.loads(r.read(4096))
+        return d.get("app") == ASSINATURA and Path(d.get("pasta", "")).resolve() == RAIZ
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def main():
-    porta = 8765
+    portas = range(8765, 8800)
     if "--porta" in sys.argv:
-        porta = int(sys.argv[sys.argv.index("--porta") + 1])
-    servidor = ThreadingHTTPServer(("127.0.0.1", porta), Manipulador)
-    endereco = f"http://127.0.0.1:{porta}"
+        p = int(sys.argv[sys.argv.index("--porta") + 1])
+        portas = range(p, p + 1)
+    servidor = None
+    for porta in portas:
+        endereco = f"http://127.0.0.1:{porta}"
+        try:
+            servidor = ThreadingHTTPServer(("127.0.0.1", porta), Manipulador)
+            break
+        except OSError:
+            if eh_nossa(endereco):
+                print(f"A Escrivaninha já está aberta em {endereco}")
+                if "--sem-navegador" not in sys.argv:
+                    webbrowser.open(endereco)
+                return
+            print(f"Porta {porta} ocupada por outro programa; tentando a próxima.")
+    if servidor is None:
+        sys.exit("Nenhuma porta livre entre 8765 e 8799.")
     print(f"Escrivaninha aberta em {endereco}  (Ctrl+C para fechar)")
     if "--sem-navegador" not in sys.argv:
         threading.Timer(0.6, lambda: webbrowser.open(endereco)).start()

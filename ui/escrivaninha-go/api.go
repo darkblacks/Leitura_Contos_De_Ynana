@@ -493,6 +493,8 @@ func novoRoteador(estatico fs.FS) http.Handler {
 		q := r.URL.Query()
 		if r.Method == http.MethodGet {
 			switch r.URL.Path {
+			case "/api/ping":
+				responder(w, 200, map[string]string{"app": assinatura, "pasta": raiz})
 			case "/api/arvore":
 				responder(w, 200, arvore())
 			case "/api/estado":

@@ -105,7 +105,7 @@ func main() {
 		// Outra Escrivaninha desta mesma pasta já está rodando: só mostra a janela dela.
 		logar("Escrivaninha já aberta em %s", endereco)
 		if modo != "nenhum" {
-			abrirJanela(endereco, false)
+			abrirJanela(endereco)
 		}
 		return
 	}
@@ -132,11 +132,11 @@ func main() {
 		select {}
 	case "navegador":
 		abrirNavegador(endereco)
-		aguardarEncerramento(endereco)
 	default:
-		// Bloqueia até a janela fechar; se não houver Edge/Chrome, cai no navegador padrão.
-		abrirJanela(endereco, true)
+		abrirJanela(endereco)
 	}
+	// Fica de pé enquanto a janela mandar sinal de vida; encerra quando ela fecha.
+	esperarJanelaFechar()
 	ctx, cancelar := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelar()
 	srv.Shutdown(ctx)

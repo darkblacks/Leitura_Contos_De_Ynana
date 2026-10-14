@@ -211,6 +211,12 @@ def checar(caminho, cfg):
                         add(num0, f"frases seguidas abrindo com \"{aberturas[i]}\" (20)",
                             " ".join(frases[i - max_aberturas:i + 1])[:160])
 
+    # Tamanho mínimo (estilo)
+    minimo = cfg.get("palavras_minimas_capitulo")
+    total = sum(tamanhos)
+    if minimo and 0 < total < minimo:
+        add(0, "capítulo curto (estilo)", f"{total} palavras; o mínimo é {minimo} (faltam {minimo - total})")
+
     # Simetria mecânica (13)
     if len(tamanhos) >= 6:
         media = statistics.mean(tamanhos)

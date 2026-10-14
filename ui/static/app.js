@@ -7,9 +7,11 @@ const vista = $("#vista");
 const estado = { arvore: null, sujo: false, salvarAgora: null, vistaAtual: null };
 
 /* ------------------------------------------------------------ API */
+const SEM_CONEXAO = "A Escrivaninha foi fechada. Feche esta janela e abra de novo pelo atalho Contos de Ynana.";
 async function api(rota, corpo) {
   const op = corpo ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) } : {};
-  const r = await fetch(rota, op);
+  let r;
+  try { r = await fetch(rota, op); } catch { throw new Error(SEM_CONEXAO); }
   const d = await r.json().catch(() => ({ erro: "resposta inválida do servidor" }));
   if (!r.ok || d.erro) throw new Error(d.erro || r.statusText);
   return d;
@@ -151,13 +153,17 @@ async function ir(nome, arg) {
   if (estado.sujo && estado.salvarAgora) await estado.salvarAgora();
   estado.salvarAgora = null; estado.sujo = false; setSalvamento("");
   estado.vistaAtual = nome;
+  if (nome !== "conversa" && typeof fonteEventos !== "undefined" && fonteEventos) { fonteEventos.close(); fonteEventos = null; }
   $$("#nav a").forEach((a) => a.classList.toggle("ativo", a.dataset.view === nome));
   $("#lateral").classList.remove("aberta");
   const hash = "#" + nome + (arg ? "/" + encodeURIComponent(arg) : "");
   if (location.hash !== hash) history.pushState(null, "", hash);
   vista.innerHTML = "";
   vista.scrollTop = 0;
-  try { await VISTAS[nome](arg); } catch (e) { vista.innerHTML = `<div class="vazio"><h3>Algo deu errado</h3>${esc(e.message)}</div>`; }
+  try { await VISTAS[nome](arg); } catch (e) {
+    const fechada = e.message === SEM_CONEXAO;
+    vista.innerHTML = `<div class="vazio"><h3>${fechada ? "A Escrivaninha foi fechada" : "Algo deu errado"}</h3>${esc(fechada ? "Feche esta janela e abra de novo pelo atalho Contos de Ynana. Nada do que você escreveu se perdeu." : e.message)}</div>`;
+  }
 }
 function abrirCaminho(c) {
   if (c.startsWith("capitulos/")) return ir("capitulo", c);
@@ -691,14 +697,215 @@ $("#tema").onclick = () => {
   try { localStorage.setItem("tema", novo); } catch {}
 };
 
+/* ------------------------------------------------------------ sinal de vida
+   O programa fica aberto enquanto esta janela estiver aberta, e encerra sozinho quando ela fecha. */
+const vivo = () => fetch("/api/vivo", { method: "POST" }).catch(() => {});
+vivo();
+setInterval(vivo, 10000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) vivo(); });
+window.addEventListener("pagehide", () => { try { navigator.sendBeacon("/api/tchau"); } catch {} });
+
 /* ------------------------------------------------------------ início */
 function rotaDoEndereco() {
   const partes = location.hash.slice(1).split("/");
   const v = partes[0], arg = decodeURIComponent(partes.slice(1).join("/"));
-  if (v && VISTAS[v]) ir(v, arg || undefined); else ir("painel");
+  if (v && VISTAS[v]) ir(v, arg || undefined); else ir("conversa");
 }
 window.addEventListener("hashchange", rotaDoEndereco);
 (async () => {
-  try { await atualizarArvore(); } catch (e) { vista.innerHTML = `<div class="vazio"><h3>Servidor não respondeu</h3>Rode <code>python3 ui/servidor.py</code> na pasta do projeto.</div>`; return; }
+  try { await atualizarArvore(); } catch (e) { vista.innerHTML = `<div class="vazio"><h3>A Escrivaninha não respondeu</h3>Feche esta janela e abra de novo pelo atalho Contos de Ynana.</div>`; return; }
   rotaDoEndereco();
 })();
+
+/* ------------------------------------------------------------ ESCREVER COM O CLAUDE
+   O exe roda o Claude Code do computador do autor (assinatura dele, sem chave de API).
+   À esquerda a conversa; à direita a folha do capítulo crescendo enquanto ele escreve. */
+const META_PALAVRAS = 4600;
+var fonteEventos = null;
+
+function decodificarParcial(js) {
+  // Extrai, de um JSON ainda incompleto do Write, o caminho e o texto já escritos.
+  const caminho = (js.match(/"file_path"\s*:\s*"((?:[^"\\]|\\.)*)"/) || [])[1] || "";
+  const i = js.search(/"content"\s*:\s*"/);
+  if (i < 0) return { caminho, texto: "" };
+  let s = js.slice(js.indexOf('"', js.indexOf(":", i) + 1) + 1), out = "";
+  for (let k = 0; k < s.length; k++) {
+    const c = s[k];
+    if (c === '"') break;
+    if (c !== "\\") { out += c; continue; }
+    const n = s[k + 1];
+    if (n === undefined) break;
+    k++;
+    if (n === "n") out += "\n"; else if (n === "t") out += "\t"; else if (n === "r") {}
+    else if (n === "u") { const h = s.slice(k + 1, k + 5); if (h.length < 4) break; out += String.fromCharCode(parseInt(h, 16)); k += 4; }
+    else out += n;
+  }
+  return { caminho: caminho.replace(/\\\\/g, "\\"), texto: out };
+}
+function semCabecalho(t) {
+  if (t.startsWith("---")) { const f = t.indexOf("\n---", 3); if (f > 0) return t.slice(t.indexOf("\n", f + 1) + 1); }
+  return t;
+}
+
+VISTAS.conversa = async () => {
+  if (fonteEventos) { fonteEventos.close(); fonteEventos = null; }
+  const st = await api("/api/claude/status").catch(() => ({ instalado: false }));
+  if (!st.instalado) {
+    vista.innerHTML = `<div class="cartao instalar"><h3>Falta só o Claude Code</h3>
+      <p>Para conversar com o Claude aqui dentro, o computador precisa do <b>Claude Code</b> instalado uma vez. Ele usa a sua assinatura do Claude, sem chave e sem custo extra.</p>
+      <ol>
+        <li>Abra o <b>PowerShell</b> (procure "PowerShell" no menu Iniciar) e cole:
+          <code class="bloco">irm https://claude.ai/install.ps1 | iex</code></li>
+        <li>Quando terminar, digite <code>claude</code>, aperte Enter e faça o login com a sua conta do Claude. Pode fechar depois.</li>
+        <li>Se ele pedir o <b>Git para Windows</b>, instale em <a href="https://git-scm.com/download/win" target="_blank" rel="noopener">git-scm.com</a> e repita o passo 2.</li>
+        <li>Volte aqui e clique em <b>Verificar de novo</b>.</li>
+      </ol>
+      <button class="botao primario" id="verificar">Verificar de novo</button></div>`;
+    $("#verificar").onclick = () => VISTAS.conversa();
+    return;
+  }
+  const a = await atualizarArvore();
+  vista.innerHTML = `
+    <div class="conversa">
+      <section class="chat">
+        <div class="chat-topo"><h3>Conversa</h3><span class="pilula" id="pilula">pronto</span>
+          <button class="botao pequeno" id="nova-conversa" style="margin-left:auto" title="Guarda esta conversa e começa outra">Nova conversa</button></div>
+        <div class="chat-msgs" id="msgs"></div>
+        <div class="atalhos" id="atalhos"></div>
+        <div class="compositor">
+          <textarea id="entrada" rows="2" placeholder="Dê o contexto, peça um capítulo, tire dúvidas…  (Enter envia, Shift+Enter quebra linha)"></textarea>
+          <button class="botao primario" id="enviar">Enviar</button>
+          <button class="botao perigo" id="parar" style="display:none">Parar</button>
+        </div>
+      </section>
+      <section class="folha-viva">
+        <div class="folha-viva-topo">
+          <select id="sel-cap"><option value="">Escolha um capítulo…</option>${a.capitulos.map((c) =>
+            `<option value="${esc(c.caminho)}">${esc(String(c.meta.capitulo || c.nome).padStart(2, "0"))} · ${esc(c.meta.titulo || "sem título")}</option>`).join("")}</select>
+          <button class="botao pequeno" id="abrir-cap" title="Abrir na escrivaninha para editar">Editar</button>
+          <div class="meta-palavras" id="meta"><b>0</b> / ${META_PALAVRAS.toLocaleString("pt-BR")} palavras<div class="barra"><div style="width:0"></div></div></div>
+        </div>
+        <div class="folha-viva-corpo" id="folha-viva"><div class="vazio" style="margin:18px">
+          <h3>A folha do capítulo aparece aqui</h3>Quando o Claude escrever, você vê o texto surgindo em tempo real.</div></div>
+      </section>
+    </div>`;
+
+  const atualizarAtalhos = (arv) => {
+    const n = arv.capitulos.length, prox = n + 1;
+    $("#atalhos").innerHTML = `
+      <button data-p="/escrever ${prox}">✎ Escrever o capítulo ${prox}</button>
+      <button data-p="/escaleta ${prox}-${prox + 2}">☰ Propor escaleta ${prox} a ${prox + 2}</button>
+      ${n ? `<button data-p="/revisar ${n}">⚖ Revisar o capítulo ${n}</button>` : ""}
+      <button data-p="/estado">◈ Onde a história está?</button>`;
+    $$("#atalhos button").forEach((b) => (b.onclick = () => enviar(b.dataset.p)));
+  };
+  const msgs = $("#msgs"), entrada = $("#entrada");
+  let bolhaAtual = null, textoAtual = "", parciais = {}, bolhasDaResposta = [];
+  const rolar = () => (msgs.scrollTop = msgs.scrollHeight);
+  const ocupado = (sim) => {
+    $("#pilula").textContent = sim ? "escrevendo" : "pronto";
+    $("#pilula").classList.toggle("ativo", sim);
+    $("#enviar").style.display = sim ? "none" : "";
+    $("#parar").style.display = sim ? "" : "none";
+  };
+  const addMsg = (papel, texto, arquivos = []) => {
+    const d = document.createElement("div");
+    d.className = "msg " + papel + (papel === "claude" ? " md" : "");
+    if (papel === "claude") d.innerHTML = markdown(texto || "") + (arquivos.length ? `<div class="arquivos-msg">${arquivos.map((f) =>
+      `<a class="botao pequeno" href="#" data-abrir="${esc(f)}">abrir ${esc(f.split("/").pop())}</a>`).join("")}</div>` : "");
+    else d.textContent = texto;
+    msgs.appendChild(d); rolar();
+    return d;
+  };
+  const addAtividade = (t) => { const d = document.createElement("div"); d.className = "atividade"; d.textContent = t; msgs.appendChild(d); rolar(); };
+
+  const mostrarFolha = (titulo, corpo, vivo) => {
+    const n = palavras(corpo);
+    const meta = $("#meta");
+    meta.classList.toggle("ok", n >= META_PALAVRAS);
+    meta.innerHTML = `<b>${n.toLocaleString("pt-BR")}</b> / ${META_PALAVRAS.toLocaleString("pt-BR")} palavras<div class="barra"><div style="width:${Math.min(100, (n / META_PALAVRAS) * 100)}%"></div></div>`;
+    const caixa = $("#folha-viva");
+    const perto = caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 120;
+    caixa.innerHTML = `<div class="folha"><h2>${esc(titulo)}</h2><div class="previa-corpo md ${vivo ? "cursor-escrita" : ""}">${markdown(corpo)}</div></div>`;
+    if (vivo && perto) caixa.scrollTop = caixa.scrollHeight;
+  };
+  const carregarCapitulo = async (c) => {
+    if (!c) return;
+    const t = await lerArquivo(c).catch(() => "");
+    const { meta, corpo } = separarCapitulo(t);
+    mostrarFolha(meta.titulo || c, corpo, false);
+    $("#sel-cap").value = c;
+  };
+  $("#sel-cap").onchange = (e) => carregarCapitulo(e.target.value);
+  $("#abrir-cap").onclick = () => { const c = $("#sel-cap").value; if (c) ir("capitulo", c); };
+
+  // histórico
+  const hist = await api("/api/claude/historico").catch(() => []);
+  if (!hist.length) addMsg("claude", "Oi! Me conte o que quer escrever hoje. Pode dar contexto solto (o que acontece, o clima, quem escreve no diário) ou usar os atalhos abaixo. Cada capítulo sai com **no mínimo 4.600 palavras** e passa pela revisão de continuidade e de estilo.");
+  hist.forEach((m) => addMsg(m.papel, m.texto, m.arquivos || []));
+  if (a.capitulos.length) carregarCapitulo(a.capitulos[a.capitulos.length - 1].caminho);
+
+  const ouvir = () => {
+    if (fonteEventos) fonteEventos.close();
+    textoAtual = ""; bolhaAtual = null; parciais = {}; bolhasDaResposta = [];
+    ocupado(true);
+    fonteEventos = new EventSource("/api/claude/eventos");
+    fonteEventos.onmessage = async (ev) => {
+      const e = JSON.parse(ev.data);
+      if (e.tipo === "parado") { ocupado(false); fonteEventos.close(); return; }
+      if (e.tipo === "texto") {
+        textoAtual += e.texto;
+        if (!bolhaAtual) { bolhaAtual = addMsg("claude", ""); bolhasDaResposta.push(bolhaAtual); }
+        bolhaAtual.innerHTML = markdown(textoAtual); rolar();
+      } else if (e.tipo === "ferramenta") {
+        if (bolhaAtual && textoAtual) { bolhaAtual = null; textoAtual = ""; }
+        addAtividade(e.texto);
+      } else if (e.tipo === "arquivo_parcial") {
+        parciais[e.bloco] = (parciais[e.bloco] || "") + e.texto;
+        const { caminho, texto } = decodificarParcial(parciais[e.bloco]);
+        if (caminho.includes("capitulos") && texto) {
+          const { meta, corpo } = separarCapitulo(texto);
+          mostrarFolha(meta.titulo || "Escrevendo…", corpo || semCabecalho(texto), true);
+        }
+      } else if (e.tipo === "fim" || e.tipo === "erro") {
+        fonteEventos.close(); fonteEventos = null; ocupado(false);
+        if (e.tipo === "erro") { const d = addMsg("erro", e.texto); d.className = "msg erro"; }
+        else if (bolhasDaResposta.length) {
+          // o texto já apareceu aos poucos; só acrescenta os botões dos arquivos na última fala
+          const ultima = bolhasDaResposta[bolhasDaResposta.length - 1];
+          ultima.innerHTML = markdown(textoAtual || ultima.textContent) + ((e.extra || []).length ? `<div class="arquivos-msg">${e.extra.map((f) =>
+            `<a class="botao pequeno" href="#" data-abrir="${esc(f)}">abrir ${esc(f.split("/").pop())}</a>`).join("")}</div>` : "");
+          rolar();
+        } else addMsg("claude", e.texto, e.extra || []);
+        const arv = await atualizarArvore();
+        atualizarAtalhos(arv);
+        const caps = (e.extra || []).filter((f) => f.startsWith("capitulos/"));
+        const sel = $("#sel-cap");
+        if (sel) sel.innerHTML = `<option value="">Escolha um capítulo…</option>` + arv.capitulos.map((c) =>
+          `<option value="${esc(c.caminho)}">${esc(String(c.meta.capitulo || c.nome).padStart(2, "0"))} · ${esc(c.meta.titulo || "sem título")}</option>`).join("");
+        if (caps.length) carregarCapitulo(caps[caps.length - 1]);
+      }
+    };
+    fonteEventos.onerror = () => { if (fonteEventos && fonteEventos.readyState === 2) ocupado(false); };
+  };
+
+  const enviar = async (texto) => {
+    texto = (texto || "").trim();
+    if (!texto) return;
+    addMsg("autor", texto);
+    entrada.value = "";
+    try { await api("/api/claude/enviar", { mensagem: texto }); ouvir(); }
+    catch (e) { const d = addMsg("erro", e.message); d.className = "msg erro"; }
+  };
+  $("#enviar").onclick = () => enviar(entrada.value);
+  entrada.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(entrada.value); } };
+  entrada.oninput = () => { entrada.style.height = "auto"; entrada.style.height = Math.min(200, entrada.scrollHeight) + "px"; };
+  atualizarAtalhos(a);
+  $("#parar").onclick = () => api("/api/claude/parar", {}).catch(() => {});
+  $("#nova-conversa").onclick = async () => {
+    if (!confirm("Guardar esta conversa e começar outra? (os capítulos não mudam)")) return;
+    try { await api("/api/claude/nova", {}); VISTAS.conversa(); } catch (e) { toast(e.message, true); }
+  };
+  if (st.rodando) ouvir();
+  entrada.focus();
+};

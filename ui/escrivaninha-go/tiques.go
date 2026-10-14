@@ -448,6 +448,14 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 		}
 	}
 
+	total := 0
+	for _, t := range tamanhos {
+		total += t
+	}
+	if minimo := cfg.numero("palavras_minimas_capitulo", 0); minimo > 0 && total > 0 && total < minimo {
+		add(0, "capítulo curto (estilo)", fmt.Sprintf("%d palavras; o mínimo é %d (faltam %d)", total, minimo, minimo-total), nil)
+	}
+
 	if len(tamanhos) >= 6 {
 		soma := 0.0
 		for _, t := range tamanhos {

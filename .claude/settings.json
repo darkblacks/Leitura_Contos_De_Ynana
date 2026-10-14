@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "MultiEdit",
+      "Glob",
+      "Grep",
+      "Task",
+      "Agent",
+      "TodoWrite",
+      "Bash(python3 ferramentas/checa_tiques.py:*)",
+      "Bash(python ferramentas/checa_tiques.py:*)",
+      "Bash(py ferramentas/checa_tiques.py:*)",
+      "Bash(./Escrivaninha.exe tiques:*)",
+      "Bash(Escrivaninha.exe tiques:*)"
+    ],
+    "deny": [
+      "WebFetch",
+      "WebSearch"
+    ]
+  }
+}

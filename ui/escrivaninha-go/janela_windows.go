@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -19,7 +18,6 @@ var (
 
 const (
 	mbIconeErro = 0x10
-	mbIconeInfo = 0x40
 	mbFrente    = 0x10000 | 0x40000 // MB_SETFOREGROUND | MB_TOPMOST
 )
 
@@ -66,16 +64,13 @@ func navegadorApp() string {
 	return ""
 }
 
-// abrirJanela abre a interface numa janela própria, sem barra de endereço.
-// Com esperar=true, só volta quando a janela for fechada.
-func abrirJanela(url string, esperar bool) {
+// abrirJanela abre a interface numa janela própria, sem barra de endereço, e volta na hora.
+// Quem decide quando encerrar é o sinal de vida que a própria janela manda (ver vida.go).
+func abrirJanela(url string) {
 	nav := navegadorApp()
 	if nav == "" {
 		logar("Edge/Chrome não encontrados; abrindo no navegador padrão.")
 		abrirNavegador(url)
-		if esperar {
-			aguardarEncerramento(url)
-		}
 		return
 	}
 	perfil := filepath.Join(os.Getenv("LocalAppData"), "ContosDeYnana", "janela")
@@ -88,23 +83,8 @@ func abrirJanela(url string, esperar bool) {
 		"--no-default-browser-check",
 		"--disable-background-mode",
 	)
-	if !esperar {
-		_ = cmd.Start()
-		return
+	if err := cmd.Start(); err != nil {
+		logar("Não consegui abrir a janela (%v); abrindo no navegador padrão.", err)
+		abrirNavegador(url)
 	}
-	inicio := time.Now()
-	if err := cmd.Run(); err != nil {
-		logar("A janela terminou com erro: %v", err)
-	}
-	// Se voltou na hora, o navegador entregou a janela a um processo que já existia:
-	// não dá para saber quando ela fecha, então pergunta.
-	if time.Since(inicio) < 4*time.Second {
-		aguardarEncerramento(url)
-	}
-}
-
-func aguardarEncerramento(url string) {
-	caixa("Contos de Ynana",
-		"A Escrivaninha está aberta em "+url+".\n\nDeixe esta mensagem aberta enquanto escreve.\nClique em OK para encerrar.",
-		mbIconeInfo)
 }

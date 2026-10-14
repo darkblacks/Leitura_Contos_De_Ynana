@@ -355,6 +355,10 @@ class Manipulador(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         try:
+            if url.path == "/api/claude/status":
+                return self._json({"instalado": False, "rodando": False, "motivo": "A conversa com o Claude funciona no Escrivaninha.exe."})
+            if url.path == "/api/claude/historico":
+                return self._json([])
             if url.path == "/api/ping":
                 return self._json({"app": ASSINATURA, "pasta": str(RAIZ)})
             if url.path == "/api/arvore":
@@ -389,6 +393,8 @@ class Manipulador(BaseHTTPRequestHandler):
             return self._json({"erro": "origem não permitida"}, 403)
         url = urlparse(self.path)
         try:
+            if url.path in ("/api/vivo", "/api/tchau"):
+                return self._json({"ok": True})  # sinal de vida da janela (usado pelo Escrivaninha.exe)
             d = self._corpo()
             if url.path == "/api/arquivo":
                 p = caminho_seguro(d["caminho"])

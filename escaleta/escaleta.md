@@ -34,7 +34,7 @@
 # Arco 1: de herdeira a dona (1812–1814)
 
 > Derivado de `referencias/textos/arco-1-roteiro-novo.md`: 11 blocos do roteiro viram **11 capítulos**. O bloco de junho de 1812 tem 12 beats e vira dois capítulos (terra e mar); os dois blocos de fevereiro de 1813 viram um capítulo com duas entradas.
-> Tamanho sugerido: 2.000 a 3.000 palavras por capítulo, ou 22 a 33 mil no arco (ver `[DECIDIR]` de tamanho em `estilo/estilo.md`).
+> Tamanho (decisão do autor): **no mínimo 4.600 palavras por capítulo**, ou cerca de 50 mil palavras no arco.
 > Dependem de decisão em `biblia/historia.md`: a lacuna de junho a novembro de 1812 (cap. 02 → 03), o nome Malcon/Malcolm, a idade da Ynana e a moldura no presente.
 
 ## Capítulo 01: A casa antes do mar

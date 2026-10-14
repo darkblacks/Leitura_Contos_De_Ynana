@@ -49,6 +49,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `ferramentas/checa_tiques.py` | Varredura mecânica dos guardrails |
 | `ferramentas/tiques.json` | Listas e parâmetros usados pelo script |
 | `entrada/` | Material antigo a importar |
+| `conversas/` | Histórico do chat da Escrivaninha (`atual.jsonl`) e a sessão do Claude Code em uso |
 | `referencias/` | Textos e imagens de consulta sobre o universo (nunca apagados) |
 | `ui/` | Escrivaninha: interface local para escrever e organizar (`abrir-escrivaninha.bat` ou `.sh`) |
 | `dist/Escrivaninha.exe` | A mesma Escrivaninha num executável único para Windows; instala-se em `C:\Os_Contos_De_Ynana` (código em `ui/escrivaninha-go/`, gerar com `ui/escrivaninha-go/build.sh`) |
@@ -93,6 +94,15 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 - Ao mudar `ui/static/`, `ferramentas/checa_tiques.py` ou `ui/servidor.py`, mantenha `ui/escrivaninha-go/` igual e gere o exe de novo.
 - O que o autor muda pela interface é texto dele: vale a regra 1. Capítulo editado lá vem marcado `editado`; depois o autor roda `/sincronizar N`.
 - Decisões resolvidas pela interface viram `**Decidido:** pergunta → **resposta**` no arquivo. Trate como regra aprovada.
+
+## Conversa pela Escrivaninha
+
+Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `claude -p` nesta pasta):
+- O autor é usuário final, não programador. Responda em português, curto e direto, sem falar de arquivos técnicos, terminal ou comandos, a não ser que ele pergunte.
+- Para escrever um capítulo, siga o fluxo do `/escrever` e grave em `capitulos/cap-NN.md`. A Escrivaninha mostra o texto aparecendo enquanto você escreve.
+- **Tamanho: cada capítulo tem no mínimo 4.600 palavras.** Se ficar curto, aprofunde as cenas dos beats (sem enchimento, sem fato novo) até passar do mínimo.
+- Para checar tiques sem Python: `.\Escrivaninha.exe tiques <arquivo>` (mesma saída do `checa_tiques.py`).
+- Se faltar decisão do autor (escaleta não aprovada, `[DECIDIR]` que trava o capítulo), pergunte em uma frase e espere.
 
 ## Comandos e revisores
 

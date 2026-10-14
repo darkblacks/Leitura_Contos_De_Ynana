@@ -10,6 +10,7 @@
   "palavras_frase_curta": 3,
   "max_onomatopeias_por_capitulo": 4,
   "max_aberturas_iguais_seguidas": 2,
+  "palavras_minimas_capitulo": 4600,
 
   "onomatopeias": [
     "toc", "tum", "bum", "pá", "plaft", "crec", "crack", "crash", "bang", "tic-tac", "tique-taque",

@@ -488,6 +488,7 @@ func origemOK(r *http.Request) bool {
 
 func novoRoteador(estatico fs.FS) http.Handler {
 	mux := http.NewServeMux()
+	rotasClaude(mux)
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
@@ -546,6 +547,16 @@ func novoRoteador(estatico fs.FS) http.Handler {
 		}
 		if !origemOK(r) {
 			responder(w, 403, item{"erro": "origem não permitida"})
+			return
+		}
+		switch r.URL.Path {
+		case "/api/vivo":
+			sinalDeVida()
+			responder(w, 200, item{"ok": true})
+			return
+		case "/api/tchau":
+			despedida()
+			responder(w, 200, item{"ok": true})
 			return
 		}
 		corpo, _ := io.ReadAll(io.LimitReader(r.Body, 30*1024*1024))

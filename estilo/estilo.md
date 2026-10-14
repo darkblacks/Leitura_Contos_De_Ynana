@@ -77,8 +77,7 @@ Limite usado pelo script: `max_onomatopeias_por_capitulo` em `ferramentas/tiques
 
 ## Tamanho
 
-- [DECIDIR] Tamanho de uma entrada e de um capítulo (em palavras ou parágrafos).
-  - *Proposta do Claude (pelos exemplos):* cada seção da versão antiga tem de 900 a 2.000 palavras. Para o Arco 1 novo (11 capítulos), 2.000 a 3.000 palavras por capítulo dariam 22 a 33 mil palavras no arco.
+- **Decidido:** Tamanho de um capítulo → **no mínimo 4.600 palavras, em média** (decisão do autor). O script avisa quando o capítulo fica abaixo (`palavras_minimas_capitulo` em `ferramentas/tiques.json`).
 
 ## Ritmo
 

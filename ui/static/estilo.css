@@ -408,3 +408,14 @@ a { color: var(--acento); }
 .beats-ref .md { font-family: var(--serif); font-size: 15px; background: var(--papel-2); border-radius: 8px; padding: 8px 14px; margin-top: 6px; }
 @media (max-width: 1100px) { .mesa { grid-template-columns: 1fr; height: auto; } .mesa .chat { height: 72vh; } .painel-cap { height: 80vh; } .pedido .duas { grid-template-columns: 1fr; } }
 .atalhos[hidden], .proximo[hidden] { display: none; }
+
+/* ---------- reescrever com notas (página do capítulo) */
+.reescrita .caixinha { margin-bottom: 10px; border-radius: 9px; padding: 8px 10px 6px; border: 1px solid var(--linha); background: var(--papel-2); border-left-width: 4px; }
+.reescrita .caixinha label { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .3px; margin-bottom: 4px; }
+.reescrita .caixinha textarea { width: 100%; border: 0; outline: 0; background: none; resize: none; font-family: var(--serif); font-size: 15px; line-height: 1.45; min-height: 42px; color: var(--tinta); }
+.reescrita .contexto { border-left-color: var(--azul); } .reescrita .contexto label { color: var(--azul); }
+.reescrita .fazer { border-left-color: var(--verde); } .reescrita .fazer label { color: var(--verde); }
+.reescrita .nao { border-left-color: var(--alerta); } .reescrita .nao label { color: var(--alerta); }
+.reescrita .manter { border-left-color: var(--ouro); } .reescrita .manter label { color: var(--ouro); }
+.reescrita .escopo { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; margin: 4px 0 10px; color: var(--tinta-2); }
+.reescrita .escopo label { display: flex; align-items: center; gap: 5px; cursor: pointer; }

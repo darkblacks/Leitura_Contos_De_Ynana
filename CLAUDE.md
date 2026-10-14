@@ -47,6 +47,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `escaleta/escaleta.md` | Beats de cada capítulo |
 | `continuidade/registro.md` | Fatos vigentes, curtos e verificáveis, com capítulo de origem |
 | `continuidade/resumos.md` | Resumo curto de cada capítulo |
+| `continuidade/notas-do-autor/cap-NN.md` | Notas do autor para reescrever o capítulo (novo contexto, fazer, não fazer, **manter**), escritas pela Escrivaninha |
 | `capitulos/cap-NN.md` | Capítulos, com cabeçalho de status |
 | `ferramentas/checa_tiques.py` | Varredura mecânica dos guardrails |
 | `ferramentas/tiques.json` | Listas e parâmetros usados pelo script |
@@ -114,6 +115,7 @@ Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `clau
   4. **Os nomes**: as fichas de todos os personagens, lugares e artefatos citados nos beats ou no pedido, com as **fotos de referência** (abra as imagens: aparência, roupas e cores vêm delas, não da imaginação).
   5. **As referências**: `referencias/` e `estilo/exemplos/` quando o capítulo tocar no que está lá; `continuidade/registro.md` sempre.
 - Depois siga o fluxo do `/escrever` (script, revisores, continuidade).
+- **Reescrita com notas**: quando o pedido vier da página do capítulo, ele traz o novo contexto, o que fazer, o que não fazer e o que manter (também em `continuidade/notas-do-autor/cap-NN.md`). Mude só o necessário para cumprir as notas; **o que está em "manter" fica exatamente como está**, nesta e nas próximas reescritas desse capítulo. Leia esse arquivo sempre que for mexer no capítulo N. Pedido "só este trecho" mexe só no trecho citado.
 - **Tamanho: cada capítulo tem no mínimo 4.600 palavras.** Se ficar curto, aprofunde as cenas dos beats (sem enchimento, sem fato novo) até passar do mínimo.
 - Para checar tiques sem Python: `.\Escrivaninha.exe tiques <arquivo>` (mesma saída do `checa_tiques.py`).
 - Se faltar decisão do autor (escaleta não aprovada, `[DECIDIR]` que trava o capítulo), pergunte em uma frase e espere.

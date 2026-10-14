@@ -366,6 +366,20 @@ VISTAS.capitulo = async (caminho) => {
         <div class="aviso" id="aviso-editado" style="display:none">Você mexeu num texto que ainda não está como <b>editado</b>. Pela regra, texto seu é cânone.
           <div style="margin-top:8px"><button class="botao pequeno" id="marcar-editado">Marcar como editado</button></div>
           <div class="sub" style="margin-top:6px">Depois rode <code>/sincronizar ${esc(meta.capitulo || "")}</code> no Claude.</div></div>
+        <div class="cartao reescrita">
+          <h3 style="font-size:19px;margin:0 0 2px">Reescrever com o Claude</h3>
+          <div class="sub" style="margin-bottom:10px">Ficam salvas neste capítulo. O que estiver em <b>Manter</b> ele não mexe, nesta nem nas próximas reescritas.</div>
+          <div class="caixinha contexto"><label>✦ Novo contexto / informações novas</label><textarea data-nota="contexto" rows="2" placeholder="Ex.: o Malcon já sabe do diário; é noite de chuva."></textarea></div>
+          <div class="caixinha fazer"><label>✓ O que fazer</label><textarea data-nota="fazer" rows="2" placeholder="Ex.: mais tensão na conversa da porta; mostrar o Rufus hesitando."></textarea></div>
+          <div class="caixinha nao"><label>✕ O que NÃO fazer</label><textarea data-nota="nao" rows="2" placeholder="Ex.: não explicar o que a Ynana sente; nada de flashback."></textarea></div>
+          <div class="caixinha manter"><label>♥ O que gostei: manter</label><textarea data-nota="manter" rows="2" placeholder="Ex.: a cena do chá; a última frase; o jeito do pai falar."></textarea></div>
+          <div class="escopo">
+            <label><input type="radio" name="escopo" value="tudo" checked> Capítulo inteiro</label>
+            <label title="Selecione um trecho no texto antes"><input type="radio" name="escopo" value="trecho"> Só o trecho selecionado</label>
+          </div>
+          <button class="botao primario" id="reescrever" style="width:100%;justify-content:center">✎ Reescrever com essas notas</button>
+          <div class="sub" id="notas-salvas" style="margin-top:6px;text-align:center"></div>
+        </div>
         <div class="cartao">
           <div style="display:flex;align-items:center;gap:8px"><h3 style="font-size:19px;margin:0">Tiques</h3>
             <button class="botao pequeno" id="checar" style="margin-left:auto">Checar agora</button></div>
@@ -439,6 +453,55 @@ VISTAS.capitulo = async (caminho) => {
     const topo = ta.getBoundingClientRect().top - vista.getBoundingClientRect().top + vista.scrollTop;
     vista.scrollTo({ top: topo + (alvo - 1) * lh * 1.4 - 160, behavior: "smooth" });
   };
+  // ---- notas do autor para a reescrita (continuidade/notas-do-autor/cap-NN.md)
+  const nCap = +(meta.capitulo || (caminho.match(/cap-(\d+)/) || [])[1] || 0);
+  const arqNotas = `continuidade/notas-do-autor/cap-${String(nCap).padStart(2, "0")}.md`;
+  const SECOES = [["contexto", "Novo contexto e informações"], ["fazer", "O que fazer"], ["nao", "O que NÃO fazer"], ["manter", "O que manter (gostei, não mexer)"]];
+  const caixas = Object.fromEntries($$("[data-nota]").map((t) => [t.dataset.nota, t]));
+  const ajustar = (t) => { t.style.height = "auto"; t.style.height = Math.min(220, t.scrollHeight + 2) + "px"; };
+  try {
+    const txtNotas = await lerArquivo(arqNotas);
+    for (const [chave, titulo] of SECOES) {
+      const m = txtNotas.match(new RegExp("## " + titulo.replace(/[()]/g, "\\$&") + "\\n([\\s\\S]*?)(?=\\n## |$)"));
+      if (m) caixas[chave].value = m[1].trim();
+    }
+  } catch {}
+  Object.values(caixas).forEach(ajustar);
+  const salvarNotas = async () => {
+    const corpoNotas = `# Notas do autor · capítulo ${nCap}\n\n> Escritas pela Escrivaninha. O Claude lê antes de reescrever este capítulo; o que está em "manter" não muda.\n\n` +
+      SECOES.map(([k, t]) => `## ${t}\n\n${caixas[k].value.trim()}\n`).join("\n");
+    try { await gravarArquivo(arqNotas, corpoNotas); $("#notas-salvas").textContent = "notas salvas ✓"; } catch (e) { toast(e.message, true); }
+  };
+  const salvarNotasDepois = debounce(salvarNotas, 1200);
+  Object.values(caixas).forEach((t) => t.addEventListener("input", () => { ajustar(t); $("#notas-salvas").textContent = "…"; salvarNotasDepois(); }));
+  $("#reescrever").onclick = async () => {
+    const v = (k) => caixas[k].value.trim();
+    if (!v("contexto") && !v("fazer") && !v("nao")) { toast("Escreva pelo menos o novo contexto, o que fazer ou o que não fazer.", true); return; }
+    const st = await api("/api/claude/status").catch(() => ({ instalado: false }));
+    if (!st.instalado) { toast("A reescrita com o Claude funciona no Escrivaninha.exe, com o Claude Code instalado.", true); return; }
+    if (st.rodando) { toast("O Claude ainda está trabalhando em outro pedido. Espere terminar.", true); return; }
+    const soTrecho = ($("input[name=escopo]:checked") || {}).value === "trecho";
+    const trecho = soTrecho ? ta.value.slice(ta.selectionStart, ta.selectionEnd).trim() : "";
+    if (soTrecho && trecho.length < 8) { toast("Selecione no texto o trecho que quer reescrever.", true); return; }
+    await salvar(); await salvarNotas();
+    const linhas = [
+      soTrecho ? `Reescreva só este trecho do capítulo ${nCap} (${caminho}), sem mexer no resto:\n«${trecho.length > 1500 ? trecho.slice(0, 1500) + "…" : trecho}»`
+               : `Reescreva o capítulo ${nCap} (${caminho}) seguindo as minhas notas. Mude só o que for preciso para cumpri-las.`,
+      v("contexto") ? `Novo contexto e informações:\n${v("contexto")}` : "",
+      v("fazer") ? `O que fazer:\n${v("fazer")}` : "",
+      v("nao") ? `O que NÃO fazer:\n${v("nao")}` : "",
+      v("manter") ? `O que manter exatamente como está (gostei, não mexer):\n${v("manter")}` : "",
+      `As notas também estão em ${arqNotas}.` + (statusAtual === "editado" ? " O capítulo está como editado: eu, o autor, estou pedindo esta reescrita explicitamente." : ""),
+      soTrecho ? "" : "Mantenha o mínimo de 4.600 palavras. Depois rode a checagem de tiques e os revisores e me diga em poucas linhas o que mudou.",
+    ];
+    try {
+      await api("/api/claude/enviar", { mensagem: linhas.filter(Boolean).join("\n\n") });
+      capituloPreferido = caminho;
+      estado.sujo = false;
+      ir("conversa");
+    } catch (e) { toast(e.message, true); }
+  };
+
   $("#checar").onclick = async () => {
     await salvar();
     const r = await api("/api/tiques?caminho=" + encodeURIComponent(caminho));
@@ -821,6 +884,7 @@ window.addEventListener("hashchange", rotaDoEndereco);
    Direita: o capítulo atual, em abas (Folha, Contexto, Revisão). */
 const META_PALAVRAS = 4600;
 var fonteEventos = null;
+var capituloPreferido = null; // a página do capítulo pede para a home abrir neste capítulo
 
 function decodificarParcial(js) {
   // Extrai, de um JSON ainda incompleto do Write, o caminho e o texto já escritos.
@@ -1254,7 +1318,8 @@ VISTAS.conversa = async () => {
   hist.forEach((m) => addMsg(m.papel, m.texto, m.arquivos || []));
   const ultimoCap = arv.capitulos.length ? arv.capitulos[arv.capitulos.length - 1] : null;
   const ultimoPronto = ultimoCap && ["revisado", "editado"].includes(ultimoCap.meta.status);
-  await carregarCapitulo(!ultimoCap || ultimoPronto ? `novo:${proximoN()}` : ultimoCap.caminho);
+  const preferido = capituloPreferido; capituloPreferido = null;
+  await carregarCapitulo(preferido || (!ultimoCap || ultimoPronto ? `novo:${proximoN()}` : ultimoCap.caminho));
   if (hist.length) respostasRapidas();
   if (st.rodando) ouvir();
   entrada.focus();

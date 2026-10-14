@@ -1,8 +1,9 @@
 {
-  "versao": "1.6.1",
-  "sha256": "4f5d179b0ab825fa2863c0665e8015c6ca81e85e124ea805ad6e8b1c3ce8cfcf",
+  "versao": "1.7.0",
+  "sha256": "68ebb050e59e0354e34dd1d309757347ef58e4d44fccdbd413b68ebb6ab2e9c0",
   "notas": [
-    "Corrige a instalação por cima: a versão nova fecha a antiga que ficava aberta em segundo plano e assume o lugar",
-    "Nova mesa de escrita na home, fichas com foto e atualização automática (da 1.6.0)"
+    "Página do capítulo: reescrever com o Claude usando caixinhas (novo contexto, o que fazer, o que não fazer, o que manter)",
+    "As notas ficam salvas por capítulo e o que está em 'manter' é respeitado nas próximas reescritas",
+    "Dá para reescrever o capítulo inteiro ou só um trecho selecionado"
   ]
 }

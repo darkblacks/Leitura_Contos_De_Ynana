@@ -78,7 +78,8 @@ Os meses têm nomes próprios. Os conhecidos:
 | Albahara | Varesh | rota de carga (mar?) | (a definir) |
 
 - [DECIDIR] Dreya e Varesh são o quê? (opções: cidades portuárias / reinos ou nações / fornecedores ou casas mercantes / regiões)
-- [DECIDIR] Calumbres é um bairro de Albahara ou outra cidade?
+- **Decidido:** Calumbres é um bairro de Albahara ou outra cidade? → **bairro de Albahara**
+- A geografia completa (mundo, continentes, arquipélagos, país, cidades e bairros) fica em [Geografia de Morcal](geografia.md).
 
 ## Linha do tempo geral
 

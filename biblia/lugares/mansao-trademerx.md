@@ -1,6 +1,6 @@
 # Mansão Trademerx
 
-> Casa da família Merx em [Albahara](albahara.md). Fontes: `[antiga]` versão antiga.
+> Casa da família Merx em [Albahara](albahara.md) (bairro a definir). Fontes: `[antiga]` versão antiga.
 
 ## Características
 

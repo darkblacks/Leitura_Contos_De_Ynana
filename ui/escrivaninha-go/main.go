@@ -19,7 +19,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,6 +36,9 @@ import (
 	"strings"
 	"time"
 )
+
+//go:embed embutido/anteriores.txt
+var anteriores string
 
 //go:embed all:embutido/projeto
 var projeto embed.FS
@@ -277,8 +282,13 @@ func extrairProjeto(pasta string) (int, error) {
 		if atual, err := os.ReadFile(alvo); err == nil {
 			// Texto do autor nunca é sobrescrito. Arquivos do sistema (instruções do
 			// Claude, comandos, interface, modelos) são atualizados com a versão nova.
-			if !ehSistema(rel) || string(atual) == string(dados) {
+			// Um arquivo da história só é atualizado se estiver exatamente como uma
+			// versão que já veio no app (o autor nunca mexeu nele).
+			if string(atual) == string(dados) || !(ehSistema(rel) || veioDoApp(rel, atual)) {
 				return nil
+			}
+			if !ehSistema(rel) {
+				logar("Atualizado (o autor não tinha mexido): %s", rel)
 			}
 		}
 		if err := os.WriteFile(alvo, dados, 0o644); err != nil {
@@ -288,6 +298,12 @@ func extrairProjeto(pasta string) (int, error) {
 		return nil
 	})
 	return novos, err
+}
+
+// veioDoApp diz se o conteúdo é idêntico a alguma versão já publicada do arquivo.
+func veioDoApp(rel string, conteudo []byte) bool {
+	h := sha256.Sum256(conteudo)
+	return strings.Contains(anteriores, hex.EncodeToString(h[:])+" "+rel+"\n")
 }
 
 // ehSistema diz se o arquivo é do sistema (pode ser atualizado) e não da história.

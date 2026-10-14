@@ -1,6 +1,10 @@
 # (Nome do lugar)
 
-> Modelo de ficha. Copie para `biblia/lugares/<nome>.md`. Campo desconhecido: `(a definir)`.
+> Modelo de ficha. Copie para `biblia/lugares/<nome>.md`. Campo desconhecido: `(a definir)`. Ponha o lugar na árvore de `biblia/geografia.md` (dentro de quê ele fica): ele herda os traços de toda a cadeia acima, então aqui vão só os traços próprios.
+
+## Retrato
+
+O jeito geral do lugar, em um parágrafo.
 
 ## Geografia
 
@@ -11,7 +15,7 @@
 
 ### Conexões
 
-Precisa bater com o mapa geral em `biblia/historia.md`.
+Precisa bater com as fichas dos lugares ligados e com `biblia/geografia.md`.
 
 | Liga-se a | Caminho | Tempo (a pé / a cavalo / etc.) |
 |---|---|---|

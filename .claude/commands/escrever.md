@@ -20,6 +20,7 @@ Antes de começar, para cada capítulo do intervalo:
    - `continuidade/registro.md` e `continuidade/resumos.md`
    - o capítulo anterior inteiro (`cap-(N-1).md`), se existir
    - só as fichas dos personagens, lugares e artefatos que aparecem nos beats ou no pedido do autor, **com as fotos de referência** (imagem com o mesmo nome da ficha, ao lado do `.md`): a aparência vem delas. Para personagem, use a versão de aparência da idade/fase do capítulo
+   - para cada lugar da cena, a cadeia dele em `biblia/geografia.md` e as fichas dessa cadeia (bairro › cidade › país › arquipélago › mundo): o lugar herda os traços de cima, e o mais perto vale mais
    - `biblia/calendario.md` (datas e idades), os acontecimentos de `biblia/acontecimentos/` que envolvem esses nomes ou caem perto da data, e os blocos de `biblia/relacoes.md` entre quem aparece (no período do capítulo). Siga "Inteligência narrativa" do `CLAUDE.md`: quem sabe o quê e o que o leitor já sabe (controle de spoiler)
 
 2. **Escrever** `capitulos/cap-NN.md` (número com dois dígitos) com o cabeçalho:

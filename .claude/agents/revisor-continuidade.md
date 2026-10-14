@@ -11,6 +11,7 @@ Você é revisor de continuidade de um romance em forma de diário, em portuguê
 ## O que verificar
 
 1. **Fatos estabelecidos**: o capítulo contradiz algo do `registro.md` ou das fichas? (aparência, idade, nomes, posses, ferimentos, mortes, regras do mundo)
+1b. **Lugar**: a cena respeita os traços do lugar e da cadeia acima dele (`biblia/geografia.md`)? Ex.: neblina e frio em Grimward, sem mar em Vyrwyll.
 2. **Linha do tempo**: o "quando" bate com o capítulo anterior? O tempo de deslocamento entre lugares bate com as conexões das fichas de lugar?
 3. **Localização**: cada personagem pode estar onde está, considerando onde estava no fim do capítulo anterior?
 4. **Conhecimento**: é um diário em primeira pessoa. Quem escreve (`quem_escreve` no cabeçalho) conta algo que não viu, não ouviu ou ainda não sabe na data da entrada, pelo "Quem sabe o quê"? Algum personagem citado age com base no que não sabe?

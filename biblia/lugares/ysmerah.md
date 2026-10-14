@@ -1,0 +1,32 @@
+# Ysmerah
+
+> Continente dentro de [Morcal](morcal.md). A posição na cadeia fica em [Geografia de Morcal](../geografia.md). Fontes: `[autor]` = descrição do autor; `[criado]` = criado pelo Claude a pedido do autor (pode mudar à vontade).
+
+## Retrato
+
+Continente de desertos, oásis e cidades de cúpula. Especiarias, tecidos tingidos e vidro fino; caravanas por terra, galeras pela costa. Mercadores de Ysmerah negociam sorrindo e não esquecem dívida. `[criado]`
+
+## Geografia
+
+- Onde fica: em [Morcal](morcal.md)
+- Clima: quente e seco; noites frias no deserto `[criado]`
+- Relevo: desertos, planaltos e uma faixa costeira fértil `[criado]`
+
+## Comportamento
+
+- Rotina e horários: (a definir)
+- Quem circula: (a definir)
+- Perigos: (a definir)
+- Regras sociais: (a definir)
+
+## Características
+
+- Cheiro: (a definir)
+- Som: (a definir)
+- Luz: (a definir)
+- Materiais: (a definir)
+- Marcos: (a definir)
+
+## Detalhes criados durante a escrita
+
+- (nenhum ainda)

@@ -1439,3 +1439,181 @@ VISTAS.relacoes = async (foco) => {
     };
   };
 };
+
+/* ============================================================ Geografia de Morcal
+   biblia/geografia.md guarda a árvore (mundo › continente/arquipélago › país › cidade › bairro › local).
+   Cada lugar herda os traços da cadeia acima; a ficha guarda só os traços próprios. */
+const ARQ_GEOGRAFIA = "biblia/geografia.md";
+const NIVEIS = ["mundo", "continente", "arquipélago", "país", "cidade", "bairro", "local"];
+const PROXIMO_NIVEL = { mundo: "continente", continente: "país", "arquipélago": "país", "país": "cidade", cidade: "bairro", bairro: "local", local: "local" };
+
+function lerArvoreMd(corpo) {
+  const raiz = { filhos: [], nivel: -1 }, pilha = [raiz], prosa = [];
+  for (const l of String(corpo || "").split("\n")) {
+    const m = l.match(/^(\s*)[-*]\s+(.*)$/);
+    if (!m) { if (l.trim()) prosa.push(l); continue; }
+    const nivel = Math.floor(m[1].replace(/\t/g, "  ").length / 2);
+    const partes = m[2].split(/\s+·\s+/);
+    const link = partes[0].match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    const no = { nome: link ? link[1] : partes[0].trim(), caminho: link ? resolverRel(ARQ_GEOGRAFIA, link[2]) : "", tipo: (partes[1] || "").trim(), nota: partes.slice(2).join(" · ").trim(), filhos: [], nivel };
+    while (pilha.length > 1 && pilha[pilha.length - 1].nivel >= nivel) pilha.pop();
+    no.pai = pilha[pilha.length - 1];
+    no.pai.filhos.push(no);
+    pilha.push(no);
+  }
+  return { raiz, prosa: prosa.join("\n") };
+}
+function escreverArvoreMd(arv) {
+  const linhas = [];
+  const andar = (nos, n) => nos.forEach((x) => {
+    const nome = x.caminho ? `[${x.nome}](${linkRel(ARQ_GEOGRAFIA, x.caminho)})` : x.nome;
+    linhas.push(`${"  ".repeat(n)}- ${[nome, x.tipo, x.nota].filter(Boolean).join(" · ")}`);
+    andar(x.filhos, n + 1);
+  });
+  andar(arv.raiz.filhos, 0);
+  return [arv.prosa, linhas.join("\n")].filter(Boolean).join("\n\n");
+}
+async function geografia() {
+  const t = await lerSeExiste(ARQ_GEOGRAFIA);
+  const doc = secoesMd(t || "# Geografia de Morcal\n\n## Árvore\n\n## Fora da árvore\n");
+  const arv = lerArvoreMd((acharSecao(doc, "Árvore") || {}).corpo);
+  const fora = lerArvoreMd((acharSecao(doc, "Fora da árvore") || {}).corpo);
+  const todos = [];
+  const juntar = (nos) => nos.forEach((x) => { todos.push(x); juntar(x.filhos); });
+  juntar(arv.raiz.filhos); juntar(fora.raiz.filhos);
+  return {
+    doc, arv, fora, todos, existe: t !== null,
+    no: (caminho) => todos.find((x) => x.caminho === caminho),
+    cadeia(caminho) { const out = []; let x = this.no(caminho); while (x && x.pai && x.pai.nome) { x = x.pai; out.unshift(x); } return out; },
+    async gravar() {
+      const s = (t2, a) => { const sec = acharSecao(doc, t2); const c = escreverArvoreMd(a); if (sec) sec.corpo = c; else doc.secoes.push({ titulo: t2, corpo: c }); };
+      s("Árvore", arv); s("Fora da árvore", fora);
+      await gravarArquivo(ARQ_GEOGRAFIA, juntarMd(doc));
+    },
+  };
+}
+
+/* Lugares: o mapa em árvore em cima das fichas */
+const _vistaLugares = VISTAS.lugares;
+VISTAS.lugares = async () => {
+  await _vistaLugares();
+  const geo = await geografia();
+  const lugares = estado.arvore.lugares || [];
+  const naArvore = new Set(geo.todos.map((x) => x.caminho));
+  const soltos = lugares.filter((l) => !naArvore.has(l.caminho));
+  const fotoDe = (c) => (lugares.find((l) => l.caminho === c) || {}).foto;
+  const htmlNo = (x) => `
+    <li class="geo-no" data-c="${esc(x.caminho)}">
+      <div class="geo-linha">
+        ${x.filhos.length ? `<button class="geo-abre" aria-label="abrir">▾</button>` : `<span class="geo-abre vazio"></span>`}
+        ${fotoDe(x.caminho) ? `<img class="geo-foto" src="${urlRepo(fotoDe(x.caminho))}" alt="">` : `<span class="geo-foto sem" style="background:${corDoNome(x.nome)}">${esc(x.nome[0] || "?")}</span>`}
+        <a href="#" class="geo-nome" ${x.caminho ? `data-abrir="${esc(x.caminho)}"` : ""}>${esc(x.nome)}</a>
+        ${x.tipo ? `<span class="etiqueta geo-tipo ${esc(semAcento(x.tipo))}">${esc(x.tipo)}</span>` : ""}${x.nota ? `<span class="sub">${esc(x.nota)}</span>` : ""}
+        <span class="geo-acoes"><button class="botao pequeno" data-add="${esc(x.caminho)}" title="Criar um lugar dentro deste">+ dentro</button>
+          ${x.caminho ? `<button class="botao pequeno" data-mover="${esc(x.caminho)}" title="Mudar de onde ele fica">mover</button>` : ""}</span>
+      </div>
+      ${x.filhos.length ? `<ul>${x.filhos.map(htmlNo).join("")}</ul>` : ""}
+    </li>`;
+  const cab = $(".cabecalho-vista", vista);
+  cab.insertAdjacentHTML("afterend", `
+    <div class="cartao geo-mapa">
+      <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Mapa de Morcal</h3>
+        <span class="sub">Cada lugar herda os traços de toda a cadeia acima: o bairro tem a cara dele e também a da cidade, do país, do arquipélago e do mundo.</span>
+        <a href="#" data-abrir="${ARQ_GEOGRAFIA}" class="sub" style="margin-left:auto;white-space:nowrap">texto completo</a></div>
+      ${geo.arv.raiz.filhos.length ? `<ul class="geo-arvore">${geo.arv.raiz.filhos.map(htmlNo).join("")}</ul>` : `<div class="sub" style="margin-top:8px">A árvore ainda está vazia.</div>`}
+      ${geo.fora.raiz.filhos.length ? `<div class="rotulo" style="margin-top:10px">Fora da árvore</div><ul class="geo-arvore">${geo.fora.raiz.filhos.map(htmlNo).join("")}</ul>` : ""}
+      ${soltos.length ? `<div class="aviso" style="margin-top:12px">Sem lugar no mapa: ${soltos.map((l) => `<a href="#" data-mover="${esc(l.caminho)}">${esc(l.titulo)}</a>`).join(", ")}. Clique para dizer dentro de quê fica.</div>` : ""}
+    </div>
+    <h2 style="margin:24px 0 10px">Todas as fichas</h2>`);
+  $$(".geo-abre:not(.vazio)").forEach((b) => (b.onclick = () => { const li = b.closest("li"); li.classList.toggle("fechado"); b.textContent = li.classList.contains("fechado") ? "▸" : "▾"; }));
+  $$("[data-add]").forEach((b) => (b.onclick = () => novoLugarDentro(b.dataset.add)));
+  $$("[data-mover]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); moverLugar(b.dataset.mover); }));
+};
+
+function opcoesDeLugar(geo, excluir) {
+  const proibidos = new Set();
+  if (excluir) { const x = geo.no(excluir); const marcar = (n) => { proibidos.add(n.caminho); n.filhos.forEach(marcar); }; if (x) marcar(x); }
+  const out = [];
+  const andar = (nos, n) => nos.forEach((x) => { if (!proibidos.has(x.caminho) && x.caminho) out.push(`<option value="${esc(x.caminho)}">${"  ".repeat(n).replace(/ /g, "&nbsp;")}${esc(x.nome)}${x.tipo ? " · " + esc(x.tipo) : ""}</option>`); andar(x.filhos, n + 1); });
+  andar(geo.arv.raiz.filhos, 0);
+  return out.join("");
+}
+async function novoLugarDentro(paiCaminho) {
+  const geo = await geografia();
+  const pai = geo.no(paiCaminho);
+  const tipoSug = pai ? PROXIMO_NIVEL[semAcento(pai.tipo) === "pais" ? "país" : semAcento(pai.tipo) === "arquipelago" ? "arquipélago" : pai.tipo] || "local" : "mundo";
+  const c = modal(`<h3>Novo lugar${pai ? " dentro de " + esc(pai.nome) : ""}</h3>
+    <div class="campo"><label>Nome</label><input id="nl-nome"></div>
+    <div class="campo"><label>O que é</label><select id="nl-tipo">${NIVEIS.map((n) => `<option ${n === tipoSug ? "selected" : ""}>${n}</option>`).join("")}<option>navio</option></select></div>
+    <div class="campo"><label>Nota curta <span class="sub">(opcional: norte, ilha principal…)</span></label><input id="nl-nota"></div>
+    <div class="modal-acoes"><button class="botao" id="nl-no">Cancelar</button><button class="botao primario" id="nl-ok">Criar</button></div>`);
+  $("#nl-nome", c).focus();
+  $("#nl-no", c).onclick = fecharModal;
+  $("#nl-ok", c).onclick = async () => {
+    const nome = $("#nl-nome", c).value.trim();
+    if (!nome) { toast("Dê um nome.", true); return; }
+    try {
+      const { caminho } = await api("/api/novo", { tipo: "lugar", nome });
+      const g = await geografia();
+      const p = g.no(paiCaminho);
+      const no = { nome, caminho, tipo: $("#nl-tipo", c).value, nota: $("#nl-nota", c).value.trim(), filhos: [] };
+      (p || g.arv.raiz).filhos.push(no);
+      await g.gravar();
+      fecharModal(); await VISTAS.lugares(); abrirFicha(caminho, () => VISTAS.lugares());
+    } catch (e) { toast(e.message, true); }
+  };
+}
+async function moverLugar(caminho) {
+  const geo = await geografia();
+  const x = geo.no(caminho);
+  const f = (estado.arvore.lugares || []).find((l) => l.caminho === caminho) || { titulo: caminho };
+  const c = modal(`<h3>Onde fica ${esc(x ? x.nome : f.titulo)}?</h3>
+    <div class="campo"><label>Dentro de</label><select id="mv-pai"><option value="">(no topo do mapa)</option><option value="__fora">fora da árvore (navio, lugar sem posição)</option>${opcoesDeLugar(geo, caminho)}</select></div>
+    <div class="campo"><label>O que é</label><select id="mv-tipo">${[...NIVEIS, "navio"].map((n) => `<option ${x && semAcento(x.tipo) === semAcento(n) ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+    <div class="modal-acoes"><button class="botao" id="mv-no">Cancelar</button><button class="botao primario" id="mv-ok">Salvar</button></div>`);
+  if (x && x.pai && x.pai.caminho) $("#mv-pai", c).value = x.pai.caminho;
+  $("#mv-no", c).onclick = fecharModal;
+  $("#mv-ok", c).onclick = async () => {
+    const no = x || { nome: f.titulo, caminho, nota: "", filhos: [] };
+    if (x) x.pai.filhos.splice(x.pai.filhos.indexOf(x), 1);
+    no.tipo = $("#mv-tipo", c).value;
+    const v = $("#mv-pai", c).value;
+    const destino = v === "__fora" ? geo.fora.raiz : v ? geo.no(v) : geo.arv.raiz;
+    destino.filhos.push(no);
+    try { await geo.gravar(); fecharModal(); VISTAS.lugares(); } catch (e) { toast(e.message, true); }
+  };
+}
+
+/* Ficha de lugar: a cadeia (Morcal › … › aqui), o que fica dentro e os traços herdados */
+const _abrirFichaAntesGeo = abrirFicha;
+abrirFicha = async function (caminho, aoFechar) {
+  await _abrirFichaAntesGeo(caminho, aoFechar);
+  if (!/^biblia\/lugares\//.test(caminho)) return;
+  const geo = await geografia();
+  const no = geo.no(caminho);
+  const box = $("#modal-caixa .ficha-texto");
+  if (!box || !$("#fm-ler", box)) return;
+  const cadeia = no ? geo.cadeia(caminho) : [];
+  const herdados = [];
+  for (const p of [...cadeia].reverse()) {
+    if (!p.caminho) continue;
+    const t = await lerSeExiste(p.caminho);
+    if (!t) continue;
+    const d = secoesMd(t);
+    const ret = (acharSecao(d, "Retrato") || {}).corpo || "";
+    const car = ["Características", "Comportamento"].map((n) => (acharSecao(d, n) || {}).corpo || "").join("\n")
+      .split("\n").filter((l) => /^[-*]\s/.test(l) && !/\(a definir\)\s*$/.test(l) && !/:\s*$/.test(l)).slice(0, 6).join("\n");
+    if (ret.trim() || car.trim()) herdados.push({ p, md: [ret.replace(/`\[[^\]]+\]`/g, "").trim(), car].filter(Boolean).join("\n\n") });
+  }
+  box.querySelector(".ficha-acoes").insertAdjacentHTML("afterend", `
+    <div class="geo-cadeia">
+      ${no ? `<div class="migalhas">${[...cadeia, no].map((x, i, a) => i < a.length - 1 && x.caminho ? `<a href="#" data-abrir="${esc(x.caminho)}">${esc(x.nome)}</a>` : `<b>${esc(x.nome)}</b>`).join(" <span>›</span> ")}
+        ${no.tipo ? `<span class="etiqueta">${esc(no.tipo)}</span>` : ""}</div>`
+        : `<div class="aviso">Este lugar ainda não está no mapa. <a href="#" id="geo-colocar">Dizer dentro de quê ele fica</a></div>`}
+      ${no && no.filhos.length ? `<div class="sub" style="margin-top:4px">Dentro dele: ${no.filhos.map((f) => f.caminho ? `<a href="#" data-abrir="${esc(f.caminho)}">${esc(f.nome)}</a>` : esc(f.nome)).join(", ")}</div>` : ""}
+      ${herdados.length ? `<details class="herdado"><summary>Herda de ${herdados.map((h) => esc(h.p.nome)).join(", ")}</summary>
+        ${herdados.map((h) => `<div class="herdado-bloco"><div class="rotulo">${esc(h.p.nome)}${h.p.tipo ? " · " + esc(h.p.tipo) : ""}</div><div class="md">${markdown(h.md, h.p.caminho)}</div></div>`).join("")}</details>` : ""}
+    </div>`);
+  const col = $("#geo-colocar", box);
+  if (col) col.onclick = (e) => { e.preventDefault(); moverLugar(caminho); };
+};

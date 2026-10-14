@@ -528,7 +528,7 @@ VISTAS.capitulo = async (caminho) => {
    Clicar abre um modal com a foto e o texto; dá para trocar a foto e editar ali mesmo. */
 const TIPOS_FICHA = {
   personagem: { titulo: "Personagens", lista: "personagens", sub: "Quem vive, escreve e é escrito no diário. Persona e Voz mudam o tom das entradas." },
-  lugar: { titulo: "Lugares", lista: "lugares", sub: "Geografia, comportamento e o que se sente em cada lugar. As conexões precisam bater com o mapa da História." },
+  lugar: { titulo: "Lugares", lista: "lugares", sub: "Geografia, comportamento e o que se sente em cada lugar. Cada lugar fica dentro de outro (mundo, continente ou arquipélago, país, cidade, bairro) e herda os traços de toda a cadeia." },
   artefato: { titulo: "Artefatos", lista: "artefatos", sub: "Objetos que importam: o Synzoe, o diário e o que mais carregar história." },
 };
 const urlRepo = (c) => "/repo/" + c.split("/").map(encodeURIComponent).join("/") + "?v=" + Date.now();

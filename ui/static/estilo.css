@@ -557,3 +557,30 @@ a { color: var(--acento); }
 }
 .ficha-pessoa .secao-corpo textarea { min-height: 0; font-family: var(--serif); font-size: 15.5px; line-height: 1.5; resize: vertical; padding: 8px 10px; }
 .ficha-pessoa .secao-corpo textarea#e-livre { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+
+/* ---------- geografia */
+.geo-mapa h3 { font-family: var(--serif-titulo); font-size: 22px; }
+.geo-mapa > div:first-child .sub { max-width: 640px; }
+.geo-arvore, .geo-arvore ul { list-style: none; margin: 0; padding: 0; }
+.geo-arvore { margin-top: 10px; }
+.geo-arvore ul { margin-left: 22px; border-left: 1px dashed var(--linha-forte); padding-left: 8px; }
+.geo-no.fechado > ul { display: none; }
+.geo-linha { display: flex; align-items: center; gap: 8px; padding: 3px 6px; border-radius: 8px; }
+.geo-linha:hover { background: var(--papel-2); }
+.geo-abre { width: 18px; border: 0; background: none; cursor: pointer; color: var(--tinta-3); padding: 0; }
+.geo-foto { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: none; display: grid; place-items: center; color: #fffc; font-family: var(--serif-titulo); font-weight: 700; font-size: 14px; }
+.geo-nome { font-family: var(--serif-titulo); font-size: 18px; font-weight: 600; color: var(--tinta); text-decoration: none; }
+.geo-nome:hover { color: var(--acento); }
+.geo-tipo.mundo, .geo-tipo.continente { border-color: var(--azul); color: var(--azul); }
+.geo-tipo.arquipelago { border-color: var(--verde); color: var(--verde); }
+.geo-tipo.pais { border-color: var(--acento); color: var(--acento); }
+.geo-tipo.cidade { border-color: var(--ouro); color: var(--ouro); }
+.geo-acoes { margin-left: auto; display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.geo-linha:hover .geo-acoes { opacity: 1; }
+.geo-cadeia { margin: 0 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--linha); }
+.migalhas { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13.5px; }
+.migalhas span { color: var(--tinta-3); }
+.herdado { margin-top: 8px; font-size: 13px; }
+.herdado summary { cursor: pointer; color: var(--tinta-2); }
+.herdado-bloco { margin: 8px 0 0 12px; padding-left: 10px; border-left: 2px solid var(--linha); }
+.herdado-bloco .md { font-size: 14px; }

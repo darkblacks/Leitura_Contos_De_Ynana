@@ -548,6 +548,8 @@ VISTAS.decisoes = async () => {
       <div class="decisao" data-i="${i}">
         <div class="onde">${esc(d.caminho)} · ${esc(d.secao)} · <a href="#" data-abrir="${esc(d.caminho)}">abrir arquivo</a></div>
         <div class="pergunta">${inline(d.pergunta)}</div>
+        ${d.proposta ? `<div class="proposta"><b>Proposta do Claude:</b> ${inline(d.proposta)}
+          <button class="botao pequeno" data-aceitar>Aceitar proposta</button></div>` : ""}
         <div class="opcoes">${d.opcoes.map((o) => `<button class="opcao">${esc(o)}</button>`).join("")}
           <input placeholder="ou escreva a sua resposta e tecle Enter"></div>
       </div>`).join("")
@@ -560,6 +562,8 @@ VISTAS.decisoes = async () => {
       catch (e) { toast(e.message, true); }
     };
     $$(".opcao", el).forEach((b) => (b.onclick = () => decidir(b.textContent)));
+    const ac = $("[data-aceitar]", el);
+    if (ac) ac.onclick = () => decidir(d.proposta);
     $("input", el).onkeydown = (e) => { if (e.key === "Enter") decidir(e.target.value.trim()); };
   });
 };

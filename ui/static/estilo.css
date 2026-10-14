@@ -204,6 +204,9 @@ a { color: var(--acento); }
 .decisao { background: var(--papel); border: 1px solid var(--linha); border-left: 3px solid var(--alerta); border-radius: var(--raio); padding: 16px 18px; margin-bottom: 12px; }
 .decisao .onde { font-size: 11px; color: var(--tinta-3); text-transform: uppercase; letter-spacing: 1px; }
 .decisao .pergunta { font-family: var(--serif); font-size: 18px; margin: 4px 0 12px; }
+.proposta { background: var(--papel-2); border: 1px dashed var(--linha-forte); border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; font-family: var(--serif); font-size: 15px; color: var(--tinta-2); }
+.proposta b { font-family: var(--sans); font-size: 12px; color: var(--acento); }
+.proposta .botao { margin-left: 8px; }
 .opcoes { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .opcao { border: 1px solid var(--linha-forte); background: var(--papel-2); padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 13px; }
 .opcao:hover { border-color: var(--acento); color: var(--acento); }

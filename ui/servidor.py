@@ -31,6 +31,7 @@ EXT_TEXTO = {".md", ".txt", ".json"}
 EXT_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 
 DECIDIR = re.compile(r"^\s*(?:[-*]\s+)?\[DECIDIR\]\s*(.+)")  # só itens de lista, não menções no texto
+PROPOSTA = "Proposta do Claude"
 OPCOES = re.compile(r"\(opções:\s*(.+?)\)\s*\.?\s*$", re.IGNORECASE)
 
 
@@ -135,7 +136,8 @@ def decisoes():
             if p.name.startswith("_"):
                 continue
             secao = ""
-            for i, linha in enumerate(ler(p).splitlines(), 1):
+            todas = ler(p).splitlines()
+            for i, linha in enumerate(todas, 1):
                 if linha.startswith("#"):
                     secao = linha.lstrip("#").strip()
                 m = DECIDIR.search(linha)
@@ -147,8 +149,12 @@ def decisoes():
                 if mo:
                     opcoes = [o.strip() for o in mo.group(1).split(" / ") if o.strip()]
                     pergunta = pergunta[:mo.start()].strip()
+                proposta = ""
+                if i < len(todas) and PROPOSTA in todas[i]:
+                    m_p = re.search(PROPOSTA + r"[^:]*:\**\s*(.*)", todas[i])
+                    proposta = m_p.group(1).strip() if m_p else ""
                 achados.append({"caminho": p.relative_to(RAIZ).as_posix(), "linha": i,
-                                "secao": secao, "pergunta": pergunta, "opcoes": opcoes})
+                                "secao": secao, "pergunta": pergunta, "opcoes": opcoes, "proposta": proposta})
     return achados
 
 
@@ -163,6 +169,8 @@ def resolver_decisao(caminho, linha, resposta):
     pergunta = OPCOES.sub("", m.group(1)).strip()
     prefixo = original[:original.index("[DECIDIR]")]
     linhas[idx] = f"{prefixo}**Decidido:** {pergunta} → **{resposta.strip()}**"
+    if idx + 1 < len(linhas) and PROPOSTA in linhas[idx + 1]:
+        del linhas[idx + 1]  # a proposta já cumpriu seu papel
     p.write_text("\n".join(linhas) + "\n", encoding="utf-8")
 
 

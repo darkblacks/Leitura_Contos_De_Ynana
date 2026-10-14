@@ -9,7 +9,7 @@ cd "$RAIZ"
 tar --exclude=.git --exclude=./ui/escrivaninha-go --exclude=./dist --exclude='__pycache__' --exclude='*.pyc' \
     -cf - . | tar -xf - -C "$AQUI/embutido/projeto"
 cd "$AQUI"
-gofmt -l . | grep -v embutido && { echo "rode gofmt -w"; exit 1; } || true
+if gofmt -l . | grep -v embutido; then echo "rode gofmt -w nos arquivos acima"; exit 1; fi
 go vet ./...
 mkdir -p "$RAIZ/dist"
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o "$RAIZ/dist/Escrivaninha.exe" .

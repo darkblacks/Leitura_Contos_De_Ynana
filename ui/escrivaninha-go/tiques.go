@@ -35,7 +35,7 @@ var (
 	reFrases        = regexp.MustCompile(`[^.!?…]+[.!?…]+`)
 	reLetras        = regexp.MustCompile(`\pL+`)
 	// alternativas mais longas primeiro: o RE2 não volta atrás quando a checagem de fim de palavra falha
-	verbos          = `(?:é|eram|era|foi|estava|está|são|foram|seria|parecia)`
+	verbos = `(?:é|eram|era|foi|estava|está|são|foram|seria|parecia)`
 )
 
 // padrão com checagem manual de limite de palavra antes (pre) e/ou depois (pos)

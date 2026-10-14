@@ -19,7 +19,7 @@ Antes de começar, para cada capítulo do intervalo:
    - os beats do capítulo em `escaleta/escaleta.md`
    - `continuidade/registro.md` e `continuidade/resumos.md`
    - o capítulo anterior inteiro (`cap-(N-1).md`), se existir
-   - só as fichas dos personagens e lugares que aparecem nos beats
+   - só as fichas dos personagens, lugares e artefatos que aparecem nos beats ou no pedido do autor, **com as fotos de referência** (imagem com o mesmo nome da ficha, ao lado do `.md`): a aparência vem delas
 
 2. **Escrever** `capitulos/cap-NN.md` (número com dois dígitos) com o cabeçalho:
    ```

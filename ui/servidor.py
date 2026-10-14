@@ -113,6 +113,9 @@ def listar(pasta, exts=EXT_TEXTO, ocultar_modelos=False):
             item["palavras"] = contar_palavras(t)
             item["meta"] = frontmatter(t)
             item["vazios"] = t.count("(a definir)") + t.count("[DECIDIR]")
+            foto = foto_de(p)
+            if foto:
+                item["foto"] = foto
         itens.append(item)
     return itens
 
@@ -124,6 +127,7 @@ def arvore():
         "capitulos": listar("capitulos"),
         "personagens": listar("biblia/personagens", ocultar_modelos=True),
         "lugares": listar("biblia/lugares", ocultar_modelos=True),
+        "artefatos": listar("biblia/artefatos", ocultar_modelos=True),
         "exemplos": listar("estilo/exemplos"),
         "ref_textos": listar("referencias/textos"),
         "ref_imagens": listar("referencias/imagens", EXT_IMAGEM),
@@ -258,10 +262,11 @@ def criar(tipo, nome):
         n = (max(existentes) + 1) if existentes else 1
         p = RAIZ / "capitulos" / f"cap-{n:02d}.md"
         p.write_text(MODELO_CAPITULO.format(n=n, titulo=nome), encoding="utf-8")
-    elif tipo in ("personagem", "lugar"):
+    elif tipo in ("personagem", "lugar", "artefato"):
         if not nome:
             raise ValueError("dê um nome")
-        pasta = "personagens" if tipo == "personagem" else "lugares"
+        pasta = {"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos"}[tipo]
+        (RAIZ / "biblia" / pasta).mkdir(parents=True, exist_ok=True)
         p = RAIZ / "biblia" / pasta / f"{slug(nome)}.md"
         if p.exists():
             raise ValueError("já existe uma ficha com esse nome")
@@ -281,6 +286,95 @@ def criar(tipo, nome):
     else:
         raise ValueError("tipo desconhecido")
     return p.relative_to(RAIZ).as_posix()
+
+
+EXT_FOTO = [".webp", ".png", ".jpg", ".jpeg", ".gif"]
+
+
+def foto_de(ficha):
+    """Foto de referência da ficha: imagem com o mesmo nome, na mesma pasta."""
+    for e in EXT_FOTO:
+        f = ficha.with_suffix(e)
+        if f.exists():
+            return f.relative_to(RAIZ).as_posix()
+    return ""
+
+
+def salvar_foto(ficha, nome, dados_b64):
+    p = caminho_seguro(ficha)
+    rel = p.relative_to(RAIZ).as_posix()
+    if p.suffix != ".md" or not rel.startswith(("biblia/personagens/", "biblia/lugares/", "biblia/artefatos/")):
+        raise ValueError("foto só para fichas de personagem, lugar ou artefato")
+    ext = Path(nome).suffix.lower().replace(".jpeg", ".jpg")
+    if ext not in EXT_FOTO:
+        raise ValueError(f"formato de imagem não aceito: {ext} (use png, jpg ou webp)")
+    dados = base64.b64decode(dados_b64)
+    if len(dados) > 15 * 1024 * 1024:
+        raise ValueError("imagem maior que 15 MB")
+    for e in EXT_FOTO:
+        p.with_suffix(e).unlink(missing_ok=True)
+    p.with_suffix(ext).write_bytes(dados)
+    return p.with_suffix(ext).relative_to(RAIZ).as_posix()
+
+
+LINK_MD = re.compile(r"\[([^\]]+)\]\(([^)]+\.md)\)")
+
+
+def pessoas_da_linha(linha):
+    out = []
+    for nome, alvo in LINK_MD.findall(linha):
+        abs_ = (RAIZ / "escaleta" / alvo).resolve()
+        it = {"nome": nome, "caminho": abs_.relative_to(RAIZ).as_posix() if RAIZ in abs_.parents else alvo}
+        if abs_.exists():
+            it["foto"] = foto_de(abs_)
+        out.append(it)
+    # Nomes escritos sem link ("Ynana, Rufus, tripulação") também valem, se houver ficha.
+    sem_links = LINK_MD.sub("", linha)
+    for pasta in ("personagens", "lugares", "artefatos"):
+        for f in listar(f"biblia/{pasta}", ocultar_modelos=True):
+            titulo = f.get("titulo", "")
+            nomes = [titulo]
+            partes = titulo.split()
+            if len(partes) > 1 and len(partes[0]) >= 4 and "." not in partes[0]:
+                nomes.append(partes[0])
+            for nome in nomes:
+                if nome and re.search(r"(?<!\w)" + re.escape(nome) + r"(?!\w)", sem_links):
+                    it = {"nome": nome, "caminho": f["caminho"]}
+                    if f.get("foto"):
+                        it["foto"] = f["foto"]
+                    out.append(it)
+                    break
+    return out
+
+
+def contexto_capitulo(n):
+    """Beats da escaleta, quem escreve, presentes e lugares (com fotos) e o capítulo anterior."""
+    n = max(1, n)
+    ctx = {"capitulo": n}
+    esc = ler(RAIZ / "escaleta" / "escaleta.md")
+    m = re.search(rf"(?m)^## Cap[ií]tulo 0*{n}\b[: ]*(.*)$", esc)
+    if m:
+        ctx["titulo"] = m.group(1).strip()
+        secao = re.split(r"(?m)^#{1,2} ", esc[m.end():], maxsplit=1)[0]
+        for l in secao.splitlines():
+            t = l.strip().lstrip("-").strip()
+            for chave, campo in (("status:", "status_escaleta"), ("quando:", "quando")):
+                if t.startswith(chave):
+                    ctx[campo] = t[len(chave):].strip()
+            for chave, campo in (("quem escreve:", "quem_escreve"), ("presentes:", "presentes"), ("lugares:", "lugares")):
+                if t.startswith(chave):
+                    ctx[campo] = pessoas_da_linha(t)
+    cap = RAIZ / "capitulos" / f"cap-{n:02d}.md"
+    if cap.exists():
+        meta = frontmatter(ler(cap))
+        ctx.update({"arquivo": cap.relative_to(RAIZ).as_posix(), "status": meta.get("status", "")})
+        for k in ("titulo", "quando"):
+            if meta.get(k):
+                ctx[k] = meta[k]
+    ant = RAIZ / "capitulos" / f"cap-{n - 1:02d}.md"
+    if n > 1 and ant.exists():
+        ctx["anterior"] = {"caminho": ant.relative_to(RAIZ).as_posix(), "titulo": frontmatter(ler(ant)).get("titulo", ""), "numero": n - 1}
+    return ctx
 
 
 def enviar_arquivo(pasta, nome, dados_b64):
@@ -374,6 +468,8 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json({"caminho": q["caminho"], "conteudo": ler(p)})
             if url.path == "/api/tiques":
                 return self._json(tiques(q.get("caminho")))
+            if url.path == "/api/contexto":
+                return self._json(contexto_capitulo(int(q.get("n") or 1)))
             if url.path == "/api/busca":
                 return self._json(busca(q.get("q", "")))
             if url.path.startswith("/repo/"):
@@ -412,6 +508,8 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json({"ok": True})
             if url.path == "/api/enviar":
                 return self._json({"caminho": enviar_arquivo(d["pasta"], d["nome"], d["dados"])})
+            if url.path == "/api/foto":
+                return self._json({"foto": salvar_foto(d["ficha"], d["nome"], d["dados"])})
             if url.path == "/api/apagar":
                 p = caminho_seguro(d["caminho"])
                 if not (p.relative_to(RAIZ).as_posix().startswith(("referencias/", "entrada/"))):

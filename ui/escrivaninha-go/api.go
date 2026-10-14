@@ -174,6 +174,9 @@ func listar(pasta string, exts map[string]bool, ocultarModelos bool) []item {
 			it["palavras"] = contarPalavrasMD(t)
 			it["meta"] = frontmatter(t)
 			it["vazios"] = strings.Count(t, "(a definir)") + strings.Count(t, "[DECIDIR]")
+			if f := fotoDe(p); f != "" {
+				it["foto"] = f
+			}
 		}
 		itens = append(itens, it)
 	}
@@ -187,6 +190,7 @@ func arvore() map[string][]item {
 		"capitulos":   listar("capitulos", extTexto, false),
 		"personagens": listar("biblia/personagens", extTexto, true),
 		"lugares":     listar("biblia/lugares", extTexto, true),
+		"artefatos":   listar("biblia/artefatos", extTexto, true),
 		"exemplos":    listar("estilo/exemplos", extTexto, false),
 		"ref_textos":  listar("referencias/textos", extTexto, false),
 		"ref_imagens": listar("referencias/imagens", extImagem, false),
@@ -364,14 +368,12 @@ func criar(tipo, nome string) (string, error) {
 		if err := os.WriteFile(p, []byte(fmt.Sprintf(modeloCapitulo, n, nome)), 0o644); err != nil {
 			return "", err
 		}
-	case "personagem", "lugar":
+	case "personagem", "lugar", "artefato":
 		if nome == "" {
 			return "", errors.New("dê um nome")
 		}
-		pasta := "personagens"
-		if tipo == "lugar" {
-			pasta = "lugares"
-		}
+		pasta := map[string]string{"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos"}[tipo]
+		os.MkdirAll(filepath.Join(raiz, "biblia", pasta), 0o755)
 		p = filepath.Join(raiz, "biblia", pasta, slug(nome)+".md")
 		if _, err := os.Stat(p); err == nil {
 			return "", errors.New("já existe uma ficha com esse nome")
@@ -534,6 +536,9 @@ func novoRoteador(estatico fs.FS) http.Handler {
 					lista = append(lista, item{"linha": o.linha, "categoria": o.categoria, "trecho": o.trecho})
 				}
 				responder(w, 200, item{"paragrafos": len(tam), "palavras": soma, "ocorrencias": lista})
+			case "/api/contexto":
+				n, _ := strconv.Atoi(q.Get("n"))
+				responder(w, 200, contextoCapitulo(n))
 			case "/api/busca":
 				responder(w, 200, busca(q.Get("q")))
 			default:
@@ -616,6 +621,13 @@ func novoRoteador(estatico fs.FS) http.Handler {
 				return
 			}
 			responder(w, 200, item{"caminho": c})
+		case "/api/foto":
+			f, err := salvarFoto(texto("ficha"), texto("nome"), texto("dados"))
+			if err != nil {
+				responderErro(w, err)
+				return
+			}
+			responder(w, 200, item{"foto": f})
 		case "/api/apagar":
 			p, err := caminhoSeguro(texto("caminho"))
 			if err != nil {
@@ -665,4 +677,164 @@ func novoRoteador(estatico fs.FS) http.Handler {
 		servirArquivo(w, nome, dados)
 	})
 	return mux
+}
+
+// ---------------------------------------------------------------- fotos e contexto
+
+var extFoto = []string{".webp", ".png", ".jpg", ".jpeg", ".gif"}
+
+// fotoDe acha a foto de referência de uma ficha: imagem com o mesmo nome, na mesma pasta.
+func fotoDe(ficha string) string {
+	base := strings.TrimSuffix(ficha, filepath.Ext(ficha))
+	for _, e := range extFoto {
+		if _, err := os.Stat(base + e); err == nil {
+			return relativo(base + e)
+		}
+	}
+	return ""
+}
+
+func salvarFoto(ficha, nome, dadosB64 string) (string, error) {
+	p, err := caminhoSeguro(ficha)
+	if err != nil {
+		return "", err
+	}
+	rel := relativo(p)
+	if !strings.HasSuffix(rel, ".md") || !(strings.HasPrefix(rel, "biblia/personagens/") || strings.HasPrefix(rel, "biblia/lugares/") || strings.HasPrefix(rel, "biblia/artefatos/")) {
+		return "", errors.New("foto só para fichas de personagem, lugar ou artefato")
+	}
+	ext := strings.ToLower(filepath.Ext(nome))
+	if ext == ".jpeg" {
+		ext = ".jpg"
+	}
+	ok := false
+	for _, e := range extFoto {
+		ok = ok || e == ext
+	}
+	if !ok {
+		return "", fmt.Errorf("formato de imagem não aceito: %s (use png, jpg ou webp)", ext)
+	}
+	dados, err := base64.StdEncoding.DecodeString(dadosB64)
+	if err != nil {
+		return "", errors.New("imagem corrompida no envio")
+	}
+	if len(dados) > 15*1024*1024 {
+		return "", errors.New("imagem maior que 15 MB")
+	}
+	base := strings.TrimSuffix(p, ".md")
+	for _, e := range extFoto {
+		os.Remove(base + e)
+	}
+	if err := os.WriteFile(base+ext, dados, 0o644); err != nil {
+		return "", err
+	}
+	return relativo(base + ext), nil
+}
+
+var reLinkMD = regexp.MustCompile(`\[([^\]]+)\]\(([^)]+\.md)\)`)
+
+// pessoasDaLinha transforma "[Ynana](../biblia/personagens/ynana.md), Rufus" em fichas com foto.
+func pessoasDaLinha(linha string) []item {
+	out := []item{}
+	for _, m := range reLinkMD.FindAllStringSubmatch(linha, -1) {
+		alvo := path.Clean(path.Join("escaleta", m[2]))
+		abs := filepath.Join(raiz, filepath.FromSlash(alvo))
+		it := item{"nome": m[1], "caminho": alvo}
+		if _, err := os.Stat(abs); err == nil {
+			it["foto"] = fotoDe(abs)
+		}
+		out = append(out, it)
+	}
+	// Nomes escritos sem link ("Ynana, Rufus, tripulação") também valem, se houver ficha.
+	semLinks := reLinkMD.ReplaceAllString(linha, "")
+	for _, pasta := range []string{"personagens", "lugares", "artefatos"} {
+		for _, f := range listar("biblia/"+pasta, extTexto, true) {
+			titulo, _ := f["titulo"].(string)
+			nomes := []string{titulo}
+			if partes := strings.Fields(titulo); len(partes) > 1 && len(partes[0]) >= 4 && !strings.Contains(partes[0], ".") {
+				nomes = append(nomes, partes[0])
+			}
+			for _, nome := range nomes {
+				if nome != "" && contemPalavra(semLinks, nome) {
+					it := item{"nome": nome, "caminho": f["caminho"]}
+					if foto, ok := f["foto"]; ok {
+						it["foto"] = foto
+					}
+					out = append(out, it)
+					break
+				}
+			}
+		}
+	}
+	return out
+}
+
+func contemPalavra(texto, nome string) bool {
+	for i := 0; ; {
+		j := strings.Index(texto[i:], nome)
+		if j < 0 {
+			return false
+		}
+		ini, fim := i+j, i+j+len(nome)
+		antesOK := ini == 0 || !ehLetraPalavra(ultimaRuna(texto[:ini]))
+		depoisOK := fim == len(texto) || !ehLetraPalavra(primeiraRuna(texto[fim:]))
+		if antesOK && depoisOK {
+			return true
+		}
+		i = fim
+	}
+}
+
+func ultimaRuna(s string) rune   { r, _ := utf8.DecodeLastRuneInString(s); return r }
+func primeiraRuna(s string) rune { r, _ := utf8.DecodeRuneInString(s); return r }
+
+// contextoCapitulo junta o que o capítulo N precisa: beats da escaleta, quem escreve,
+// presentes e lugares (com fotos) e o capítulo anterior.
+func contextoCapitulo(n int) item {
+	if n <= 0 {
+		n = 1
+	}
+	ctx := item{"capitulo": n}
+	esc := ler(filepath.Join(raiz, "escaleta", "escaleta.md"))
+	reTit := regexp.MustCompile(`(?m)^## Cap[ií]tulo 0*` + strconv.Itoa(n) + `\b[: ]*(.*)$`)
+	if loc := reTit.FindStringSubmatchIndex(esc); loc != nil {
+		ctx["titulo"] = strings.TrimSpace(esc[loc[2]:loc[3]])
+		secao := esc[loc[1]:]
+		if fim := regexp.MustCompile(`(?m)^#{1,2} `).FindStringIndex(secao); fim != nil {
+			secao = secao[:fim[0]]
+		}
+		for _, l := range strings.Split(secao, "\n") {
+			t := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(l), "-"))
+			switch {
+			case strings.HasPrefix(t, "status:"):
+				ctx["status_escaleta"] = strings.TrimSpace(t[7:])
+			case strings.HasPrefix(t, "quando:"):
+				ctx["quando"] = strings.TrimSpace(t[7:])
+			case strings.HasPrefix(t, "quem escreve:"):
+				ctx["quem_escreve"] = pessoasDaLinha(t)
+			case strings.HasPrefix(t, "presentes:"):
+				ctx["presentes"] = pessoasDaLinha(t)
+			case strings.HasPrefix(t, "lugares:"):
+				ctx["lugares"] = pessoasDaLinha(t)
+			}
+		}
+	}
+	cap := filepath.Join(raiz, "capitulos", fmt.Sprintf("cap-%02d.md", n))
+	if _, err := os.Stat(cap); err == nil {
+		meta := frontmatter(ler(cap))
+		ctx["arquivo"] = relativo(cap)
+		ctx["status"] = meta["status"]
+		if meta["titulo"] != "" {
+			ctx["titulo"] = meta["titulo"]
+		}
+		if meta["quando"] != "" {
+			ctx["quando"] = meta["quando"]
+		}
+	}
+	ant := filepath.Join(raiz, "capitulos", fmt.Sprintf("cap-%02d.md", n-1))
+	if _, err := os.Stat(ant); err == nil {
+		meta := frontmatter(ler(ant))
+		ctx["anterior"] = item{"caminho": relativo(ant), "titulo": meta["titulo"], "numero": n - 1}
+	}
+	return ctx
 }

@@ -167,8 +167,7 @@ async function ir(nome, arg) {
 }
 function abrirCaminho(c) {
   if (c.startsWith("capitulos/")) return ir("capitulo", c);
-  if (c.startsWith("biblia/personagens/")) return ir("ficha", c);
-  if (c.startsWith("biblia/lugares/")) return ir("ficha", c);
+  if (/^biblia\/(personagens|lugares|artefatos)\/[^/]+\.md$/.test(c)) return abrirFicha(c);
   return ir("arquivo", c);
 }
 $$("#nav a").forEach((a) => (a.onclick = () => ir(a.dataset.view)));
@@ -181,6 +180,7 @@ async function atualizarArvore() {
   $("#n-capitulos").textContent = a.capitulos.length || "";
   $("#n-personagens").textContent = a.personagens.length || "";
   $("#n-lugares").textContent = a.lugares.length || "";
+  $("#n-artefatos").textContent = (a.artefatos || []).length || "";
   $("#n-referencias").textContent = (a.ref_imagens.length + a.ref_textos.length) || "";
   $("#n-decisoes").textContent = dec.length || "";
   return a;
@@ -456,39 +456,102 @@ VISTAS.capitulo = async (caminho) => {
   };
 };
 
-/* ------------------------------------------------------------ FICHAS */
+/* ------------------------------------------------------------ FICHAS (personagens, lugares, artefatos)
+   Cada ficha tem uma foto de referência: imagem com o mesmo nome, ao lado do .md.
+   Clicar abre um modal com a foto e o texto; dá para trocar a foto e editar ali mesmo. */
+const TIPOS_FICHA = {
+  personagem: { titulo: "Personagens", lista: "personagens", sub: "Quem vive, escreve e é escrito no diário. Persona e Voz mudam o tom das entradas." },
+  lugar: { titulo: "Lugares", lista: "lugares", sub: "Geografia, comportamento e o que se sente em cada lugar. As conexões precisam bater com o mapa da História." },
+  artefato: { titulo: "Artefatos", lista: "artefatos", sub: "Objetos que importam: o Synzoe, o diário e o que mais carregar história." },
+};
+const urlRepo = (c) => "/repo/" + c.split("/").map(encodeURIComponent).join("/") + "?v=" + Date.now();
+function retrato(f, classe = "retrato") {
+  return f.foto ? `<div class="${classe}"><img src="${urlRepo(f.foto)}" alt="${esc(f.titulo || f.nome)}" loading="lazy"></div>`
+    : `<div class="${classe} sem-foto" style="background:${corDoNome(f.titulo || f.nome || "?")}"><span>${esc((f.titulo || f.nome || "?")[0])}</span></div>`;
+}
+
 function vistaFichas(tipo) {
+  const cfg = TIPOS_FICHA[tipo];
   return async () => {
     const a = await atualizarArvore();
-    const lista = tipo === "personagem" ? a.personagens : a.lugares;
-    const titulo = tipo === "personagem" ? "Personagens" : "Lugares";
-    const sub = tipo === "personagem"
-      ? "Quem vive, escreve e é escrito no diário. Persona e Voz mudam o tom das entradas."
-      : "Geografia, comportamento e o que se sente em cada lugar. As conexões precisam bater com o mapa da História.";
-    vista.innerHTML = cabecalho(titulo, sub, `<button class="botao primario" id="nova">+ Nova ficha</button>`) +
-      (lista.length ? `<div class="grade">${lista.map((f) => {
-        const total = 20, faltam = Math.min(f.vazios, total);
-        return `<div class="cartao clicavel" data-abrir="${esc(f.caminho)}">
-          <div class="avatar" style="background:${corDoNome(f.titulo)}">${esc(f.titulo[0] || "?")}</div>
-          <h3>${esc(f.titulo)}</h3><div class="sub">${f.palavras} palavras${f.vazios ? ` · ${f.vazios} campo(s) vazio(s)` : " · completa"}</div>
-          <div class="barra"><div style="width:${Math.max(6, 100 - (faltam / total) * 100)}%"></div></div></div>`;
-      }).join("")}</div>`
-        : `<div class="vazio"><h3>Nenhuma ficha ainda</h3>Crie aqui, ou jogue material em Referências e peça ao Claude <code>/importar</code>.</div>`);
+    const lista = a[cfg.lista] || [];
+    vista.innerHTML = cabecalho(cfg.titulo, cfg.sub, `<button class="botao primario" id="nova">+ Nova ficha</button>`) +
+      (lista.length ? `<div class="grade-fichas">${lista.map((f) => `
+        <div class="cartao-ficha" data-ficha="${esc(f.caminho)}">
+          ${retrato(f)}
+          <div class="cartao-ficha-texto"><h3>${esc(f.titulo)}</h3>
+            <div class="sub">${f.foto ? "" : "sem foto · "}${f.vazios ? `${f.vazios} campo(s) vazio(s)` : "completa"}</div></div>
+        </div>`).join("")}</div>`
+        : `<div class="vazio"><h3>Nenhuma ficha ainda</h3>Crie aqui, ou peça ao Claude no chat.</div>`);
+    $$("[data-ficha]", vista).forEach((el) => (el.onclick = () => abrirFicha(el.dataset.ficha, () => vistaFichas(tipo)())));
     $("#nova").onclick = async () => {
-      const n = await pedirTexto(tipo === "personagem" ? "Novo personagem" : "Novo lugar", "Nome");
+      const n = await pedirTexto("Nova ficha: " + cfg.titulo.toLowerCase().replace(/s$/, ""), "Nome");
       if (!n) return;
-      try { const { caminho } = await api("/api/novo", { tipo, nome: n }); ir("ficha", caminho); } catch (e) { toast(e.message, true); }
+      try { const { caminho } = await api("/api/novo", { tipo, nome: n }); await vistaFichas(tipo)(); abrirFicha(caminho, () => vistaFichas(tipo)()); }
+      catch (e) { toast(e.message, true); }
     };
   };
 }
 VISTAS.personagens = vistaFichas("personagem");
 VISTAS.lugares = vistaFichas("lugar");
-VISTAS.ficha = async (caminho) => {
-  const voltar = caminho.includes("/personagens/") ? "personagens" : "lugares";
-  vista.innerHTML = `<p><a href="#" id="voltar">← ${voltar === "personagens" ? "Personagens" : "Lugares"}</a></p><div id="ed"></div>`;
-  $("#voltar").onclick = (e) => { e.preventDefault(); ir(voltar); };
-  await montarEditor($("#ed"), caminho);
-};
+VISTAS.artefatos = vistaFichas("artefato");
+
+async function abrirFicha(caminho, aoFechar) {
+  const a = await atualizarArvore();
+  const todas = [...a.personagens, ...a.lugares, ...(a.artefatos || [])];
+  const f = todas.find((x) => x.caminho === caminho) || { caminho, titulo: caminho.split("/").pop().replace(".md", "") };
+  let texto = await lerArquivo(caminho);
+  const c = modal(`
+    <div class="ficha-modal">
+      <div class="ficha-foto" id="fm-foto">
+        ${retrato(f, "retrato grande")}
+        <button class="botao pequeno" id="fm-trocar">${f.foto ? "Trocar foto" : "Adicionar foto"}</button>
+        <input type="file" id="fm-arq" accept=".png,.jpg,.jpeg,.webp,.gif" hidden>
+        <div class="sub">Arraste uma imagem para cá</div>
+      </div>
+      <div class="ficha-texto">
+        <div class="ficha-acoes">
+          <button class="botao pequeno" id="fm-editar">Editar</button>
+          <button class="botao pequeno primario" id="fm-salvar" style="display:none">Salvar</button>
+          <button class="botao pequeno" id="fm-fechar">Fechar</button>
+        </div>
+        <div class="md" id="fm-ler"></div>
+        <textarea id="fm-ed" spellcheck="true" style="display:none"></textarea>
+      </div>
+    </div>`, "largo");
+  const ler = $("#fm-ler", c), ed = $("#fm-ed", c);
+  const render = () => (ler.innerHTML = markdown(texto, caminho));
+  render();
+  let sujo = false;
+  const salvar = async () => {
+    try { await gravarArquivo(caminho, ed.value); texto = ed.value; sujo = false; render(); toast("Ficha salva"); }
+    catch (e) { toast(e.message, true); }
+  };
+  const fechar = async () => { if (sujo) await salvar(); fecharModal(); aoFechar && aoFechar(); };
+  $("#fm-editar", c).onclick = () => {
+    const editando = ed.style.display === "none";
+    if (!editando && sujo) salvar();
+    ed.style.display = editando ? "block" : "none";
+    ler.style.display = editando ? "none" : "block";
+    $("#fm-salvar", c).style.display = editando ? "" : "none";
+    $("#fm-editar", c).textContent = editando ? "Ler" : "Editar";
+    if (editando) { ed.value = texto; ed.focus(); }
+  };
+  ed.oninput = () => { sujo = true; };
+  ed.onkeydown = (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); e.stopPropagation(); salvar(); } };
+  $("#fm-salvar", c).onclick = salvar;
+  $("#fm-fechar", c).onclick = fechar;
+  const enviarFoto = async (arq) => {
+    if (!arq) return;
+    try {
+      const { foto } = await api("/api/foto", { ficha: caminho, nome: arq.name, dados: await lerBase64(arq) });
+      $("#fm-foto .retrato", c).outerHTML = retrato({ ...f, foto }, "retrato grande");
+      $("#fm-trocar", c).textContent = "Trocar foto";
+      toast("Foto salva");
+    } catch (e) { toast(e.message, true); }
+  };
+  ligarSoltar($("#fm-foto", c), $("#fm-arq", c), (arqs) => enviarFoto(arqs[0]));
+}
 
 /* ------------------------------------------------------------ ARQUIVOS COM ABAS */
 function vistaAbas(titulo, sub, abas) {
@@ -518,6 +581,7 @@ VISTAS.estilo = vistaAbas("Estilo", "Como você escreve. Os capítulos oficiais 
    { nome: "Exemplos · capítulos oficiais", render: (el) => listaDeTextos(el, "exemplos", "exemplo", "estilo/exemplos") },
    { nome: "Guardrails", caminho: "estilo/guardrails.md" },
    { nome: "Parâmetros do script", caminho: "ferramentas/tiques.json", previa: false }]);
+VISTAS.ficha = async (caminho) => { await VISTAS[caminho.includes("/lugares/") ? "lugares" : caminho.includes("/artefatos/") ? "artefatos" : "personagens"](); abrirFicha(caminho); };
 VISTAS.arquivo = async (caminho) => {
   vista.innerHTML = `<div id="ed"></div>`;
   await montarEditor($("#ed"), caminho);
@@ -591,7 +655,7 @@ async function enviar(arquivo, pasta) {
   } catch (e) { toast(arquivo.name + ": " + e.message, true); }
 }
 function ligarSoltar(zona, input, aoReceber) {
-  zona.addEventListener("click", (e) => { if (e.target.tagName !== "A") input.click(); });
+  zona.addEventListener("click", (e) => { if (e.target.tagName !== "A" && (!zona.classList.contains("ficha-foto") || e.target.tagName === "BUTTON")) input.click(); });
   input.onchange = () => aoReceber([...input.files]);
   ["dragenter", "dragover"].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.add("sobre"); }));
   ["dragleave", "drop"].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.remove("sobre"); }));
@@ -785,6 +849,7 @@ VISTAS.conversa = async () => {
           <button class="botao pequeno" id="abrir-cap" title="Abrir na escrivaninha para editar">Editar</button>
           <div class="meta-palavras" id="meta"><b>0</b> / ${META_PALAVRAS.toLocaleString("pt-BR")} palavras<div class="barra"><div style="width:0"></div></div></div>
         </div>
+        <div class="contexto-cap" id="contexto"></div>
         <div class="folha-viva-corpo" id="folha-viva"><div class="vazio" style="margin:18px">
           <h3>A folha do capítulo aparece aqui</h3>Quando o Claude escrever, você vê o texto surgindo em tempo real.</div></div>
       </section>
@@ -829,8 +894,27 @@ VISTAS.conversa = async () => {
     caixa.innerHTML = `<div class="folha"><h2>${esc(titulo)}</h2><div class="previa-corpo md ${vivo ? "cursor-escrita" : ""}">${markdown(corpo)}</div></div>`;
     if (vivo && perto) caixa.scrollTop = caixa.scrollHeight;
   };
+  const rosto = (p, classe) => `<button class="rosto ${classe || ""}" data-ficha="${esc(p.caminho)}" title="${esc(p.nome)}">
+      ${p.foto ? `<img src="${urlRepo(p.foto)}" alt="">` : `<span style="background:${corDoNome(p.nome)}">${esc(p.nome[0])}</span>`}
+      <small>${esc(p.nome)}</small></button>`;
+  const carregarContexto = async (n) => {
+    const ctx = await api("/api/contexto?n=" + n).catch(() => null);
+    const caixa = $("#contexto");
+    if (!caixa || !ctx) return;
+    const quem = ctx.quem_escreve || [], pres = (ctx.presentes || []).filter((p) => !quem.some((q) => q.caminho === p.caminho));
+    caixa.innerHTML = `
+      <div class="ctx-linha"><span><b>Capítulo ${ctx.capitulo}</b>${ctx.titulo ? ` · ${esc(ctx.titulo)}` : ""}${ctx.quando ? `<br><span class="sub">${esc(ctx.quando)}</span>` : ""}</span>
+        ${ctx.status_escaleta ? `<span class="pilula ${ctx.status_escaleta === "aprovada" ? "ok" : ""}">escaleta ${esc(ctx.status_escaleta)}</span>` : `<span class="pilula">sem escaleta</span>`}</div>
+      ${quem.length || pres.length ? `<div class="ctx-rostos">${quem.map((p) => rosto(p, "escreve")).join("")}${quem.length && pres.length ? `<i class="sep"></i>` : ""}${pres.map((p) => rosto(p)).join("")}</div>` : ""}
+      ${(ctx.lugares || []).length ? `<div class="ctx-lugares">${ctx.lugares.map((l) => `<button class="chip" data-ficha="${esc(l.caminho)}">⌂ ${esc(l.nome)}</button>`).join("")}</div>` : ""}
+      ${ctx.anterior ? `<div class="sub">Anterior: <a href="#" data-cap="${esc(ctx.anterior.caminho)}">cap. ${ctx.anterior.numero}${ctx.anterior.titulo ? " · " + esc(ctx.anterior.titulo) : ""}</a></div>` : ""}`;
+    $$("[data-ficha]", caixa).forEach((b) => (b.onclick = () => abrirFicha(b.dataset.ficha)));
+    $$("[data-cap]", caixa).forEach((b) => (b.onclick = (e) => { e.preventDefault(); carregarCapitulo(b.dataset.cap); }));
+  };
+  const numeroDe = (c) => +((c.match(/cap-(\d+)/) || [])[1] || 0);
   const carregarCapitulo = async (c) => {
     if (!c) return;
+    carregarContexto(numeroDe(c));
     const t = await lerArquivo(c).catch(() => "");
     const { meta, corpo } = separarCapitulo(t);
     mostrarFolha(meta.titulo || c, corpo, false);
@@ -844,6 +928,7 @@ VISTAS.conversa = async () => {
   if (!hist.length) addMsg("claude", "Oi! Me conte o que quer escrever hoje. Pode dar contexto solto (o que acontece, o clima, quem escreve no diário) ou usar os atalhos abaixo. Cada capítulo sai com **no mínimo 4.600 palavras** e passa pela revisão de continuidade e de estilo.");
   hist.forEach((m) => addMsg(m.papel, m.texto, m.arquivos || []));
   if (a.capitulos.length) carregarCapitulo(a.capitulos[a.capitulos.length - 1].caminho);
+  else carregarContexto(1);
 
   const ouvir = () => {
     if (fonteEventos) fonteEventos.close();

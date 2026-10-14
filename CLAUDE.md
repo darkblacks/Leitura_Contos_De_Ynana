@@ -39,6 +39,8 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `biblia/historia.md` | Premissa, abertura (desfecho inicial), final, arcos, regras do mundo, linha do tempo |
 | `biblia/personagens/<nome>.md` | Uma ficha por personagem (modelo em `_modelo.md`) |
 | `biblia/lugares/<nome>.md` | Uma ficha por lugar (modelo em `_modelo.md`) |
+| `biblia/artefatos/<nome>.md` | Uma ficha por objeto importante: Synzoe, o diário… (modelo em `_modelo.md`) |
+| `biblia/*/<nome>.png\|jpg\|webp` | **Foto de referência** da ficha: imagem com o mesmo nome, ao lado do `.md`. É a aparência canônica |
 | `estilo/estilo.md` | Como eu escrevo (definido por mim) |
 | `estilo/exemplos/` | Exemplos de entradas do diário, colados pelo autor: o modelo de escrita |
 | `estilo/guardrails.md` | Padrões proibidos e como reescrever cada um |
@@ -99,7 +101,14 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 
 Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `claude -p` nesta pasta):
 - O autor é usuário final, não programador. Responda em português, curto e direto, sem falar de arquivos técnicos, terminal ou comandos, a não ser que ele pergunte.
-- Para escrever um capítulo, siga o fluxo do `/escrever` e grave em `capitulos/cap-NN.md`. A Escrivaninha mostra o texto aparecendo enquanto você escreve.
+- **A primeira tela da Escrivaninha é este chat**, com o capítulo atual aberto ao lado. O autor dá o contexto em poucas palavras; **você** reúne o resto sozinho e **você mesmo escreve** o capítulo em `capitulos/cap-NN.md` (ele vê o texto surgindo enquanto você grava). Nunca peça ao autor algo que já está nos arquivos.
+- Antes de escrever o capítulo N, reúna sem perguntar:
+  1. **O acontecimento**: os beats do capítulo N em `escaleta/escaleta.md`, mais o que o autor disse no chat (o pedido dele vale mais que a escaleta; se contradizer fato estabelecido, avise em uma frase).
+  2. **O contexto do capítulo anterior**: `capitulos/cap-(N-1).md` inteiro (onde parou, tom, última cena) e `continuidade/resumos.md` para os anteriores.
+  3. **Quem escreve**: a ficha dele (Persona, Voz, "Como escreve no diário") e a **foto** dele.
+  4. **Os nomes**: as fichas de todos os personagens, lugares e artefatos citados nos beats ou no pedido, com as **fotos de referência** (abra as imagens: aparência, roupas e cores vêm delas, não da imaginação).
+  5. **As referências**: `referencias/` e `estilo/exemplos/` quando o capítulo tocar no que está lá; `continuidade/registro.md` sempre.
+- Depois siga o fluxo do `/escrever` (script, revisores, continuidade).
 - **Tamanho: cada capítulo tem no mínimo 4.600 palavras.** Se ficar curto, aprofunde as cenas dos beats (sem enchimento, sem fato novo) até passar do mínimo.
 - Para checar tiques sem Python: `.\Escrivaninha.exe tiques <arquivo>` (mesma saída do `checa_tiques.py`).
 - Se faltar decisão do autor (escaleta não aprovada, `[DECIDIR]` que trava o capítulo), pergunte em uma frase e espere.

@@ -233,12 +233,16 @@ func extrairProjeto(pasta string) (int, error) {
 		if d.IsDir() {
 			return os.MkdirAll(alvo, 0o755)
 		}
-		if _, err := os.Stat(alvo); err == nil {
-			return nil
-		}
 		dados, err := projeto.ReadFile(p)
 		if err != nil {
 			return err
+		}
+		if atual, err := os.ReadFile(alvo); err == nil {
+			// Texto do autor nunca é sobrescrito. Arquivos do sistema (instruções do
+			// Claude, comandos, interface, modelos) são atualizados com a versão nova.
+			if !ehSistema(rel) || string(atual) == string(dados) {
+				return nil
+			}
 		}
 		if err := os.WriteFile(alvo, dados, 0o644); err != nil {
 			return err
@@ -247,6 +251,18 @@ func extrairProjeto(pasta string) (int, error) {
 		return nil
 	})
 	return novos, err
+}
+
+// ehSistema diz se o arquivo é do sistema (pode ser atualizado) e não da história.
+func ehSistema(rel string) bool {
+	switch {
+	case rel == "CLAUDE.md", rel == ".gitignore", strings.HasPrefix(rel, "abrir-escrivaninha"),
+		strings.HasPrefix(rel, ".claude/"), strings.HasPrefix(rel, "ui/"),
+		rel == "ferramentas/checa_tiques.py",
+		strings.HasSuffix(rel, "/_modelo.md"), strings.HasSuffix(rel, "LEIA-ME.md"):
+		return true
+	}
+	return false
 }
 
 func copiarArquivo(de, para string) error {

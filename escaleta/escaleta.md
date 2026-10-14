@@ -44,7 +44,7 @@
 - quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 1 ou 2
 - lugares: [Mansão Trademerx](../biblia/lugares/mansao-trademerx.md), escritório da Trademerx, cais de [Albahara](../biblia/lugares/albahara.md)
-- presentes: Ynana, [Sr. Merx](../biblia/personagens/sr-merx.md), [Sra. Merx](../biblia/personagens/sra-merx.md), [Rufus](../biblia/personagens/rufus.md), [Malcon](../biblia/personagens/malcon.md)
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Sr. Merx](../biblia/personagens/sr-merx.md), [Sra. Merx](../biblia/personagens/sra-merx.md), [Rufus](../biblia/personagens/rufus.md), [Malcon](../biblia/personagens/malcon.md)
 
 ### Cenas
 1. Ynana abre o diário: idade, tom leve, a "vida boa" antes do choque.
@@ -71,10 +71,10 @@
 
 - status: proposta
 - quando: 1812, Tempestade (junho), a viagem
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 2 ou 3, curtas, ao longo da viagem
 - lugares: [Zéfiro](../biblia/lugares/zefiro.md)
-- presentes: Ynana, Sr. Merx, Sra. Merx, Rufus, tripulação
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Sr. Merx](../biblia/personagens/sr-merx.md), [Sra. Merx](../biblia/personagens/sra-merx.md), [Rufus](../biblia/personagens/rufus.md), tripulação
 
 ### Cenas
 1. Embarque: amizade e segurança com Rufus, que tem um jeito protetor com ela.
@@ -99,10 +99,10 @@
 
 - status: proposta
 - quando: 1812, Ventania (novembro)
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 1
-- lugares: porto de Albahara, Mansão Trademerx
-- presentes: Ynana, Rufus, multidão, um oportunista
+- lugares: porto de [Albahara](../biblia/lugares/albahara.md), [Mansão Trademerx](../biblia/lugares/mansao-trademerx.md)
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Rufus](../biblia/personagens/rufus.md), multidão, um oportunista
 
 ### Cenas
 1. Ynana chega sem os pais. Morte sem corpo, choque.
@@ -125,10 +125,10 @@
 
 - status: proposta
 - quando: 1812, Nyx (dezembro)
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: várias, curtas, irregulares (a forma mostra a queda)
-- lugares: Mansão Trademerx
-- presentes: Ynana, Rufus
+- lugares: [Mansão Trademerx](../biblia/lugares/mansao-trademerx.md)
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Rufus](../biblia/personagens/rufus.md)
 
 ### Cenas
 1. Ynana acorda e percebe o vazio: os pais não voltam.
@@ -150,10 +150,10 @@
 
 - status: proposta
 - quando: 1813, Bruma (fevereiro)
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 2 (a visita de Malcon; dias depois, a recusa)
-- lugares: Mansão Trademerx
-- presentes: Ynana, Malcon, Rufus
+- lugares: [Mansão Trademerx](../biblia/lugares/mansao-trademerx.md)
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Malcon](../biblia/personagens/malcon.md), [Rufus](../biblia/personagens/rufus.md)
 
 ### Cenas
 1. Entrada "bonita" de Malcon: educado, de luto, postura de continuidade.
@@ -178,10 +178,10 @@
 
 - status: proposta
 - quando: 1813, Maré (março)
-- quem escreve: Ynana; [DECIDIR] e Rufus? (ver a ficha dele)
+- quem escreve: [Ynana](../biblia/personagens/ynana.md); [DECIDIR] e [Rufus](../biblia/personagens/rufus.md)? (ver a ficha dele)
 - entradas: 1 ou 2
-- lugares: Mansão Trademerx; ruas de Albahara
-- presentes: Ynana, Rufus
+- lugares: [Mansão Trademerx](../biblia/lugares/mansao-trademerx.md); ruas de [Albahara](../biblia/lugares/albahara.md)
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Rufus](../biblia/personagens/rufus.md)
 
 ### Cenas
 1. Rufus confronta: "se comporte / se recomponha".
@@ -201,10 +201,10 @@
 
 - status: proposta
 - quando: 1813, Coral (abril)
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 1 (escrita depois, de volta)
 - lugares: [Calumbres](../biblia/lugares/calumbres.md)
-- presentes: Ynana, um rapaz (sem nome? [DECIDIR])
+- presentes: [Ynana](../biblia/personagens/ynana.md), um rapaz (sem nome? [DECIDIR])
 
 ### Cenas
 1. Ynana bebe em Calumbres: submundo, risco real.
@@ -224,10 +224,10 @@
 
 - status: proposta
 - quando: 1813, Ferrugem (outubro); salto de seis meses depois do cap. 07
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 2 ou 3 (o treino em semanas)
 - lugares: escritório e galpões da Trademerx
-- presentes: Ynana, Rufus
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Rufus](../biblia/personagens/rufus.md)
 
 ### Cenas
 1. O acordo de Rufus: sem bebida antes de decisões.
@@ -244,10 +244,10 @@
 
 - status: proposta
 - quando: 1814, Maré (março)
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 2
-- lugares: galpões, cais e favelas de Albahara
-- presentes: Ynana, funcionários, informantes
+- lugares: galpões, cais e favelas de [Albahara](../biblia/lugares/albahara.md)
+- presentes: [Ynana](../biblia/personagens/ynana.md), funcionários, informantes
 
 ### Cenas
 1. Ynana aparece nos galpões em horários fixos.
@@ -263,10 +263,10 @@
 
 - status: proposta
 - quando: 1814, Tempestade (junho), dois anos depois do naufrágio
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 1 ou 2
 - lugares: rotas e armazéns da Trademerx
-- presentes: Ynana, Rufus
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Rufus](../biblia/personagens/rufus.md)
 
 ### Cenas
 1. Roubos e sabotagens atingem rotas e armazéns.
@@ -286,10 +286,10 @@
 
 - status: proposta
 - quando: 1814, Ventania (novembro), dois anos depois da volta ao porto
-- quem escreve: Ynana
+- quem escreve: [Ynana](../biblia/personagens/ynana.md)
 - entradas: 1
 - lugares: galpão, cais ou guilda ([DECIDIR] qual)
-- presentes: Ynana, Rufus, o oportunista, funcionários
+- presentes: [Ynana](../biblia/personagens/ynana.md), [Rufus](../biblia/personagens/rufus.md), o oportunista, funcionários
 
 ### Cenas
 1. Um oportunista tenta tirar proveito (credor, rival, fornecedor ou porto). Pode ser o mesmo do cap. 03.

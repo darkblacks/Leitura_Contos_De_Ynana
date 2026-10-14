@@ -55,6 +55,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `biblia/personagens/<nome>.md` | Uma ficha por personagem (modelo em `_modelo.md`) |
 | `biblia/familias/<nome>.md` | Uma ficha por família: casta, empresa, descrição e **Membros** (cada um com pai, mãe e cônjuge: daí sai a árvore genealógica) |
 | `biblia/empresas/<nome>.md` | Uma ficha por empresa: ramo, sede, família, casta, descrição e **Pessoas** (com o papel de cada uma); a logo é a imagem com o mesmo nome |
+| `biblia/parlamento.md` | **Parlamento de Sylvarene**: as cadeiras (Senhor Supremo, General de Sylvarene, as 7 da Távola Redonda, Barão e Ministro da Milícia de cada cidade), uma versão por ano (`## 1812`); cada versão vale até a próxima |
 | `biblia/relacoes.md` | Relações entre personagens (`A → B`: o que B é para A — pai, filha, namorado, amigo, rival…; período; frase; indicadores de 1 a 5) |
 | `biblia/geografia.md` | **Geografia de Morcal**: a árvore de lugares (mundo › continente ou arquipélago › país › cidade › bairro › local) |
 | `biblia/lugares/<nome>.md` | Uma ficha por lugar, de qualquer nível, com os traços próprios |
@@ -78,6 +79,7 @@ Seções, em linguagem natural (nada de atributos de RPG): Identidade · Apelido
 ## Dinâmicas de personagem
 
 - Família (`biblia/familias/`), casta (ficha › Sociedade; se faltar, a da família), empresa (`biblia/empresas/`) e profissão (ficha › Sociedade › Ocupação) definem as dinâmicas: quem deve a quem, quem compete com quem, quem trata quem como igual. Use ao escrever cenas com mais de uma pessoa. Nem todo personagem tem tudo preenchido: o que faltar, não invente.
+- **Cargos públicos**: quem ocupa uma cadeira na data do capítulo é quem está na versão de `biblia/parlamento.md` com o ano mais alto que não passa do ano do capítulo. Cadeira `(vago)` está vaga; não invente ocupante.
 - Parentesco da árvore (pai, mãe, cônjuge) é fato; o sentimento entre as pessoas fica em `biblia/relacoes.md`.
 
 ## Imagens: descrever pelo que se vê
@@ -135,7 +137,7 @@ Seções, em linguagem natural (nada de atributos de RPG): Identidade · Apelido
 - `ui/servidor.py` (Python puro, só em 127.0.0.1) serve uma interface que lê e grava estes mesmos arquivos. `Escrivaninha.exe` é a mesma coisa em Go. `Escrivaninha.exe tiques <arquivo>` dá a mesma saída do `checa_tiques.py`.
 - Ao mudar `ui/static/`, `ferramentas/checa_tiques.py` ou `ui/servidor.py`, mantenha `ui/escrivaninha-go/` igual e gere o exe de novo.
 - O que o autor muda pela interface é texto dele: vale a regra 1.
-- Telas: Escrever com o Claude (chat + folha), Capítulos, Personagens (fichas e relações), Lugares, Artefatos, Acontecimentos (por ciclo), Calendário (meses e eventos), Estilo (escritores), Comandos.
+- Telas: Escrever com o Claude (chat + folha), Capítulos, Personagens (fichas, relações, famílias, castas, empresas, parlamento), Lugares, Artefatos, Acontecimentos (por ciclo), Calendário (meses e eventos), Estilo (escritores), Comandos.
 
 ## Atualizações do app (Escrivaninha.exe)
 

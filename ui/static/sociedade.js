@@ -1,6 +1,6 @@
 /* Escrivaninha · Contos de Ynana — dinâmicas de personagem, dentro de Personagens:
-   famílias (com árvore genealógica), castas (pirâmide), empresas (logo e pessoas) e os
-   filtros das fichas. Depende de app.js, mundo.js e escrita.js. */
+   famílias (com árvore genealógica), castas (pirâmide), empresas (logo e pessoas), o Parlamento
+   (cadeiras por ano) e os filtros das fichas. Depende de app.js, mundo.js e escrita.js. */
 
 const PASTA_FAMILIAS = "biblia/familias";
 const PASTA_EMPRESAS = "biblia/empresas";
@@ -78,6 +78,7 @@ async function dadosSociais() {
   const familias = [], empresas = [];
   for (const f of a.familias || []) { const t = await lerSeExiste(f.caminho); if (t) familias.push({ ...lerFamilia(t, f.caminho), foto: f.foto }); }
   for (const e of a.empresas || []) { const t = await lerSeExiste(e.caminho); if (t) empresas.push(lerEmpresa(t, e.caminho, e.foto)); }
+  const cargos = cargosPorPessoa(lerParlamento((await lerSeExiste(ARQ_PARLAMENTO)) || ""));
   const porPessoa = {};
   for (const p of a.personagens) {
     const t = (await lerSeExiste(p.caminho)) || "";
@@ -85,7 +86,7 @@ async function dadosSociais() {
     const v = (k) => semTags(vazio(soc.get(k)) ? "" : soc.get(k));
     const fams = familias.filter((f) => f.membros.some((m) => m.caminho === p.caminho));
     const emps = empresas.filter((e) => e.pessoas.some((x) => x.caminho === p.caminho));
-    porPessoa[p.caminho] = { p, familias: fams, empresas: emps, casta: v("Casta") || (fams.find((f) => f.casta) || {}).casta || "", bolha: v("Bolha principal"), profissao: v("Ocupação") };
+    porPessoa[p.caminho] = { p, familias: fams, empresas: emps, casta: v("Casta") || (fams.find((f) => f.casta) || {}).casta || "", bolha: v("Bolha principal"), profissao: v("Ocupação"), cargos: cargos[p.caminho] || [] };
   }
   return { familias, empresas, porPessoa, personagens: a.personagens };
 }
@@ -101,6 +102,7 @@ VISTAS.personagens = async () => {
     ["casta", "Casta", valores((x) => [x.casta])],
     ["empresa", "Empresa", valores((x) => x.empresas.map((e) => e.titulo))],
     ["profissao", "Profissão", valores((x) => [x.profissao])],
+    ["cargo", "Cargo público", valores((x) => x.cargos.map((c) => c.rotulo))],
   ];
   $(".abas", vista).insertAdjacentHTML("afterend", `<div class="filtros-pers">${filtros.map(([k, nome, vals]) => `
     <label><span>${nome}</span><select data-filtro="${k}"><option value="">todas</option>${vals.map((v) => `<option>${esc(v)}</option>`).join("")}</select></label>`).join("")}
@@ -110,7 +112,8 @@ VISTAS.personagens = async () => {
     if (!x) return;
     el.dataset.familia = x.familias.map((f) => f.titulo).join("|");
     el.dataset.casta = x.casta; el.dataset.empresa = x.empresas.map((e) => e.titulo).join("|"); el.dataset.profissao = x.profissao;
-    const tags = [...x.familias.map((f) => f.titulo), x.casta, ...x.empresas.map((e) => e.titulo), x.profissao].filter(Boolean);
+    el.dataset.cargo = x.cargos.map((c) => c.rotulo).join("|");
+    const tags = [...x.familias.map((f) => f.titulo), x.casta, ...x.empresas.map((e) => e.titulo), x.profissao, ...x.cargos.filter((c) => !c.ate).map((c) => c.rotulo)].filter(Boolean);
     if (tags.length) $(".cartao-ficha-texto", el).insertAdjacentHTML("beforeend", `<div class="tags-pers">${tags.map((t) => `<span class="etiqueta">${esc(t)}</span>`).join("")}</div>`);
   });
   const aplicar = () => {
@@ -370,8 +373,177 @@ abrirFicha = async function (caminho, aoFechar) {
     ...x.familias.map((f) => [f.titulo, "familias", f.caminho]),
     ...(x.casta ? [[x.casta, "castas", ""]] : []),
     ...x.empresas.map((e) => { const papel = (e.pessoas.find((p) => p.caminho === caminho) || {}).papel; return [e.titulo + (papel ? " · " + papel : ""), "empresas", ""]; }),
+    ...x.cargos.map((c) => [textoCargo(c), "parlamento", c.de]),
   ];
   if (!tags.length) return;
   lado.insertAdjacentHTML("afterend", `<div class="tags-pers centro">${tags.map(([t, rota, alvo]) => `<a href="#" class="etiqueta" data-rota="${rota}" data-alvo="${esc(alvo)}">${esc(t)}</a>`).join("")}</div>`);
   $$(".tags-pers [data-rota]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); fecharModal(); ir(a.dataset.rota, a.dataset.alvo || undefined); }));
+};
+
+/* ------------------------------------------------------------ Parlamento de Sylvarene: cadeiras, com uma versão por ano */
+const ARQ_PARLAMENTO = "biblia/parlamento.md";
+const CIDADES_SYLVARENE = ["Grimward", "Vyrwyll", "Kalun", "Faunbridge", "Albahara"];
+const vagoOuNome = (oc) => (/^\(?\s*vag[oa]\s*\)?$/i.test(oc.trim()) || !oc.trim() ? { nome: "", caminho: "" } : linkOuNome(oc, ARQ_PARLAMENTO));
+const anoNum = (a) => parseInt(String(a).match(/\d+/) || [0], 10);
+const tipoGrupo = (g) => (/principa/.test(semAcento(g.nome)) ? "principal" : /tavola|tabula|tavula/.test(semAcento(g.nome)) ? "tavola" : "cidade");
+
+function lerParlamento(t) {
+  const p = { cabeca: [], versoes: [] };
+  let v = null, g = null, m;
+  for (const l of String(t || "").split("\n")) {
+    if ((m = l.match(/^## (.+)$/))) { v = { ano: m[1].trim(), nota: [], grupos: [] }; p.versoes.push(v); g = null; continue; }
+    if (!v) { p.cabeca.push(l); continue; }
+    if ((m = l.match(/^### (.+)$/))) { g = { ...linkOuNome(m[1], ARQ_PARLAMENTO), cadeiras: [] }; v.grupos.push(g); continue; }
+    if (!g && (m = l.match(/^>\s?(.*)$/))) { if (m[1].trim()) v.nota.push(m[1].trim()); continue; }
+    if (g && (m = l.match(/^[-*]\s+([^:]+):\s*(.*)$/))) g.cadeiras.push({ cargo: m[1].trim(), ...vagoOuNome(m[2]) });
+  }
+  p.versoes.sort((a, b) => anoNum(a.ano) - anoNum(b.ano));
+  if (!p.cabeca.some((l) => l.trim())) p.cabeca = ["# Parlamento de Sylvarene", "", "> Cada `## ano` é uma versão das cadeiras: vale desse ano até a próxima versão."];
+  return p;
+}
+function escreverParlamento(p) {
+  const ref = (x) => (x.caminho ? mdLink(x.nome, x.caminho, ARQ_PARLAMENTO) : x.nome || "(vago)");
+  const partes = [p.cabeca.join("\n").trim()];
+  for (const v of [...p.versoes].sort((a, b) => anoNum(a.ano) - anoNum(b.ano))) {
+    partes.push(`## ${v.ano}` + (v.nota.length ? "\n\n" + v.nota.map((n) => "> " + n).join("\n") : ""));
+    for (const g of v.grupos) partes.push(`### ${ref(g)}\n` + g.cadeiras.map((c) => `- ${c.cargo}: ${ref(c)}`).join("\n"));
+  }
+  return partes.join("\n\n") + "\n";
+}
+function versaoPadrao(ano, lugares) {
+  const lug = (n) => (lugares || []).find((l) => semAcento(l.titulo) === semAcento(n));
+  const c = (cargo) => ({ cargo, nome: "", caminho: "" });
+  return { ano, nota: [], grupos: [
+    { nome: "Cargos principais", caminho: "", cadeiras: [c("Senhor Supremo"), c("General de Sylvarene")] },
+    { nome: "Távola Redonda", caminho: "", cadeiras: [1, 2, 3, 4, 5, 6, 7].map((i) => c(`Cadeira ${i}`)) },
+    ...CIDADES_SYLVARENE.map((n) => ({ nome: n, caminho: (lug(n) || {}).caminho || "", cadeiras: [c("Barão"), c("Ministro da Milícia")] })),
+  ] };
+}
+/* Nome do cargo como se fala: "Barão de Kalun", "Cadeira 3 da Távola Redonda", "Senhor Supremo". */
+function rotuloCargo(g, c) {
+  const t = tipoGrupo(g);
+  return t === "principal" ? c.cargo : t === "tavola" ? `${c.cargo} da ${g.nome}` : `${c.cargo} de ${g.nome}`;
+}
+/* Por personagem: cada cargo com o ano em que entrou e o ano da versão em que saiu. */
+function cargosPorPessoa(p) {
+  const res = {}, k = (x) => x.caminho || x.nome;
+  p.versoes.forEach((v, i) => {
+    const agora = new Set();
+    for (const g of v.grupos) for (const c of g.cadeiras) {
+      if (!c.nome) continue;
+      const rot = rotuloCargo(g, c), lista = (res[k(c)] = res[k(c)] || []);
+      agora.add(k(c) + "|" + rot);
+      const aberto = lista.find((x) => x.rotulo === rot && x.ate === null);
+      if (!aberto) lista.push({ rotulo: rot, de: v.ano, ate: null });
+    }
+    for (const [quem, lista] of Object.entries(res)) for (const x of lista) if (x.ate === null && !agora.has(quem + "|" + x.rotulo) && anoNum(x.de) < anoNum(v.ano)) x.ate = v.ano;
+  });
+  return res;
+}
+const textoCargo = (x) => `${x.rotulo} · ${x.ate ? `${x.de}–${x.ate}` : `desde ${x.de}`}`;
+
+VISTAS.parlamento = async (anoPedido) => {
+  marcarNavPersonagens();
+  const a = await atualizarArvore();
+  const texto = await lerSeExiste(ARQ_PARLAMENTO);
+  const p = lerParlamento(texto);
+  const gravar = async (ano, msg) => { await gravarArquivo(ARQ_PARLAMENTO, escreverParlamento(p)); if (msg) toast(msg); VISTAS.parlamento(ano); };
+  if (!p.versoes.length) {
+    vista.innerHTML = cabecalho("Personagens", "Parlamento de Sylvarene.") + abasPersonagens("parlamento") +
+      `<div class="vazio"><h3>Nenhuma versão das cadeiras ainda</h3><button class="botao primario" id="parl-criar">Criar as cadeiras de 1812</button></div>`;
+    $("#parl-criar").onclick = async () => { p.versoes.push(versaoPadrao("1812", a.lugares)); await gravar("1812", "Cadeiras criadas"); };
+    return;
+  }
+  const v = p.versoes.find((x) => x.ano === anoPedido) || p.versoes[p.versoes.length - 1];
+  const iv = p.versoes.indexOf(v), anterior = p.versoes[iv - 1], proxima = p.versoes[iv + 1];
+  const pessoa = (c) => c.caminho && a.personagens.find((x) => x.caminho === c.caminho);
+  const mudou = (g, c, j) => {
+    if (!anterior) return false;
+    const ga = anterior.grupos.find((x) => semAcento(x.nome) === semAcento(g.nome));
+    const ca = ga && ga.cadeiras[j];
+    return !ca || (ca.caminho || ca.nome) !== (c.caminho || c.nome);
+  };
+  const assento = (g, c, gi, j, classe = "") => {
+    const ps = pessoa(c);
+    const rosto = !c.nome ? `<span class="assento-vago">vago</span>` : ps && ps.foto ? `<img src="${urlRepo(ps.foto)}" alt="">` : `<span class="assento-ini" style="background:${corDoNome(c.nome)}">${esc(c.nome[0])}</span>`;
+    return `<button class="assento ${classe} ${c.nome ? "" : "vazio-assento"} ${mudou(g, c, j) ? "mudou" : ""}" data-g="${gi}" data-c="${j}" title="${esc(rotuloCargo(g, c))}">
+      <span class="assento-rosto">${rosto}</span><span class="assento-cargo">${esc(c.cargo)}</span><span class="assento-nome">${esc(c.nome || "—")}</span>${mudou(g, c, j) ? `<span class="assento-novo">mudou</span>` : ""}</button>`;
+  };
+  const grupos = v.grupos.map((g, gi) => ({ g, gi, tipo: tipoGrupo(g) }));
+  const principais = grupos.filter((x) => x.tipo === "principal"), tavolas = grupos.filter((x) => x.tipo === "tavola"), cidades = grupos.filter((x) => x.tipo === "cidade");
+  const tavolaHtml = ({ g, gi }) => {
+    const n = g.cadeiras.length || 1;
+    return `<div class="tavola-bloco"><div class="tavola">
+      <div class="tavola-mesa" ${g.caminho ? `data-lugar="${esc(g.caminho)}"` : ""}><b>${esc(g.nome)}</b><span>${n} cadeiras</span></div>
+      ${g.cadeiras.map((c, j) => { const ang = (-90 + (360 / n) * j) * Math.PI / 180; return `<div class="tavola-lugar" style="left:${50 + 41 * Math.cos(ang)}%;top:${50 + 41 * Math.sin(ang)}%">${assento(g, c, gi, j, "pequeno")}</div>`; }).join("")}
+    </div></div>`;
+  };
+  vista.innerHTML = cabecalho("Personagens", "Parlamento de Sylvarene: quem ocupa cada cadeira. Quando algo muda na história, crie uma versão nova para aquele ano.",
+    `<button class="botao primario" id="parl-nova">+ Nova versão</button>`) + abasPersonagens("parlamento") + `
+    <div class="parl-versoes">
+      <span class="sub">Versões:</span>
+      ${p.versoes.map((x) => `<button class="chip ${x === v ? "sel" : ""}" data-ano="${esc(x.ano)}">${esc(x.ano)}</button>`).join("")}
+      <span class="sub parl-vale">vale ${proxima ? `de ${esc(v.ano)} até ${esc(proxima.ano)}` : `desde ${esc(v.ano)}`}</span>
+    </div>
+    <div class="parl-nota">${v.nota.length ? `<b>O que mudou:</b> ${esc(v.nota.join(" "))}` : `<span class="sub">${anterior ? "Sem nota do que mudou." : "Primeira versão das cadeiras."}</span>`}
+      <a href="#" id="parl-nota-ed">editar</a>${p.versoes.length > 1 ? ` · <a href="#" id="parl-apagar">apagar esta versão</a>` : ""}</div>
+    <div class="parlamento">
+      ${principais.map(({ g, gi }) => `<div class="parl-principais">${g.cadeiras.map((c, j) => assento(g, c, gi, j, j === 0 ? "trono" : "grande")).join("")}</div>`).join("")}
+      ${tavolas.map(tavolaHtml).join("")}
+      ${cidades.length ? `<div class="parl-cidades">${cidades.map(({ g, gi }) => `
+        <div class="cartao parl-cidade"><h3 ${g.caminho ? `data-lugar="${esc(g.caminho)}"` : ""}>${esc(g.nome)}</h3>
+          <div class="parl-cidade-assentos">${g.cadeiras.map((c, j) => assento(g, c, gi, j)).join("")}</div></div>`).join("")}</div>` : ""}
+    </div>`;
+  $$("[data-ano]").forEach((b) => (b.onclick = () => ir("parlamento", b.dataset.ano)));
+  $$("[data-lugar]").forEach((el) => (el.onclick = () => abrirFicha(el.dataset.lugar)));
+  $$(".assento").forEach((b) => (b.onclick = () => editarAssento(v.grupos[+b.dataset.g], +b.dataset.c)));
+  $("#parl-nota-ed").onclick = async (e) => {
+    e.preventDefault();
+    const n = await pedirTexto(`O que mudou em ${v.ano}`, "Uma frase (pode ficar em branco)", v.nota.join(" "));
+    if (n === null) return;
+    v.nota = n ? [n] : []; await gravar(v.ano, "Nota salva");
+  };
+  if ($("#parl-apagar")) $("#parl-apagar").onclick = async (e) => {
+    e.preventDefault();
+    if (!confirm(`Apagar a versão de ${v.ano}? As outras versões ficam como estão.`)) return;
+    p.versoes.splice(iv, 1); await gravar(undefined, "Versão apagada");
+  };
+  $("#parl-nova").onclick = () => {
+    const c = modal(`<h3>Nova versão das cadeiras</h3>
+      <div class="sub" style="margin-bottom:10px">Começa como uma cópia da versão de ${esc(v.ano)}. Depois é só trocar quem mudou.</div>
+      <div class="campo"><label>Ano</label><input id="pn-ano" inputmode="numeric" placeholder="ex.: ${anoNum(p.versoes[p.versoes.length - 1].ano) + 1}"></div>
+      <div class="campo"><label>O que mudou (opcional)</label><input id="pn-nota" placeholder="ex.: o Barão de Kalun morreu e o filho assumiu"></div>
+      <div class="modal-acoes"><button class="botao" id="pn-no">Cancelar</button><button class="botao primario" id="pn-ok">Criar</button></div>`);
+    $("#pn-ano", c).focus();
+    $("#pn-no", c).onclick = fecharModal;
+    $("#pn-ok", c).onclick = async () => {
+      const ano = $("#pn-ano", c).value.trim();
+      if (!/^\d{3,4}$/.test(ano)) return toast("Escreva o ano com números (ex.: 1815)", true);
+      if (p.versoes.some((x) => anoNum(x.ano) === +ano)) return toast(`Já existe a versão de ${ano}`, true);
+      const nova = JSON.parse(JSON.stringify(v));
+      nova.ano = ano; nova.nota = $("#pn-nota", c).value.trim() ? [$("#pn-nota", c).value.trim()] : [];
+      p.versoes.push(nova); fecharModal(); await gravar(ano, `Versão de ${ano} criada`);
+    };
+  };
+  function editarAssento(g, j) {
+    const cad = g.cadeiras[j];
+    const c = modal(`<h3>${esc(rotuloCargo(g, cad))} <span class="sub">· ${esc(v.ano)}</span></h3>
+      <div class="campo"><label>Nome do cargo</label><input id="as-cargo" value="${esc(cad.cargo)}"></div>
+      <div class="campo"><label>Quem ocupa</label><input id="as-quem" list="lista-pers-parl" value="${esc(cad.nome)}" placeholder="personagem, um nome, ou vazio para vago">
+        <datalist id="lista-pers-parl">${a.personagens.map((x) => `<option value="${esc(x.titulo)}">`).join("")}</datalist></div>
+      <div class="sub">Muda só a versão de ${esc(v.ano)}. ${proxima ? `A de ${esc(proxima.ano)} fica como está.` : ""}</div>
+      <div class="modal-acoes">${cad.caminho ? `<button class="botao" id="as-ficha">Abrir ficha</button>` : ""}<button class="botao" id="as-vago">Deixar vago</button><button class="botao" id="as-no">Cancelar</button><button class="botao primario" id="as-ok">Salvar</button></div>`);
+    $("#as-quem", c).focus();
+    $("#as-no", c).onclick = fecharModal;
+    if ($("#as-ficha", c)) $("#as-ficha", c).onclick = () => abrirFicha(cad.caminho);
+    const salvar = async (quem) => {
+      const ps = quem && (a.personagens.find((x) => x.titulo === quem) || acharFichaPorNome(quem, a.personagens));
+      cad.cargo = $("#as-cargo", c).value.trim() || cad.cargo;
+      Object.assign(cad, ps ? { nome: ps.titulo, caminho: ps.caminho } : { nome: quem, caminho: "" });
+      fecharModal(); await gravar(v.ano, "Cadeira salva");
+    };
+    $("#as-vago", c).onclick = () => salvar("");
+    $("#as-ok", c).onclick = () => salvar($("#as-quem", c).value.trim());
+    $("#as-quem", c).onkeydown = (e) => { if (e.key === "Enter") salvar(e.target.value.trim()); };
+  }
 };

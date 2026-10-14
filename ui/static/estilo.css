@@ -767,3 +767,50 @@ a { color: var(--acento); }
 .empresa-campos input, .empresa-campos select, .empresa-campos textarea { border: 1px solid var(--linha-forte); background: var(--papel); border-radius: 7px; padding: 6px 9px; width: 100%; }
 .linha-pessoa { grid-template-columns: 1fr 1fr auto !important; }
 @media (max-width: 900px) { .castas-tela, .familia-grade, .empresa-modal { grid-template-columns: 1fr; } }
+
+/* Parlamento de Sylvarene */
+.parl-versoes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 8px; }
+.parl-vale { margin-left: 6px; }
+.parl-nota { font-size: 13px; color: var(--tinta-2); margin-bottom: 18px; }
+.parl-nota a { color: var(--acento); margin-left: 4px; font-size: 12px; }
+.parlamento { display: flex; flex-direction: column; align-items: center; gap: 26px; }
+.parl-principais { display: flex; justify-content: center; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+.assento { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 112px; padding: 10px 6px 8px; border: 1px solid var(--linha-forte); border-radius: var(--raio); background: var(--papel); color: var(--tinta); cursor: pointer; font: inherit; box-shadow: var(--sombra); }
+.assento:hover { border-color: var(--acento); }
+.assento-rosto { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.assento-rosto img { width: 100%; height: 100%; object-fit: cover; }
+.assento-ini { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--serif-titulo); font-size: 22px; }
+.assento-vago { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: 1.5px dashed var(--linha-forte); border-radius: 50%; font-size: 10px; color: var(--tinta-3); }
+.assento-cargo { font-size: 11px; color: var(--tinta-3); text-transform: uppercase; letter-spacing: .04em; text-align: center; line-height: 1.2; }
+.assento-nome { font-family: var(--serif-titulo); font-size: 15px; font-weight: 600; text-align: center; line-height: 1.15; }
+.assento.vazio-assento .assento-nome { color: var(--tinta-3); font-weight: 400; }
+.assento.mudou { border-color: var(--ouro); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ouro) 30%, transparent); }
+.assento-novo { position: absolute; top: -8px; right: -6px; background: var(--ouro); color: var(--papel); font-size: 10px; padding: 1px 6px; border-radius: 10px; }
+.assento.trono { width: 168px; padding: 16px 8px 12px; border: 2px solid var(--ouro); background: linear-gradient(var(--papel), var(--papel-2)); }
+.assento.trono .assento-rosto { width: 84px; height: 84px; }
+.assento.trono .assento-nome { font-size: 19px; }
+.assento.trono .assento-cargo { color: var(--ouro); font-weight: 600; }
+.assento.grande { width: 136px; }
+.assento.grande .assento-rosto { width: 64px; height: 64px; }
+.assento.pequeno { width: 96px; padding: 7px 4px 6px; }
+.assento.pequeno .assento-rosto { width: 42px; height: 42px; }
+.assento.pequeno .assento-nome { font-size: 13px; }
+.tavola-bloco { width: 100%; display: flex; justify-content: center; }
+.tavola { position: relative; width: min(520px, 100%); aspect-ratio: 1; }
+.tavola-mesa { position: absolute; left: 50%; top: 50%; width: 46%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a5a3a, #5a3622); border: 6px solid #3e2416; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #f3e6cf; text-align: center; box-shadow: inset 0 0 30px #0006, var(--sombra); }
+.tavola-mesa b { font-family: var(--serif-titulo); font-size: 20px; }
+.tavola-mesa span { font-size: 11px; opacity: .8; }
+.tavola-mesa[data-lugar] { cursor: pointer; }
+.tavola-lugar { position: absolute; transform: translate(-50%, -50%); }
+.parl-cidades { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; width: 100%; }
+.parl-cidade h3 { margin: 0 0 10px; text-align: center; }
+.parl-cidade h3[data-lugar] { cursor: pointer; }
+.parl-cidade h3[data-lugar]:hover { color: var(--acento); }
+.parl-cidade-assentos { display: flex; justify-content: center; gap: 10px; }
+@media (max-width: 640px) {
+  .tavola { width: 100%; }
+  .assento.pequeno { width: 70px; }
+  .assento.pequeno .assento-rosto { width: 32px; height: 32px; }
+  .assento.pequeno .assento-cargo { font-size: 9px; }
+  .assento.pequeno .assento-nome { font-size: 11px; }
+}

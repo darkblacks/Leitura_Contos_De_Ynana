@@ -1,10 +1,9 @@
 {
-  "versao": "2.4.0",
-  "sha256": "2c18269ab08815e3be71f1f427a5237f0cb0a9806e11636a906d082f85c27dc6",
+  "versao": "2.5.0",
+  "sha256": "c529ea371ba3a717727f9040eeeed409a52163d0c86a6874de2ec66855830f61",
   "notas": [
-    "Personagens: filtros por família, casta, empresa e profissão",
-    "Famílias com árvore genealógica (pai, mãe, cônjuge)",
-    "Castas na pirâmide, com os rostos em cada camada",
-    "Empresas com logo, descrição e pessoas"
+    "Personagens › Parlamento de Sylvarene: Senhor Supremo, General, Távola Redonda (7 cadeiras), Barão e Ministro da Milícia de cada cidade",
+    "Uma versão das cadeiras por ano: copie o ano anterior e troque só quem mudou",
+    "Cargo público nos filtros e na ficha do personagem"
   ]
 }

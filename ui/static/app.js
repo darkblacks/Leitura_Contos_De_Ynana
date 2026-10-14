@@ -815,9 +815,10 @@ window.addEventListener("hashchange", rotaDoEndereco);
   verificarAtualizacao();
 })();
 
-/* ------------------------------------------------------------ ESCREVER COM O CLAUDE
+/* ------------------------------------------------------------ ESCREVER COM O CLAUDE (home)
    O exe roda o Claude Code do computador do autor (assinatura dele, sem chave de API).
-   À esquerda a conversa; à direita a folha do capítulo crescendo enquanto ele escreve. */
+   Esquerda: conversa, com o pedido de capítulo guiado e as etapas do trabalho.
+   Direita: o capítulo atual, em abas (Folha, Contexto, Revisão). */
 const META_PALAVRAS = 4600;
 var fonteEventos = null;
 
@@ -844,13 +845,32 @@ function semCabecalho(t) {
   if (t.startsWith("---")) { const f = t.indexOf("\n---", 3); if (f > 0) return t.slice(t.indexOf("\n", f + 1) + 1); }
   return t;
 }
+const ETAPAS = [
+  { id: "contexto", nome: "Reunindo contexto" },
+  { id: "escrita", nome: "Escrevendo" },
+  { id: "tiques", nome: "Checando tiques" },
+  { id: "revisao", nome: "Revisores" },
+  { id: "continuidade", nome: "Continuidade" },
+];
+function etapaDaFerramenta(nome, arquivo) {
+  arquivo = arquivo || "";
+  if (["Write", "Edit", "MultiEdit"].includes(nome)) {
+    if (arquivo.includes("capitulos/")) return "escrita";
+    if (arquivo.includes("continuidade/") || arquivo.includes("biblia/")) return "continuidade";
+    return null;
+  }
+  if (nome === "Bash") return "tiques";
+  if (nome === "Task" || nome === "Agent") return "revisao";
+  if (["Read", "Glob", "Grep", "TodoWrite"].includes(nome)) return "contexto";
+  return null;
+}
 
 VISTAS.conversa = async () => {
   if (fonteEventos) { fonteEventos.close(); fonteEventos = null; }
   const st = await api("/api/claude/status").catch(() => ({ instalado: false }));
   if (!st.instalado) {
     vista.innerHTML = `<div class="cartao instalar"><h3>Falta só o Claude Code</h3>
-      <p>Para conversar com o Claude aqui dentro, o computador precisa do <b>Claude Code</b> instalado uma vez. Ele usa a sua assinatura do Claude, sem chave e sem custo extra.</p>
+      <p>Para escrever com o Claude aqui dentro, o computador precisa do <b>Claude Code</b> instalado uma vez. Ele usa a sua assinatura do Claude, sem chave e sem custo extra.</p>
       <ol>
         <li>Abra o <b>PowerShell</b> (procure "PowerShell" no menu Iniciar) e cole:
           <code class="bloco">irm https://claude.ai/install.ps1 | iex</code></li>
@@ -862,108 +882,308 @@ VISTAS.conversa = async () => {
     $("#verificar").onclick = () => VISTAS.conversa();
     return;
   }
-  const a = await atualizarArvore();
+  let arv = await atualizarArvore();
   vista.innerHTML = `
-    <div class="conversa">
+    <div class="mesa">
       <section class="chat">
-        <div class="chat-topo"><h3>Conversa</h3><span class="pilula" id="pilula">pronto</span>
-          <button class="botao pequeno" id="nova-conversa" style="margin-left:auto" title="Guarda esta conversa e começa outra">Nova conversa</button></div>
+        <div class="chat-topo">
+          <h3>Escrever</h3><span class="pilula" id="pilula">pronto</span>
+          <button class="botao pequeno" id="nova-conversa" style="margin-left:auto" title="Guarda esta conversa e começa outra">Nova conversa</button>
+        </div>
+        <div class="etapas" id="etapas" hidden></div>
         <div class="chat-msgs" id="msgs"></div>
+        <div class="proximo" id="proximo"></div>
         <div class="atalhos" id="atalhos"></div>
         <div class="compositor">
-          <textarea id="entrada" rows="2" placeholder="Dê o contexto, peça um capítulo, tire dúvidas…  (Enter envia, Shift+Enter quebra linha)"></textarea>
+          <button class="botao" id="abrir-pedido" title="Montar o pedido de um capítulo">✎ Capítulo</button>
+          <textarea id="entrada" rows="1" placeholder="Converse ou peça ajustes…"></textarea>
           <button class="botao primario" id="enviar">Enviar</button>
           <button class="botao perigo" id="parar" style="display:none">Parar</button>
         </div>
       </section>
-      <section class="folha-viva">
-        <div class="folha-viva-topo">
-          <select id="sel-cap"><option value="">Escolha um capítulo…</option>${a.capitulos.map((c) =>
-            `<option value="${esc(c.caminho)}">${esc(String(c.meta.capitulo || c.nome).padStart(2, "0"))} · ${esc(c.meta.titulo || "sem título")}</option>`).join("")}</select>
-          <button class="botao pequeno" id="abrir-cap" title="Abrir na escrivaninha para editar">Editar</button>
-          <div class="meta-palavras" id="meta"><b>0</b> / ${META_PALAVRAS.toLocaleString("pt-BR")} palavras<div class="barra"><div style="width:0"></div></div></div>
+      <section class="painel-cap">
+        <div class="painel-cap-topo">
+          <select id="sel-cap"></select>
+          <div class="meta-palavras" id="meta"></div>
         </div>
-        <div class="contexto-cap" id="contexto"></div>
-        <div class="folha-viva-corpo" id="folha-viva"><div class="vazio" style="margin:18px">
-          <h3>A folha do capítulo aparece aqui</h3>Quando o Claude escrever, você vê o texto surgindo em tempo real.</div></div>
+        <div class="abas abas-cap">
+          <div class="aba ativa" data-aba="folha">Folha</div>
+          <div class="aba" data-aba="contexto">Contexto</div>
+          <div class="aba" data-aba="revisao">Revisão</div>
+          <button class="botao pequeno" id="abrir-cap" title="Abrir na escrivaninha para editar à mão">Editar à mão</button>
+        </div>
+        <div class="painel-cap-corpo" id="aba-folha"></div>
+        <div class="painel-cap-corpo" id="aba-contexto" hidden></div>
+        <div class="painel-cap-corpo" id="aba-revisao" hidden></div>
+        <div class="flutuante" id="flutuante" hidden>
+          <button data-acao="Reescreva este trecho mantendo os fatos, com prosa mais viva e específica.">Reescrever</button>
+          <button data-acao="Expanda este trecho: mais detalhe sensorial e mais tempo dentro da cena, sem fato novo.">Expandir</button>
+          <button data-acao="Reescreva este trecho com mais diálogo, cada personagem na sua voz da ficha.">Mais diálogo</button>
+          <button data-acao="Reescreva este trecho com mais tensão, sem mudar o que acontece.">Mais tenso</button>
+          <button data-acao="">Pedir…</button>
+        </div>
       </section>
     </div>`;
 
-  const atualizarAtalhos = (arv) => {
-    const n = arv.capitulos.length, prox = n + 1;
-    $("#atalhos").innerHTML = `
-      <button data-p="/escrever ${prox}">✎ Escrever o capítulo ${prox}</button>
-      <button data-p="/escaleta ${prox}-${prox + 2}">☰ Propor escaleta ${prox} a ${prox + 2}</button>
-      ${n ? `<button data-p="/revisar ${n}">⚖ Revisar o capítulo ${n}</button>` : ""}
-      <button data-p="/estado">◈ Onde a história está?</button>`;
-    $$("#atalhos button").forEach((b) => (b.onclick = () => enviar(b.dataset.p)));
-  };
   const msgs = $("#msgs"), entrada = $("#entrada");
+  let capAtual = null;              // { n, caminho, titulo }
+  let ctxAtual = null;
   let bolhaAtual = null, textoAtual = "", parciais = {}, bolhasDaResposta = [];
+  let etapaIdx = -1, cronometro = null, inicioTrabalho = 0;
   const rolar = () => (msgs.scrollTop = msgs.scrollHeight);
-  const ocupado = (sim) => {
-    $("#pilula").textContent = sim ? "escrevendo" : "pronto";
-    $("#pilula").classList.toggle("ativo", sim);
-    $("#enviar").style.display = sim ? "none" : "";
-    $("#parar").style.display = sim ? "" : "none";
-  };
-  const addMsg = (papel, texto, arquivos = []) => {
-    const d = document.createElement("div");
-    d.className = "msg " + papel + (papel === "claude" ? " md" : "");
-    if (papel === "claude") d.innerHTML = markdown(texto || "") + (arquivos.length ? `<div class="arquivos-msg">${arquivos.map((f) =>
-      `<a class="botao pequeno" href="#" data-abrir="${esc(f)}">abrir ${esc(f.split("/").pop())}</a>`).join("")}</div>` : "");
-    else d.textContent = texto;
-    msgs.appendChild(d); rolar();
-    return d;
-  };
-  const addAtividade = (t) => { const d = document.createElement("div"); d.className = "atividade"; d.textContent = t; msgs.appendChild(d); rolar(); };
+  const numeroDe = (c) => +((String(c).match(/cap-(\d+)/) || [])[1] || 0);
+  const proximoN = () => (arv.capitulos.length ? Math.max(...arv.capitulos.map((c) => numeroDe(c.caminho))) + 1 : 1);
 
-  const mostrarFolha = (titulo, corpo, vivo) => {
-    const n = palavras(corpo);
+  // ------------------------------------------------ abas do painel
+  const abrirAba = (id) => {
+    $$(".abas-cap .aba").forEach((a) => a.classList.toggle("ativa", a.dataset.aba === id));
+    ["folha", "contexto", "revisao"].forEach((x) => ($("#aba-" + x).hidden = x !== id));
+    if (id === "revisao") desenharRevisao();
+  };
+  $$(".abas-cap .aba").forEach((a) => (a.onclick = () => abrirAba(a.dataset.aba)));
+
+  const medir = (corpo) => {
+    const n = palavras(corpo || "");
     const meta = $("#meta");
     meta.classList.toggle("ok", n >= META_PALAVRAS);
     meta.innerHTML = `<b>${n.toLocaleString("pt-BR")}</b> / ${META_PALAVRAS.toLocaleString("pt-BR")} palavras<div class="barra"><div style="width:${Math.min(100, (n / META_PALAVRAS) * 100)}%"></div></div>`;
-    const caixa = $("#folha-viva");
-    const perto = caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 120;
-    caixa.innerHTML = `<div class="folha"><h2>${esc(titulo)}</h2><div class="previa-corpo md ${vivo ? "cursor-escrita" : ""}">${markdown(corpo)}</div></div>`;
+    return n;
+  };
+  const preencherSelect = () => {
+    const prox = proximoN();
+    $("#sel-cap").innerHTML = arv.capitulos.map((c) =>
+      `<option value="${esc(c.caminho)}">${esc(String(c.meta.capitulo || numeroDe(c.caminho)).padStart(2, "0"))} · ${esc(c.meta.titulo || "sem título")} ${c.meta.status ? "· " + esc(c.meta.status) : ""}</option>`).join("") +
+      `<option value="novo:${prox}">${String(prox).padStart(2, "0")} · próximo capítulo (ainda não escrito)</option>`;
+  };
+
+  // ------------------------------------------------ folha (texto do capítulo)
+  const mostrarFolha = (titulo, corpo, vivo) => {
+    medir(corpo);
+    const caixa = $("#aba-folha");
+    const perto = caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 140;
+    caixa.innerHTML = corpo
+      ? `<div class="folha"><h2>${esc(titulo)}</h2><div class="previa-corpo md ${vivo ? "cursor-escrita" : ""}" id="texto-folha">${markdown(corpo)}</div></div>`
+      : `<div class="vazio folha-vazia"><h3>${esc(titulo || "Capítulo ainda não escrito")}</h3>Clique em <b>✎ Capítulo</b> para montar o pedido, ou escreva no chat. Você vê o texto surgindo aqui.</div>`;
     if (vivo && perto) caixa.scrollTop = caixa.scrollHeight;
   };
+  const carregarCapitulo = async (valor) => {
+    if (!valor) return;
+    if (valor.startsWith("novo:")) {
+      const n = +valor.slice(5);
+      capAtual = { n, caminho: `capitulos/cap-${String(n).padStart(2, "0")}.md`, novo: true };
+      await carregarContexto(n);
+      mostrarFolha(ctxAtual && ctxAtual.titulo ? `Capítulo ${n} · ${ctxAtual.titulo}` : `Capítulo ${n}`, "", false);
+    } else {
+      const t = await lerArquivo(valor).catch(() => "");
+      const { meta, corpo } = separarCapitulo(t);
+      capAtual = { n: numeroDe(valor), caminho: valor, titulo: meta.titulo, status: meta.status };
+      await carregarContexto(capAtual.n);
+      mostrarFolha(meta.titulo || valor, corpo, false);
+    }
+    $("#sel-cap").value = valor;
+    desenharProximo(); desenharAtalhos();
+  };
+  $("#sel-cap").onchange = (e) => carregarCapitulo(e.target.value);
+  $("#abrir-cap").onclick = () => { if (capAtual && !capAtual.novo) ir("capitulo", capAtual.caminho); else toast("Este capítulo ainda não foi escrito."); };
+
+  // ------------------------------------------------ contexto (beats, rostos, anterior)
   const rosto = (p, classe) => `<button class="rosto ${classe || ""}" data-ficha="${esc(p.caminho)}" title="${esc(p.nome)}">
       ${p.foto ? `<img src="${urlRepo(p.foto)}" alt="">` : `<span style="background:${corDoNome(p.nome)}">${esc(p.nome[0])}</span>`}
       <small>${esc(p.nome)}</small></button>`;
   const carregarContexto = async (n) => {
-    const ctx = await api("/api/contexto?n=" + n).catch(() => null);
-    const caixa = $("#contexto");
-    if (!caixa || !ctx) return;
-    const quem = ctx.quem_escreve || [], pres = (ctx.presentes || []).filter((p) => !quem.some((q) => q.caminho === p.caminho));
+    ctxAtual = await api("/api/contexto?n=" + n).catch(() => null);
+    const caixa = $("#aba-contexto");
+    if (!ctxAtual) { caixa.innerHTML = ""; return; }
+    const c = ctxAtual, quem = c.quem_escreve || [], pres = (c.presentes || []).filter((p) => !quem.some((q) => q.caminho === p.caminho));
     caixa.innerHTML = `
-      <div class="ctx-linha"><span><b>Capítulo ${ctx.capitulo}</b>${ctx.titulo ? ` · ${esc(ctx.titulo)}` : ""}${ctx.quando ? `<br><span class="sub">${esc(ctx.quando)}</span>` : ""}</span>
-        ${ctx.status_escaleta ? `<span class="pilula ${ctx.status_escaleta === "aprovada" ? "ok" : ""}">escaleta ${esc(ctx.status_escaleta)}</span>` : `<span class="pilula">sem escaleta</span>`}</div>
-      ${quem.length || pres.length ? `<div class="ctx-rostos">${quem.map((p) => rosto(p, "escreve")).join("")}${quem.length && pres.length ? `<i class="sep"></i>` : ""}${pres.map((p) => rosto(p)).join("")}</div>` : ""}
-      ${(ctx.lugares || []).length ? `<div class="ctx-lugares">${ctx.lugares.map((l) => `<button class="chip" data-ficha="${esc(l.caminho)}">⌂ ${esc(l.nome)}</button>`).join("")}</div>` : ""}
-      ${ctx.anterior ? `<div class="sub">Anterior: <a href="#" data-cap="${esc(ctx.anterior.caminho)}">cap. ${ctx.anterior.numero}${ctx.anterior.titulo ? " · " + esc(ctx.anterior.titulo) : ""}</a></div>` : ""}`;
+      <div class="ctx-bloco">
+        <div class="ctx-linha"><span><b>Capítulo ${c.capitulo}</b>${c.titulo ? ` · ${esc(c.titulo)}` : ""}${c.quando ? `<br><span class="sub">${esc(c.quando)}</span>` : ""}</span>
+          ${c.status_escaleta ? `<span class="pilula ${c.status_escaleta === "aprovada" ? "ok" : ""}">escaleta ${esc(c.status_escaleta)}</span>` : `<span class="pilula">sem escaleta</span>`}</div>
+        ${quem.length || pres.length ? `<div class="ctx-rostos">${quem.map((p) => rosto(p, "escreve")).join("")}${quem.length && pres.length ? `<i class="sep"></i>` : ""}${pres.map((p) => rosto(p)).join("")}</div>` : ""}
+        ${(c.lugares || []).length ? `<div class="ctx-lugares">${c.lugares.map((l) => `<button class="chip" data-ficha="${esc(l.caminho)}">⌂ ${esc(l.nome)}</button>`).join("")}</div>` : ""}
+      </div>
+      ${c.anterior ? `<div class="ctx-bloco"><h4>Onde paramos · capítulo ${c.anterior.numero}${c.anterior.titulo ? " · " + esc(c.anterior.titulo) : ""}</h4>
+        ${c.anterior.resumo ? `<div class="md">${markdown(c.anterior.resumo)}</div>` : `<p class="sub">Sem resumo ainda. O Claude lê o capítulo anterior inteiro antes de escrever.</p>`}
+        <a href="#" data-cap="${esc(c.anterior.caminho)}">ler o capítulo ${c.anterior.numero}</a></div>` : ""}
+      <div class="ctx-bloco"><h4>O que acontece (escaleta)</h4>
+        ${c.beats ? `<div class="md beats">${markdown(c.beats.replace(/^- (status|quando|quem escreve|entradas|lugares|presentes):.*$/gm, "").trim())}</div>` : `<p class="sub">Sem beats para este capítulo. Conte no pedido o que deve acontecer.</p>`}</div>`;
     $$("[data-ficha]", caixa).forEach((b) => (b.onclick = () => abrirFicha(b.dataset.ficha)));
-    $$("[data-cap]", caixa).forEach((b) => (b.onclick = (e) => { e.preventDefault(); carregarCapitulo(b.dataset.cap); }));
+    $$("[data-cap]", caixa).forEach((b) => (b.onclick = (e) => { e.preventDefault(); carregarCapitulo(b.dataset.cap); abrirAba("folha"); }));
   };
-  const numeroDe = (c) => +((c.match(/cap-(\d+)/) || [])[1] || 0);
-  const carregarCapitulo = async (c) => {
-    if (!c) return;
-    carregarContexto(numeroDe(c));
-    const t = await lerArquivo(c).catch(() => "");
-    const { meta, corpo } = separarCapitulo(t);
-    mostrarFolha(meta.titulo || c, corpo, false);
-    $("#sel-cap").value = c;
+
+  // ------------------------------------------------ revisão (tiques)
+  const desenharRevisao = async () => {
+    const caixa = $("#aba-revisao");
+    if (!capAtual || capAtual.novo) { caixa.innerHTML = `<p class="sub" style="padding:18px">A revisão aparece depois que o capítulo existir.</p>`; return; }
+    caixa.innerHTML = `<p class="sub" style="padding:18px">Checando…</p>`;
+    const r = await api("/api/tiques?caminho=" + encodeURIComponent(capAtual.caminho)).catch((e) => ({ erro: e.message }));
+    if (r.erro) { caixa.innerHTML = `<p class="sub" style="padding:18px">${esc(r.erro)}</p>`; return; }
+    const grupos = [];
+    for (const o of r.ocorrencias) {
+      const g = grupos.find((x) => x.categoria === o.categoria);
+      if (g) g.itens.push(o); else grupos.push({ categoria: o.categoria, itens: [o] });
+    }
+    caixa.innerHTML = `<div class="ctx-bloco">
+        <div class="ctx-linha"><b>${r.palavras.toLocaleString("pt-BR")} palavras · ${r.paragrafos} parágrafos</b>
+          <span class="pilula ${r.ocorrencias.length ? "" : "ok"}">${r.ocorrencias.length ? r.ocorrencias.length + " apontamento(s)" : "nada encontrado"}</span></div>
+        ${r.ocorrencias.length ? `<button class="botao pequeno primario" id="pedir-correcao">Pedir ao Claude para corrigir</button>` : ""}</div>
+      ${grupos.map((g) => `<div class="ctx-bloco"><h4>${esc(g.categoria)} · ${g.itens.length}</h4>
+        ${g.itens.slice(0, 12).map((o) => `<div class="tique"><b>${o.linha ? "linha " + o.linha : "geral"}</b><span>${esc(o.trecho)}</span></div>`).join("")}</div>`).join("")}`;
+    const b = $("#pedir-correcao", caixa);
+    if (b) b.onclick = () => enviar(`No capítulo ${capAtual.n}, corrija os apontamentos da checagem de tiques (${r.ocorrencias.length} itens: ${grupos.map((g) => g.categoria + " ×" + g.itens.length).join("; ")}). Mexa só nos trechos apontados e me diga em poucas linhas o que mudou.`);
   };
-  $("#sel-cap").onchange = (e) => carregarCapitulo(e.target.value);
-  $("#abrir-cap").onclick = () => { const c = $("#sel-cap").value; if (c) ir("capitulo", c); };
 
-  // histórico
-  const hist = await api("/api/claude/historico").catch(() => []);
-  if (!hist.length) addMsg("claude", "Oi! Me conte o que quer escrever hoje. Pode dar contexto solto (o que acontece, o clima, quem escreve no diário) ou usar os atalhos abaixo. Cada capítulo sai com **no mínimo 4.600 palavras** e passa pela revisão de continuidade e de estilo.");
-  hist.forEach((m) => addMsg(m.papel, m.texto, m.arquivos || []));
-  if (a.capitulos.length) carregarCapitulo(a.capitulos[a.capitulos.length - 1].caminho);
-  else carregarContexto(1);
+  // ------------------------------------------------ trecho selecionado → ação
+  const flut = $("#flutuante");
+  let trechoSel = "";
+  document.addEventListener("selectionchange", () => {
+    const sel = document.getSelection();
+    const alvo = $("#texto-folha");
+    if (!sel || sel.isCollapsed || !alvo || !alvo.contains(sel.anchorNode)) { flut.hidden = true; return; }
+    trechoSel = sel.toString().trim();
+    if (trechoSel.length < 8) { flut.hidden = true; return; }
+    const r = sel.getRangeAt(0).getBoundingClientRect(), base = $(".painel-cap").getBoundingClientRect();
+    flut.style.top = Math.max(8, r.top - base.top - 46) + "px";
+    flut.style.left = Math.min(base.width - 380, Math.max(8, r.left - base.left)) + "px";
+    flut.hidden = false;
+  });
+  $$("#flutuante button").forEach((b) => (b.onmousedown = async (e) => {
+    e.preventDefault();
+    let pedido = b.dataset.acao;
+    if (!pedido) { pedido = await pedirTexto("O que fazer com este trecho?", "Seu pedido", ""); if (!pedido) return; }
+    flut.hidden = true;
+    const curto = trechoSel.length > 600 ? trechoSel.slice(0, 600) + "…" : trechoSel;
+    const aviso = capAtual && capAtual.status === "editado" ? " O capítulo está como editado: eu, o autor, estou pedindo esta mudança explicitamente." : "";
+    enviar(`No capítulo ${capAtual ? capAtual.n : "atual"}, mexa só neste trecho:\n«${curto}»\n\nPedido: ${pedido}${aviso}`);
+  }));
 
+  // ------------------------------------------------ mensagens
+  const addMsg = (papel, texto, arquivos = []) => {
+    const d = document.createElement("div");
+    d.className = "msg " + papel + (papel === "claude" ? " md" : "");
+    if (papel === "claude") d.innerHTML = markdown(texto || "") + botoesArquivos(arquivos);
+    else d.textContent = texto;
+    msgs.appendChild(d); rolar();
+    return d;
+  };
+  const botoesArquivos = (arquivos) => (arquivos || []).length ? `<div class="arquivos-msg">${arquivos.map((f) =>
+    `<a class="botao pequeno" href="#" data-abrir="${esc(f)}">abrir ${esc(f.split("/").pop())}</a>`).join("")}</div>` : "";
+  const addAtividade = (t) => { const d = document.createElement("div"); d.className = "atividade"; d.textContent = t; msgs.appendChild(d); rolar(); };
+  const respostasRapidas = (ultima) => {
+    $$(".rapidas", msgs).forEach((x) => x.remove());
+    const n = capAtual ? capAtual.n : proximoN();
+    const opcoes = [];
+    if (capAtual && !capAtual.novo) {
+      const pal = palavras(($("#texto-folha") || {}).textContent || "");
+      if (pal && pal < META_PALAVRAS) opcoes.push(["Continuar até 4.600 palavras", `O capítulo ${n} está com ${pal} palavras. Aprofunde as cenas dos beats até passar de 4.600, sem enchimento e sem fato novo.`]);
+      opcoes.push(["Revisar o capítulo " + n, `/revisar ${n}`]);
+      opcoes.push(["Escrever o capítulo " + (n + 1), () => abrirPedido()]);
+    }
+    opcoes.push(["Onde a história está?", "/estado"]);
+    const d = document.createElement("div");
+    d.className = "rapidas";
+    d.innerHTML = opcoes.map(([r, p], i) => `<button data-i="${i}">${esc(r)}</button>`).join("");
+    $$("button", d).forEach((b) => (b.onclick = () => { const acao = opcoes[+b.dataset.i][1]; typeof acao === "function" ? acao() : enviar(acao); }));
+    msgs.appendChild(d);
+    $("#atalhos").hidden = true;
+    rolar();
+  };
+
+  // ------------------------------------------------ etapas do trabalho
+  const desenharEtapas = () => {
+    const box = $("#etapas");
+    const seg = Math.floor((Date.now() - inicioTrabalho) / 1000);
+    box.innerHTML = ETAPAS.map((e, i) => `<div class="etapa ${i < etapaIdx ? "feita" : i === etapaIdx ? "agora" : ""}"><i></i><span>${e.nome}</span></div>`).join("") +
+      `<span class="cronometro">${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}</span>`;
+  };
+  const marcarEtapa = (id) => {
+    const i = ETAPAS.findIndex((e) => e.id === id);
+    if (i > etapaIdx) { etapaIdx = i; desenharEtapas(); }
+  };
+  const ocupado = (sim) => {
+    $("#pilula").textContent = sim ? "trabalhando" : "pronto";
+    $("#pilula").classList.toggle("ativo", sim);
+    $("#enviar").style.display = sim ? "none" : "";
+    $("#parar").style.display = sim ? "" : "none";
+    $("#abrir-pedido").disabled = sim;
+    $("#etapas").hidden = !sim;
+    $("#proximo").hidden = sim;
+    $("#atalhos").hidden = sim || !!$(".rapidas", msgs);
+    clearInterval(cronometro);
+    if (sim) { inicioTrabalho = Date.now(); etapaIdx = -1; desenharEtapas(); cronometro = setInterval(desenharEtapas, 1000); }
+  };
+
+  // ------------------------------------------------ cartão "próximo capítulo" e atalhos
+  const desenharProximo = () => {
+    const box = $("#proximo");
+    if (!capAtual || !capAtual.novo) { box.innerHTML = ""; return; }
+    box.innerHTML = `<div class="cartao-proximo">
+        <div><div class="rotulo">Próximo capítulo</div>
+          <b>${capAtual.n}${ctxAtual && ctxAtual.titulo ? " · " + esc(ctxAtual.titulo) : ""}</b>
+          ${ctxAtual && ctxAtual.status_escaleta ? `<span class="sub"> · escaleta ${esc(ctxAtual.status_escaleta)}</span>` : ""}</div>
+        <button class="botao primario" id="comecar">✎ Montar pedido</button></div>`;
+    $("#comecar").onclick = () => abrirPedido();
+  };
+  const desenharAtalhos = () => {
+    const n = capAtual ? capAtual.n : proximoN();
+    $("#atalhos").innerHTML = capAtual && !capAtual.novo ? `
+      <button data-p="/revisar ${n}">⚖ Revisar o ${n}</button>
+      <button data-p="/escaleta ${proximoN()}-${proximoN() + 2}">☰ Propor escaleta ${proximoN()} a ${proximoN() + 2}</button>
+      <button data-p="/estado">◈ Onde a história está?</button>` : `
+      <button data-p="/escaleta ${n}-${n + 2}">☰ Propor escaleta ${n} a ${n + 2}</button>
+      <button data-p="/estado">◈ Onde a história está?</button>`;
+    $$("#atalhos button").forEach((b) => (b.onclick = () => enviar(b.dataset.p)));
+  };
+
+  // ------------------------------------------------ pedido de capítulo (guiado)
+  const abrirPedido = async () => {
+    const n = capAtual && capAtual.novo ? capAtual.n : proximoN();
+    const ctx = await api("/api/contexto?n=" + n).catch(() => ({}));
+    arv = await atualizarArvore();
+    const pessoas = arv.personagens, lugares = arv.lugares;
+    const quemPadrao = ((ctx.quem_escreve || [])[0] || {}).caminho || ((pessoas.find((p) => /ynana/i.test(p.titulo)) || {}).caminho);
+    const presPadrao = new Set((ctx.presentes || []).map((p) => p.caminho));
+    const lugPadrao = new Set((ctx.lugares || []).map((p) => p.caminho));
+    const opRosto = (p, nomeCampo, marcado, tipo) => `<label class="opcao-rosto"><input type="${tipo}" name="${nomeCampo}" value="${esc(p.caminho)}" ${marcado ? "checked" : ""}>
+        ${p.foto ? `<img src="${urlRepo(p.foto)}" alt="">` : `<span style="background:${corDoNome(p.titulo)}">${esc(p.titulo[0])}</span>`}<small>${esc(p.titulo)}</small></label>`;
+    const c = modal(`
+      <div class="pedido">
+        <h3>Capítulo ${n}${ctx.titulo ? " · " + esc(ctx.titulo) : ""}</h3>
+        <div class="campo"><label>Quem escreve no diário</label><div class="grade-rostos">${pessoas.map((p) => opRosto(p, "quem", p.caminho === quemPadrao, "radio")).join("")}</div></div>
+        <div class="campo"><label>Quem aparece</label><div class="grade-rostos">${pessoas.map((p) => opRosto(p, "pres", presPadrao.has(p.caminho), "checkbox")).join("")}</div></div>
+        <div class="campo"><label>Onde</label><div class="grade-chips">${lugares.map((l) => `<label class="chip-check"><input type="checkbox" name="lug" value="${esc(l.caminho)}" ${lugPadrao.has(l.caminho) ? "checked" : ""}><span>${esc(l.titulo)}</span></label>`).join("")}</div></div>
+        <div class="duas">
+          <div class="campo"><label>Quando</label><input id="p-quando" value="${esc(ctx.quando || "")}" placeholder="1812, Tempestade (junho)…"></div>
+          <div class="campo"><label>Tamanho mínimo (palavras)</label><input id="p-tam" type="number" min="${META_PALAVRAS}" step="100" value="${META_PALAVRAS}"></div>
+        </div>
+        <div class="campo"><label>O que acontece</label><textarea id="p-acontece" rows="4" placeholder="Conte do seu jeito. Se deixar em branco, sigo a escaleta${ctx.beats ? "" : " (este capítulo ainda não tem escaleta)"}."></textarea></div>
+        ${ctx.beats ? `<details class="beats-ref"><summary>Ver a escaleta deste capítulo</summary><div class="md">${markdown(ctx.beats.replace(/^- (status|quando|quem escreve|entradas|lugares|presentes):.*$/gm, "").trim())}</div></details>` : ""}
+        <div class="campo"><label>Tom, clima, cuidados (opcional)</label><textarea id="p-tom" rows="2" placeholder="Ex.: mais silêncio que fala; terminar antes do jantar; o Rufus quase não fala."></textarea></div>
+        <div class="modal-acoes"><button class="botao" id="p-cancelar">Cancelar</button><button class="botao primario" id="p-escrever">✎ Escrever o capítulo ${n}</button></div>
+      </div>`, "largo pedido-modal");
+    $("#p-cancelar", c).onclick = fecharModal;
+    $("#p-escrever", c).onclick = () => {
+      const nome = (cam) => { const f = [...pessoas, ...lugares].find((x) => x.caminho === cam); return f ? f.titulo : cam; };
+      const quem = ($("input[name=quem]:checked", c) || {}).value;
+      const pres = $$("input[name=pres]:checked", c).map((i) => nome(i.value));
+      const lug = $$("input[name=lug]:checked", c).map((i) => nome(i.value));
+      const acontece = $("#p-acontece", c).value.trim(), tom = $("#p-tom", c).value.trim();
+      const tam = Math.max(META_PALAVRAS, +$("#p-tam", c).value || META_PALAVRAS);
+      const linhas = [`Escreva o capítulo ${n}${ctx.titulo ? ` (${ctx.titulo})` : ""}.`,
+        quem ? `Quem escreve no diário: ${nome(quem)}.` : "",
+        $("#p-quando", c).value.trim() ? `Quando: ${$("#p-quando", c).value.trim()}.` : "",
+        pres.length ? `Quem aparece: ${pres.join(", ")}.` : "",
+        lug.length ? `Onde: ${lug.join(", ")}.` : "",
+        acontece ? `O que acontece (do autor; vale mais que a escaleta):\n${acontece}` : "Siga os beats da escaleta deste capítulo.",
+        tom ? `Tom e cuidados: ${tom}` : "",
+        `Mínimo de ${tam.toLocaleString("pt-BR")} palavras. Reúna sozinho o capítulo anterior, as fichas, as fotos e as referências antes de escrever.`];
+      fecharModal();
+      enviar(linhas.filter(Boolean).join("\n"));
+    };
+  };
+  $("#abrir-pedido").onclick = () => abrirPedido();
+
+  // ------------------------------------------------ fluxo de resposta
   const ouvir = () => {
     if (fonteEventos) fonteEventos.close();
     textoAtual = ""; bolhaAtual = null; parciais = {}; bolhasDaResposta = [];
@@ -972,59 +1192,70 @@ VISTAS.conversa = async () => {
     fonteEventos.onmessage = async (ev) => {
       const e = JSON.parse(ev.data);
       if (e.tipo === "parado") { ocupado(false); fonteEventos.close(); return; }
+      if (e.tipo === "status") marcarEtapa("contexto");
       if (e.tipo === "texto") {
         textoAtual += e.texto;
         if (!bolhaAtual) { bolhaAtual = addMsg("claude", ""); bolhasDaResposta.push(bolhaAtual); }
         bolhaAtual.innerHTML = markdown(textoAtual); rolar();
       } else if (e.tipo === "ferramenta") {
         if (bolhaAtual && textoAtual) { bolhaAtual = null; textoAtual = ""; }
+        const et = etapaDaFerramenta(e.nome, e.extra);
+        if (et) marcarEtapa(et);
         addAtividade(e.texto);
       } else if (e.tipo === "arquivo_parcial") {
         parciais[e.bloco] = (parciais[e.bloco] || "") + e.texto;
         const { caminho, texto } = decodificarParcial(parciais[e.bloco]);
         if (caminho.includes("capitulos") && texto) {
+          marcarEtapa("escrita");
+          abrirAba("folha");
           const { meta, corpo } = separarCapitulo(texto);
           mostrarFolha(meta.titulo || "Escrevendo…", corpo || semCabecalho(texto), true);
         }
       } else if (e.tipo === "fim" || e.tipo === "erro") {
         fonteEventos.close(); fonteEventos = null; ocupado(false);
-        if (e.tipo === "erro") { const d = addMsg("erro", e.texto); d.className = "msg erro"; }
+        let ultima = null;
+        if (e.tipo === "erro") { ultima = addMsg("erro", e.texto); ultima.className = "msg erro"; }
         else if (bolhasDaResposta.length) {
-          // o texto já apareceu aos poucos; só acrescenta os botões dos arquivos na última fala
-          const ultima = bolhasDaResposta[bolhasDaResposta.length - 1];
-          ultima.innerHTML = markdown(textoAtual || ultima.textContent) + ((e.extra || []).length ? `<div class="arquivos-msg">${e.extra.map((f) =>
-            `<a class="botao pequeno" href="#" data-abrir="${esc(f)}">abrir ${esc(f.split("/").pop())}</a>`).join("")}</div>` : "");
-          rolar();
-        } else addMsg("claude", e.texto, e.extra || []);
-        const arv = await atualizarArvore();
-        atualizarAtalhos(arv);
+          ultima = bolhasDaResposta[bolhasDaResposta.length - 1];
+          ultima.innerHTML = markdown(textoAtual || ultima.textContent) + botoesArquivos(e.extra);
+        } else ultima = addMsg("claude", e.texto, e.extra || []);
+        arv = await atualizarArvore();
+        preencherSelect();
         const caps = (e.extra || []).filter((f) => f.startsWith("capitulos/"));
-        const sel = $("#sel-cap");
-        if (sel) sel.innerHTML = `<option value="">Escolha um capítulo…</option>` + arv.capitulos.map((c) =>
-          `<option value="${esc(c.caminho)}">${esc(String(c.meta.capitulo || c.nome).padStart(2, "0"))} · ${esc(c.meta.titulo || "sem título")}</option>`).join("");
-        if (caps.length) carregarCapitulo(caps[caps.length - 1]);
+        await carregarCapitulo(caps.length ? caps[caps.length - 1] : ($("#sel-cap").value || `novo:${proximoN()}`));
+        respostasRapidas(ultima);
       }
     };
     fonteEventos.onerror = () => { if (fonteEventos && fonteEventos.readyState === 2) ocupado(false); };
   };
-
   const enviar = async (texto) => {
     texto = (texto || "").trim();
     if (!texto) return;
+    $$(".rapidas", msgs).forEach((x) => x.remove());
+    $("#atalhos").hidden = false;
     addMsg("autor", texto);
-    entrada.value = "";
+    entrada.value = ""; entrada.style.height = "auto";
     try { await api("/api/claude/enviar", { mensagem: texto }); ouvir(); }
     catch (e) { const d = addMsg("erro", e.message); d.className = "msg erro"; }
   };
   $("#enviar").onclick = () => enviar(entrada.value);
   entrada.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(entrada.value); } };
   entrada.oninput = () => { entrada.style.height = "auto"; entrada.style.height = Math.min(200, entrada.scrollHeight) + "px"; };
-  atualizarAtalhos(a);
   $("#parar").onclick = () => api("/api/claude/parar", {}).catch(() => {});
   $("#nova-conversa").onclick = async () => {
     if (!confirm("Guardar esta conversa e começar outra? (os capítulos não mudam)")) return;
     try { await api("/api/claude/nova", {}); VISTAS.conversa(); } catch (e) { toast(e.message, true); }
   };
+
+  // ------------------------------------------------ início
+  preencherSelect();
+  const hist = await api("/api/claude/historico").catch(() => []);
+  if (!hist.length) addMsg("claude", "Oi! Vamos escrever. Clique em **✎ Capítulo** para montar o pedido (quem escreve, quem aparece, o que acontece), ou só me conte a ideia aqui. Eu reúno o capítulo anterior, as fichas e as fotos sozinho, e cada capítulo sai com **no mínimo 4.600 palavras**, revisado.\n\nDica: selecione um trecho da folha à direita para pedir que eu reescreva, expanda ou ponha mais diálogo.");
+  hist.forEach((m) => addMsg(m.papel, m.texto, m.arquivos || []));
+  const ultimoCap = arv.capitulos.length ? arv.capitulos[arv.capitulos.length - 1] : null;
+  const ultimoPronto = ultimoCap && ["revisado", "editado"].includes(ultimoCap.meta.status);
+  await carregarCapitulo(!ultimoCap || ultimoPronto ? `novo:${proximoN()}` : ultimoCap.caminho);
+  if (hist.length) respostasRapidas();
   if (st.rodando) ouvir();
   entrada.focus();
 };

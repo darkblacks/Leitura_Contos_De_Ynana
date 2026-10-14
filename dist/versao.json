@@ -1,9 +1,10 @@
 {
-  "versao": "1.5.0",
-  "sha256": "a1e3c861713fc48d20c8ec67904441d3e8c06494b685b942f72cc239b7dce71d",
+  "versao": "1.6.0",
+  "sha256": "7701bb4405773416d9979aab6695e05532e87668fee617df6693319168f74c49",
   "notas": [
-    "Atualização automática: o app avisa quando há versão nova e se atualiza sozinho",
-    "Fichas com foto em modal, seção de Artefatos",
-    "Chat mostra quem escreve e quem aparece no capítulo atual"
+    "Nova mesa de escrita na home: pedido de capítulo guiado (quem escreve, quem aparece, onde, o que acontece)",
+    "Etapas visíveis enquanto o Claude trabalha: contexto, escrita, tiques, revisores, continuidade",
+    "Capítulo atual em abas: Folha, Contexto (escaleta e onde paramos) e Revisão",
+    "Selecione um trecho da folha para reescrever, expandir, pôr mais diálogo ou mais tensão"
   ]
 }

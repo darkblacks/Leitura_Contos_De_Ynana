@@ -263,7 +263,14 @@ func (c *conversa) ler(saida interface{ Read([]byte) (int, error) }, cmd *exec.C
 					}
 					arquivos[rel] = true
 				}
-				c.publicar(evento{Tipo: "ferramenta", Nome: nome, Texto: descricao})
+				arq := ""
+				if fp, ok := entrada["file_path"].(string); ok {
+					arq = filepath.ToSlash(fp)
+					if filepath.IsAbs(fp) {
+						arq = relativo(fp)
+					}
+				}
+				c.publicar(evento{Tipo: "ferramenta", Nome: nome, Texto: descricao, Extra: arq})
 			}
 		case "result":
 			if id, ok := m["session_id"].(string); ok && id != "" {

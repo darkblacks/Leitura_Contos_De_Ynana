@@ -804,6 +804,7 @@ func contextoCapitulo(n int) item {
 		if fim := regexp.MustCompile(`(?m)^#{1,2} `).FindStringIndex(secao); fim != nil {
 			secao = secao[:fim[0]]
 		}
+		ctx["beats"] = strings.TrimSpace(secao)
 		for _, l := range strings.Split(secao, "\n") {
 			t := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(l), "-"))
 			switch {
@@ -835,7 +836,22 @@ func contextoCapitulo(n int) item {
 	ant := filepath.Join(raiz, "capitulos", fmt.Sprintf("cap-%02d.md", n-1))
 	if _, err := os.Stat(ant); err == nil {
 		meta := frontmatter(ler(ant))
-		ctx["anterior"] = item{"caminho": relativo(ant), "titulo": meta["titulo"], "numero": n - 1}
+		ctx["anterior"] = item{"caminho": relativo(ant), "titulo": meta["titulo"], "numero": n - 1, "resumo": resumoDe(n - 1)}
 	}
 	return ctx
+}
+
+// resumoDe pega o resumo do capítulo N em continuidade/resumos.md (seção que cita o número).
+func resumoDe(n int) string {
+	t := ler(filepath.Join(raiz, "continuidade", "resumos.md"))
+	re := regexp.MustCompile(`(?mi)^#{2,3} .*?(?:cap(?:[ií]tulo)?[ -]?0*` + strconv.Itoa(n) + `)\b.*$`)
+	loc := re.FindStringIndex(t)
+	if loc == nil {
+		return ""
+	}
+	resto := t[loc[1]:]
+	if fim := regexp.MustCompile(`(?m)^#{1,3} `).FindStringIndex(resto); fim != nil {
+		resto = resto[:fim[0]]
+	}
+	return strings.TrimSpace(resto)
 }

@@ -347,6 +347,15 @@ def pessoas_da_linha(linha):
     return out
 
 
+def resumo_de(n):
+    """Resumo do capítulo N em continuidade/resumos.md (seção que cita o número)."""
+    t = ler(RAIZ / "continuidade" / "resumos.md")
+    m = re.search(rf"(?mi)^#{{2,3}} .*?(?:cap(?:[ií]tulo)?[ -]?0*{n})\b.*$", t)
+    if not m:
+        return ""
+    return re.split(r"(?m)^#{1,3} ", t[m.end():], maxsplit=1)[0].strip()
+
+
 def contexto_capitulo(n):
     """Beats da escaleta, quem escreve, presentes e lugares (com fotos) e o capítulo anterior."""
     n = max(1, n)
@@ -356,6 +365,7 @@ def contexto_capitulo(n):
     if m:
         ctx["titulo"] = m.group(1).strip()
         secao = re.split(r"(?m)^#{1,2} ", esc[m.end():], maxsplit=1)[0]
+        ctx["beats"] = secao.strip()
         for l in secao.splitlines():
             t = l.strip().lstrip("-").strip()
             for chave, campo in (("status:", "status_escaleta"), ("quando:", "quando")):
@@ -373,7 +383,8 @@ def contexto_capitulo(n):
                 ctx[k] = meta[k]
     ant = RAIZ / "capitulos" / f"cap-{n - 1:02d}.md"
     if n > 1 and ant.exists():
-        ctx["anterior"] = {"caminho": ant.relative_to(RAIZ).as_posix(), "titulo": frontmatter(ler(ant)).get("titulo", ""), "numero": n - 1}
+        ctx["anterior"] = {"caminho": ant.relative_to(RAIZ).as_posix(), "titulo": frontmatter(ler(ant)).get("titulo", ""),
+                           "numero": n - 1, "resumo": resumo_de(n - 1)}
     return ctx
 
 

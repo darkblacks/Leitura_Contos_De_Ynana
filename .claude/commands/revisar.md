@@ -6,7 +6,7 @@ argument-hint: <N>
 Revisar o capítulo **$ARGUMENTS** sem alterar nenhum arquivo.
 
 1. Confirme que `capitulos/cap-NN.md` existe. Leia só o cabeçalho e os beats do capítulo em `escaleta/escaleta.md` para saber quem e quais lugares aparecem.
-2. Rode `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md --resumo`.
+2. Rode `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md --resumo` (no Windows sem Python: `.\Escrivaninha.exe tiques capitulos\cap-NN.md --resumo`).
 3. Chame em paralelo, com contexto limpo e só os caminhos necessários:
    - `revisor-continuidade`: o capítulo, a ficha de quem escreve, `continuidade/registro.md`, `continuidade/resumos.md`, os beats, as fichas envolvidas e o capítulo anterior (se existir).
    - `revisor-estilo`: o capítulo, `estilo/estilo.md`, `estilo/guardrails.md`, `estilo/exemplos/`, a saída do script, a ficha de quem escreve e as fichas dos personagens citados com fala.

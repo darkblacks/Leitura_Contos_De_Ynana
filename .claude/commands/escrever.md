@@ -33,7 +33,7 @@ Antes de começar, para cada capítulo do intervalo:
    ```
    É uma entrada de diário em primeira pessoa: siga a forma dos exemplos e o `estilo.md`, com o tom de quem escreve, e os beats na ordem. Quem escreve só conta o que sabe até a data da entrada. Se um `[DECIDIR]` do estilo afetar o capítulo e os exemplos não resolverem, pare e avise. Detalhe menor inventado: anote para registrar no passo 6. Fato novo importante fora da escaleta: não invente; pare e pergunte.
 
-3. **Script**: rode `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md` e guarde a saída num arquivo temporário do scratchpad (ou cole no pedido ao revisor).
+3. **Script**: rode `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md` (no Windows sem Python: `.\Escrivaninha.exe tiques capitulos\cap-NN.md`, mesma saída) e guarde a saída num arquivo temporário do scratchpad (ou cole no pedido ao revisor).
 
 4. **Revisores** (podem rodar em paralelo, cada um com contexto limpo). Passe só os caminhos dos arquivos necessários:
    - `revisor-continuidade`: o capítulo, a ficha de quem escreve, `continuidade/registro.md`, `continuidade/resumos.md`, os beats do capítulo, as fichas envolvidas e o capítulo anterior.

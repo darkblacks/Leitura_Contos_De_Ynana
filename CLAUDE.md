@@ -51,6 +51,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `entrada/` | Material antigo a importar |
 | `referencias/` | Textos e imagens de consulta sobre o universo (nunca apagados) |
 | `ui/` | Escrivaninha: interface local para escrever e organizar (`abrir-escrivaninha.bat` ou `.sh`) |
+| `dist/Escrivaninha.exe` | A mesma Escrivaninha num executável único para Windows; instala-se em `C:\Os_Contos_De_Ynana` (código em `ui/escrivaninha-go/`, gerar com `ui/escrivaninha-go/build.sh`) |
 
 ## Convenções
 
@@ -88,6 +89,8 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 ## Escrivaninha (interface)
 
 - `ui/servidor.py` (Python puro, sem rede externa, só em 127.0.0.1) serve uma interface que lê e grava estes mesmos arquivos.
+- `Escrivaninha.exe` é a mesma coisa em Go, sem precisar de Python. Na primeira execução copia para a pasta só os arquivos que ainda não existem: nunca sobrescreve texto do autor. `Escrivaninha.exe tiques <arquivo>` dá a mesma saída do `checa_tiques.py`.
+- Ao mudar `ui/static/`, `ferramentas/checa_tiques.py` ou `ui/servidor.py`, mantenha `ui/escrivaninha-go/` igual e gere o exe de novo.
 - O que o autor muda pela interface é texto dele: vale a regra 1. Capítulo editado lá vem marcado `editado`; depois o autor roda `/sincronizar N`.
 - Decisões resolvidas pela interface viram `**Decidido:** pergunta → **resposta**` no arquivo. Trate como regra aprovada.
 

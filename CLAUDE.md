@@ -49,6 +49,8 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `ferramentas/checa_tiques.py` | Varredura mecânica dos guardrails |
 | `ferramentas/tiques.json` | Listas e parâmetros usados pelo script |
 | `entrada/` | Material antigo a importar |
+| `referencias/` | Textos e imagens de consulta sobre o universo (nunca apagados) |
+| `ui/` | Escrivaninha: interface local para escrever e organizar (`abrir-escrivaninha.bat` ou `.sh`) |
 
 ## Convenções
 
@@ -82,6 +84,12 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 5. `/revisar N` quando eu quiser só a lista de problemas.
 6. `/estado` para saber onde estamos.
 7. Entre capítulos eu posso dar `/clear`: tudo que importa está nos arquivos.
+
+## Escrivaninha (interface)
+
+- `ui/servidor.py` (Python puro, sem rede externa, só em 127.0.0.1) serve uma interface que lê e grava estes mesmos arquivos.
+- O que o autor muda pela interface é texto dele: vale a regra 1. Capítulo editado lá vem marcado `editado`; depois o autor roda `/sincronizar N`.
+- Decisões resolvidas pela interface viram `**Decidido:** pergunta → **resposta**` no arquivo. Trate como regra aprovada.
 
 ## Comandos e revisores
 

@@ -1,0 +1,428 @@
+#!/usr/bin/env python3
+"""Escrivaninha: interface local para escrever e organizar os Contos de Ynana.
+
+Uso:
+    python3 ui/servidor.py            (abre em http://127.0.0.1:8765)
+    python3 ui/servidor.py --porta 9000 --sem-navegador
+
+Python puro, sem dependências e sem rede externa: só lê e grava os arquivos
+deste repositório e escuta apenas no próprio computador (127.0.0.1).
+"""
+
+import base64
+import importlib.util
+import json
+import mimetypes
+import re
+import sys
+import threading
+import webbrowser
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
+
+RAIZ = Path(__file__).resolve().parent.parent
+ESTATICO = Path(__file__).resolve().parent / "static"
+
+# Pastas e arquivos que a interface pode ler e gravar
+EDITAVEIS = ["biblia", "estilo", "escaleta", "continuidade", "capitulos", "entrada", "referencias"]
+ARQUIVOS_SOLTOS = ["ferramentas/tiques.json", "CLAUDE.md"]
+EXT_TEXTO = {".md", ".txt", ".json"}
+EXT_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+
+DECIDIR = re.compile(r"^\s*(?:[-*]\s+)?\[DECIDIR\]\s*(.+)")  # só itens de lista, não menções no texto
+OPCOES = re.compile(r"\(opções:\s*(.+?)\)\s*\.?\s*$", re.IGNORECASE)
+
+
+# ---------------------------------------------------------------- utilidades
+
+def caminho_seguro(rel):
+    """Converte caminho relativo em absoluto, garantindo que fica dentro das áreas permitidas."""
+    rel = (rel or "").strip().lstrip("/").replace("\\", "/")
+    alvo = (RAIZ / rel).resolve()
+    if RAIZ not in alvo.parents and alvo != RAIZ:
+        raise PermissionError("fora do repositório")
+    rel_norm = alvo.relative_to(RAIZ).as_posix()
+    if rel_norm in ARQUIVOS_SOLTOS:
+        return alvo
+    if rel_norm.split("/")[0] not in EDITAVEIS:
+        raise PermissionError(f"área não editável: {rel_norm}")
+    return alvo
+
+
+def slug(nome):
+    tabela = str.maketrans("áàâãäéèêëíìîïóòôõöúùûüçñÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑ",
+                           "aaaaaeeeeiiiiooooouuuucnAAAAAEEEEIIIIOOOOOUUUUCN")
+    s = nome.translate(tabela).lower()
+    s = re.sub(r"[^a-z0-9.]+", "-", s).strip("-")
+    return s or "sem-nome"
+
+
+def ler(p):
+    return p.read_text(encoding="utf-8") if p.exists() else ""
+
+
+def frontmatter(texto):
+    meta = {}
+    if texto.startswith("---"):
+        fim = texto.find("\n---", 3)
+        if fim != -1:
+            for linha in texto[3:fim].splitlines():
+                if ":" in linha:
+                    k, v = linha.split(":", 1)
+                    meta[k.strip()] = v.strip()
+    return meta
+
+
+def titulo_md(texto, padrao):
+    for linha in texto.splitlines():
+        if linha.startswith("# "):
+            return linha[2:].strip()
+    return padrao
+
+
+def contar_palavras(texto):
+    if texto.startswith("---"):
+        fim = texto.find("\n---", 3)
+        if fim != -1:
+            texto = texto[fim + 4:]
+    return len(re.findall(r"[^\W_]+", texto))
+
+
+def listar(pasta, exts=EXT_TEXTO, ocultar_modelos=False):
+    base = RAIZ / pasta
+    if not base.exists():
+        return []
+    itens = []
+    for p in sorted(base.rglob("*")):
+        if not p.is_file() or p.suffix.lower() not in exts:
+            continue
+        if p.name in ("LEIA-ME.md", ".gitkeep"):
+            continue
+        if ocultar_modelos and p.name.startswith("_"):
+            continue
+        rel = p.relative_to(RAIZ).as_posix()
+        item = {"caminho": rel, "nome": p.stem, "tamanho": p.stat().st_size,
+                "modificado": p.stat().st_mtime}
+        if p.suffix.lower() in EXT_TEXTO:
+            t = ler(p)
+            item["titulo"] = titulo_md(t, p.stem)
+            item["palavras"] = contar_palavras(t)
+            item["meta"] = frontmatter(t)
+            item["vazios"] = t.count("(a definir)") + t.count("[DECIDIR]")
+        itens.append(item)
+    return itens
+
+
+# ---------------------------------------------------------------- operações
+
+def arvore():
+    return {
+        "capitulos": listar("capitulos"),
+        "personagens": listar("biblia/personagens", ocultar_modelos=True),
+        "lugares": listar("biblia/lugares", ocultar_modelos=True),
+        "exemplos": listar("estilo/exemplos"),
+        "ref_textos": listar("referencias/textos"),
+        "ref_imagens": listar("referencias/imagens", EXT_IMAGEM),
+        "entrada": listar("entrada"),
+    }
+
+
+def decisoes():
+    achados = []
+    for pasta in ("estilo", "biblia", "escaleta"):
+        for p in sorted((RAIZ / pasta).rglob("*.md")):
+            if p.name.startswith("_"):
+                continue
+            secao = ""
+            for i, linha in enumerate(ler(p).splitlines(), 1):
+                if linha.startswith("#"):
+                    secao = linha.lstrip("#").strip()
+                m = DECIDIR.search(linha)
+                if not m:
+                    continue
+                pergunta = m.group(1).strip()
+                opcoes = []
+                mo = OPCOES.search(pergunta)
+                if mo:
+                    opcoes = [o.strip() for o in mo.group(1).split(" / ") if o.strip()]
+                    pergunta = pergunta[:mo.start()].strip()
+                achados.append({"caminho": p.relative_to(RAIZ).as_posix(), "linha": i,
+                                "secao": secao, "pergunta": pergunta, "opcoes": opcoes})
+    return achados
+
+
+def resolver_decisao(caminho, linha, resposta):
+    p = caminho_seguro(caminho)
+    linhas = ler(p).splitlines()
+    idx = int(linha) - 1
+    if idx < 0 or idx >= len(linhas) or not DECIDIR.search(linhas[idx]):
+        raise ValueError("a decisão mudou de lugar; recarregue a página")
+    original = linhas[idx]
+    m = DECIDIR.search(original)
+    pergunta = OPCOES.sub("", m.group(1)).strip()
+    prefixo = original[:original.index("[DECIDIR]")]
+    linhas[idx] = f"{prefixo}**Decidido:** {pergunta} → **{resposta.strip()}**"
+    p.write_text("\n".join(linhas) + "\n", encoding="utf-8")
+
+
+def carregar_checador():
+    spec = importlib.util.spec_from_file_location("checa_tiques", RAIZ / "ferramentas" / "checa_tiques.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def tiques(caminho):
+    p = caminho_seguro(caminho)
+    mod = carregar_checador()
+    ocorrencias, tamanhos = mod.checar(p, mod.carregar_config())
+    return {"paragrafos": len(tamanhos), "palavras": sum(tamanhos),
+            "ocorrencias": [{"linha": n, "categoria": c, "trecho": t} for n, c, t in ocorrencias]}
+
+
+def busca(q):
+    q = q.strip().lower()
+    if len(q) < 2:
+        return []
+    res = []
+    for pasta in EDITAVEIS:
+        for p in sorted((RAIZ / pasta).rglob("*")):
+            if not p.is_file() or p.suffix.lower() not in EXT_TEXTO:
+                continue
+            for i, linha in enumerate(ler(p).splitlines(), 1):
+                if q in linha.lower():
+                    res.append({"caminho": p.relative_to(RAIZ).as_posix(), "linha": i, "texto": linha.strip()[:200]})
+                    if len(res) >= 200:
+                        return res
+    return res
+
+
+def estado():
+    a = arvore()
+    status = {}
+    for c in a["capitulos"]:
+        s = c.get("meta", {}).get("status", "sem status")
+        status[s] = status.get(s, 0) + 1
+    escaleta = ler(RAIZ / "escaleta" / "escaleta.md")
+    historia = ler(RAIZ / "biblia" / "historia.md")
+    pend = ler(RAIZ / "continuidade" / "registro.md")
+    trecho_pend = pend.split("## Promessas e pendências em aberto", 1)
+    pendencias = []
+    if len(trecho_pend) > 1:
+        bloco = trecho_pend[1].split("\n## ", 1)[0]
+        pendencias = [l[2:] for l in bloco.splitlines() if l.startswith("- ") and not l.startswith("- ~~")]
+    return {
+        "capitulos": len(a["capitulos"]),
+        "palavras": sum(c.get("palavras", 0) for c in a["capitulos"]),
+        "status": status,
+        "personagens": len(a["personagens"]),
+        "lugares": len(a["lugares"]),
+        "exemplos": len(a["exemplos"]),
+        "referencias": len(a["ref_textos"]) + len(a["ref_imagens"]),
+        "decisoes": len(decisoes()),
+        "escaleta_aprovada": escaleta.count("status: aprovada"),
+        "escaleta_proposta": escaleta.count("status: proposta"),
+        "historia_vazios": historia.count("(a definir)") + sum(1 for l in historia.splitlines() if DECIDIR.search(l)),
+        "pendencias": pendencias[:8],
+        "ultimo": a["capitulos"][-1] if a["capitulos"] else None,
+    }
+
+
+MODELO_CAPITULO = """---
+status: rascunho
+capitulo: {n}
+titulo: {titulo}
+quando:
+quem_escreve:
+---
+
+"""
+
+
+def criar(tipo, nome):
+    nome = (nome or "").strip()
+    if tipo == "capitulo":
+        existentes = [int(m.group(1)) for c in (RAIZ / "capitulos").glob("cap-*.md")
+                      if (m := re.match(r"cap-(\d+)", c.stem))]
+        n = (max(existentes) + 1) if existentes else 1
+        p = RAIZ / "capitulos" / f"cap-{n:02d}.md"
+        p.write_text(MODELO_CAPITULO.format(n=n, titulo=nome), encoding="utf-8")
+    elif tipo in ("personagem", "lugar"):
+        if not nome:
+            raise ValueError("dê um nome")
+        pasta = "personagens" if tipo == "personagem" else "lugares"
+        p = RAIZ / "biblia" / pasta / f"{slug(nome)}.md"
+        if p.exists():
+            raise ValueError("já existe uma ficha com esse nome")
+        modelo = ler(RAIZ / "biblia" / pasta / "_modelo.md")
+        modelo = re.sub(r"^# .*$", f"# {nome}", modelo, count=1, flags=re.M)
+        modelo = re.sub(r"^> Modelo de ficha.*\n\n?", "", modelo, count=1, flags=re.M)
+        p.write_text(modelo, encoding="utf-8")
+    elif tipo in ("exemplo", "ref_texto"):
+        if not nome:
+            raise ValueError("dê um nome")
+        pasta = RAIZ / ("estilo/exemplos" if tipo == "exemplo" else "referencias/textos")
+        pasta.mkdir(parents=True, exist_ok=True)
+        p = pasta / f"{slug(nome)}.md"
+        if p.exists():
+            raise ValueError("já existe um arquivo com esse nome")
+        p.write_text(f"# {nome}\n\n", encoding="utf-8")
+    else:
+        raise ValueError("tipo desconhecido")
+    return p.relative_to(RAIZ).as_posix()
+
+
+def enviar_arquivo(pasta, nome, dados_b64):
+    destino = {"imagens": "referencias/imagens", "textos": "referencias/textos",
+               "exemplos": "estilo/exemplos", "entrada": "entrada"}.get(pasta)
+    if not destino:
+        raise ValueError("pasta inválida")
+    nome_base = Path(nome).name
+    ext = Path(nome_base).suffix.lower()
+    permitidas = EXT_IMAGEM if pasta == "imagens" else EXT_TEXTO
+    if ext not in permitidas:
+        raise ValueError(f"tipo de arquivo não aceito aqui: {ext or 'sem extensão'}")
+    dados = base64.b64decode(dados_b64)
+    if len(dados) > 15 * 1024 * 1024:
+        raise ValueError("arquivo maior que 15 MB")
+    alvo_dir = RAIZ / destino
+    alvo_dir.mkdir(parents=True, exist_ok=True)
+    alvo = alvo_dir / (slug(Path(nome_base).stem) + ext)
+    i = 2
+    while alvo.exists():
+        alvo = alvo_dir / f"{slug(Path(nome_base).stem)}-{i}{ext}"
+        i += 1
+    alvo.write_bytes(dados)
+    return alvo.relative_to(RAIZ).as_posix()
+
+
+# ---------------------------------------------------------------- HTTP
+
+class Manipulador(BaseHTTPRequestHandler):
+    server_version = "Escrivaninha/1.0"
+
+    def log_message(self, fmt, *args):
+        pass  # silencioso
+
+    def _json(self, dados, codigo=200):
+        corpo = json.dumps(dados, ensure_ascii=False).encode("utf-8")
+        self.send_response(codigo)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(corpo)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(corpo)
+
+    def _arquivo(self, p):
+        if not p.exists() or not p.is_file():
+            self.send_error(404)
+            return
+        tipo = mimetypes.guess_type(p.name)[0] or "application/octet-stream"
+        if tipo.startswith("text/") or tipo in ("application/javascript", "application/json"):
+            tipo += "; charset=utf-8"
+        dados = p.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", tipo)
+        self.send_header("Content-Length", str(len(dados)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(dados)
+
+    def _corpo(self):
+        n = int(self.headers.get("Content-Length") or 0)
+        return json.loads(self.rfile.read(n) or b"{}")
+
+    def _origem_ok(self):
+        """Bloqueia gravações vindas de outros sites abertos no navegador."""
+        origem = self.headers.get("Origin")
+        if not origem:
+            return True
+        host = urlparse(origem).hostname
+        return host in ("127.0.0.1", "localhost")
+
+    def do_GET(self):
+        url = urlparse(self.path)
+        q = {k: v[0] for k, v in parse_qs(url.query).items()}
+        try:
+            if url.path == "/api/arvore":
+                return self._json(arvore())
+            if url.path == "/api/estado":
+                return self._json(estado())
+            if url.path == "/api/decisoes":
+                return self._json(decisoes())
+            if url.path == "/api/arquivo":
+                p = caminho_seguro(q.get("caminho"))
+                if not p.exists():
+                    return self._json({"erro": "arquivo não encontrado"}, 404)
+                return self._json({"caminho": q["caminho"], "conteudo": ler(p)})
+            if url.path == "/api/tiques":
+                return self._json(tiques(q.get("caminho")))
+            if url.path == "/api/busca":
+                return self._json(busca(q.get("q", "")))
+            if url.path.startswith("/repo/"):
+                p = caminho_seguro(unquote(url.path[len("/repo/"):]))
+                return self._arquivo(p)
+            alvo = (ESTATICO / (url.path.lstrip("/") or "index.html")).resolve()
+            if ESTATICO not in alvo.parents:
+                return self.send_error(404)
+            return self._arquivo(alvo)
+        except PermissionError as e:
+            return self._json({"erro": str(e)}, 403)
+        except Exception as e:  # noqa: BLE001
+            return self._json({"erro": str(e)}, 400)
+
+    def do_POST(self):
+        if not self._origem_ok():
+            return self._json({"erro": "origem não permitida"}, 403)
+        url = urlparse(self.path)
+        try:
+            d = self._corpo()
+            if url.path == "/api/arquivo":
+                p = caminho_seguro(d["caminho"])
+                if p.suffix.lower() not in EXT_TEXTO:
+                    raise ValueError("só arquivos de texto")
+                if p.suffix.lower() == ".json":
+                    json.loads(d["conteudo"])  # não deixa gravar JSON quebrado
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(d["conteudo"], encoding="utf-8")
+                return self._json({"ok": True})
+            if url.path == "/api/novo":
+                return self._json({"caminho": criar(d.get("tipo"), d.get("nome"))})
+            if url.path == "/api/decidir":
+                resolver_decisao(d["caminho"], d["linha"], d["resposta"])
+                return self._json({"ok": True})
+            if url.path == "/api/enviar":
+                return self._json({"caminho": enviar_arquivo(d["pasta"], d["nome"], d["dados"])})
+            if url.path == "/api/apagar":
+                p = caminho_seguro(d["caminho"])
+                if not (p.relative_to(RAIZ).as_posix().startswith(("referencias/", "entrada/"))):
+                    raise PermissionError("só dá para apagar referências e entrada pela interface")
+                p.unlink()
+                return self._json({"ok": True})
+            return self._json({"erro": "rota desconhecida"}, 404)
+        except PermissionError as e:
+            return self._json({"erro": str(e)}, 403)
+        except json.JSONDecodeError as e:
+            return self._json({"erro": f"JSON inválido: {e}"}, 400)
+        except Exception as e:  # noqa: BLE001
+            return self._json({"erro": str(e)}, 400)
+
+
+def main():
+    porta = 8765
+    if "--porta" in sys.argv:
+        porta = int(sys.argv[sys.argv.index("--porta") + 1])
+    servidor = ThreadingHTTPServer(("127.0.0.1", porta), Manipulador)
+    endereco = f"http://127.0.0.1:{porta}"
+    print(f"Escrivaninha aberta em {endereco}  (Ctrl+C para fechar)")
+    if "--sem-navegador" not in sys.argv:
+        threading.Timer(0.6, lambda: webbrowser.open(endereco)).start()
+    try:
+        servidor.serve_forever()
+    except KeyboardInterrupt:
+        print("\nAté a próxima página.")
+
+
+if __name__ == "__main__":
+    main()

@@ -5,12 +5,15 @@ Uso:
     python3 ferramentas/checa_tiques.py capitulos/cap-01.md
     python3 ferramentas/checa_tiques.py capitulos/cap-01.md --resumo
 
-Só aponta ocorrências (linha, categoria, trecho). Não reescreve nada.
+Só aponta ocorrências (linha, categoria, trecho), agrupadas por classe. Não reescreve nada.
+O jeito de escrever do autor não é tique: onomatopeia entre asteriscos (*Chua*) e fala entre aspas
+com travessão ("— ...") ficam de fora.
 Python puro, sem rede. Listas e parâmetros em ferramentas/tiques.json.
 """
 
 import json
 import re
+import unicodedata
 import statistics
 import sys
 from pathlib import Path
@@ -62,8 +65,44 @@ def montar_paragrafos(linhas):
 
 
 def eh_dialogo(texto):
-    t = texto.lstrip()
+    t = texto.lstrip().lstrip(ASPAS).lstrip()
     return bool(t) and (t[0] in TRAVESSOES or t.startswith("-"))
+
+
+ASPAS = "\"“”«»"
+# Trechos que são jeito de escrever do autor: fala entre aspas e onomatopeia entre asteriscos.
+FALA_ENTRE_ASPAS = re.compile(r'"[^"\n]*"|“[^”\n]*”|«[^»\n]*»')
+ONOM_ASTERISCO = re.compile(r"\*[^*\n]{1,30}\*")
+
+
+def sem_protegidos(texto, *regs):
+    """Troca os trechos protegidos por espaços (mesmo tamanho, para não mexer nas posições)."""
+    for r in regs:
+        texto = r.sub(lambda m: " " * len(m.group()), texto)
+    return texto
+
+
+def raiz(palavra):
+    p = unicodedata.normalize("NFD", palavra.lower())
+    return "".join(c for c in p if not unicodedata.combining(c))[:4]
+
+
+# Classes de tique: cada categoria entra na primeira classe cujo prefixo casa.
+CLASSES = [
+    ("Comparação e contraste", ("contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa")),
+    ("Ritmo e repetição", ("possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica")),
+    ("Vocabulário artificial", ("palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto")),
+    ("Exagero e efeito", ("linguagem grandiosa", "gancho artificial")),
+    ("Emoção e corpo", ("emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou")),
+    ("Formato", ()),
+]
+
+
+def classe_de(categoria):
+    for nome, prefixos in CLASSES:
+        if any(categoria.startswith(p) for p in prefixos):
+            return nome
+    return "Formato"
 
 
 def trecho(texto, ini, fim, margem=30):
@@ -96,6 +135,11 @@ FRASES = re.compile(r"[^.!?…]+[.!?…]+")
 
 # Onomatopeia: letra esticada ("craaash", "toc-toc") ou termos da lista em tiques.json
 LETRA_ESTICADA = re.compile(r"\b\w*([^\W\d_])\1{2,}\w*\b", re.IGNORECASE)
+
+# Repetição comparativa: "amarelei às vezes, mas eu sempre amarelo", "entrei no percurso, mas sempre entro"
+MAS_SEMPRE = re.compile(r"(?<!\w)mas (?:eu |ele |ela |a gente |nós |eles |elas )?sempre ([^\W\d_]+)", re.IGNORECASE)
+OU_QUANDO = re.compile(r"(?<!\w)ou quando(?!\w)", re.IGNORECASE)
+PALAVRA = re.compile(r"[^\W\d_]+")
 
 
 def contar_palavras(s):
@@ -144,6 +188,17 @@ def checar(caminho, cfg):
     for num, texto in linhas:
         if not texto.strip() or SEPARADOR_CENA.match(texto):
             continue
+        for m in MAS_SEMPRE.finditer(texto):
+            r2 = raiz(m.group(1))
+            if len(r2) < 4:
+                continue
+            ini = max(texto.rfind(c, 0, m.start()) for c in ".!?") + 1
+            for w in PALAVRA.finditer(texto, ini, m.start()):
+                if raiz(w.group()) == r2:
+                    add(num, "repetição comparativa (21)", trecho(texto, w.start(), m.end()), (w.start(), m.end()))
+                    break
+        for m in OU_QUANDO.finditer(texto):
+            add(num, "alternativa comparativa \"ou quando\" (21)", trecho(texto, m.start(), m.end()), m.span())
         for cat, regs in listas.items():
             for r in regs:
                 for m in r.finditer(texto):
@@ -152,8 +207,9 @@ def checar(caminho, cfg):
             for m in r.finditer(texto):
                 add(num, "contraste falso (1)", trecho(texto, m.start(), m.end()), m.span())
         vistos_onom = []
+        sem_metodo = sem_protegidos(texto, ONOM_ASTERISCO, FALA_ENTRE_ASPAS)
         for r in onomatopeias:
-            for m in r.finditer(texto):
+            for m in r.finditer(sem_metodo):
                 if not any(m.start() < b and a < m.end() for a, b in vistos_onom):
                     vistos_onom.append(m.span())
                     total_onom.append((num, trecho(texto, m.start(), m.end())))
@@ -161,7 +217,7 @@ def checar(caminho, cfg):
             for m in r.finditer(texto):
                 total_sussurros.append((num, trecho(texto, m.start(), m.end())))
         if so_dialogo and not eh_dialogo(texto):
-            for m in re.finditer("[" + TRAVESSOES + "]|(?<=\\s)--?(?=\\s)", texto):
+            for m in re.finditer("[" + TRAVESSOES + "]|(?<=\\s)--?(?=\\s)", sem_protegidos(texto, FALA_ENTRE_ASPAS)):
                 add(num, "travessão fora de diálogo (14)", trecho(texto, m.start(), m.end()), m.span())
         if not eh_dialogo(texto):
             for m in TRINCA_TERMOS.finditer(texto):
@@ -226,7 +282,8 @@ def checar(caminho, cfg):
                 add(0, "simetria mecânica (13)",
                     f"{len(tamanhos)} parágrafos, média {media:.0f} palavras, variação baixa (cv={cv:.2f})")
 
-    return sorted(ocorrencias, key=lambda o: (o[0], o[1])), tamanhos
+    ordem = [c for c, _ in CLASSES]
+    return sorted(ocorrencias, key=lambda o: (ordem.index(classe_de(o[1])), o[0], o[1])), tamanhos
 
 
 def main():
@@ -239,18 +296,29 @@ def main():
     ocorrencias, tamanhos = checar(caminho, cfg)
 
     print(f"# checa_tiques: {caminho}")
-    print(f"# {len(tamanhos)} parágrafos, {sum(tamanhos)} palavras, {len(ocorrencias)} ocorrência(s)\n")
+    print(f"# {len(tamanhos)} parágrafos, {sum(tamanhos)} palavras, {len(ocorrencias)} ocorrência(s)")
+    atual = None
     for num, cat, txt in ocorrencias:
+        classe = classe_de(cat)
+        if classe != atual:
+            atual = classe
+            n = sum(1 for o in ocorrencias if classe_de(o[1]) == classe)
+            print(f"\n## {classe} ({n})")
         local = f"linha {num}" if num else "geral"
         print(f"{local:>10} | {cat} | {txt}")
 
     if "--resumo" in sys.argv:
-        contagem = {}
-        for _, cat, _ in ocorrencias:
-            contagem[cat] = contagem.get(cat, 0) + 1
-        print("\n# resumo por categoria")
-        for cat, n in sorted(contagem.items(), key=lambda x: -x[1]):
-            print(f"{n:>4}  {cat}")
+        print("\n# resumo por classe")
+        for classe, _ in CLASSES:
+            contagem = {}
+            for _, cat, _ in ocorrencias:
+                if classe_de(cat) == classe:
+                    contagem[cat] = contagem.get(cat, 0) + 1
+            if not contagem:
+                continue
+            print(f"{sum(contagem.values()):>4}  {classe}")
+            for cat, n in sorted(contagem.items(), key=lambda x: -x[1]):
+                print(f"      {n:>4}  {cat}")
 
 
 if __name__ == "__main__":

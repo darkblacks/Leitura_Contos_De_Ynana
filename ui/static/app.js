@@ -329,7 +329,8 @@ VISTAS.capitulo = async (caminho) => {
           <div class="sub" style="margin-top:6px">Depois rode <code>/sincronizar ${esc(meta.capitulo || "")}</code> no Claude.</div></div>
         <div id="extras-capitulo"></div>
         <div class="cartao">
-          <h3 style="font-size:19px;margin:0 0 8px">Não gostou?</h3>
+          <h3 style="font-size:19px;margin:0 0 8px">O que achou?</h3>
+          <button class="botao gostei" id="gostei" style="width:100%;justify-content:center;margin-bottom:8px" title="Registra nos Acontecimentos o que aconteceu, a função na história e onde estava cada um">♥ Gostei: canonizar</button>
           <div class="botoes-reescrita">
             <button class="botao" id="do-zero" title="Guarda uma cópia e o Claude escreve de novo, do zero">↺ Reescrever do zero</button>
             <button class="botao primario" id="ajustar" title="Diga o que mudar e o que manter">✎ Ajustar</button>
@@ -412,6 +413,7 @@ VISTAS.capitulo = async (caminho) => {
   };
   const nCap = +(meta.capitulo || (caminho.match(/cap-(\d+)/) || [])[1] || 0);
   $("#ajustar").onclick = async () => { await salvar(); abrirAjuste({ caminho, n: nCap, status: statusAtual, trecho: ta.value.slice(ta.selectionStart, ta.selectionEnd).trim() }); };
+  $("#gostei").onclick = async () => { await salvar(); canonizarCapitulo({ caminho, n: nCap }); };
   $("#do-zero").onclick = async () => { await salvar(); reescreverDoZero({ caminho, n: nCap, meta, status: statusAtual }); };
   // acontecimentos vinculados, linha do tempo e idades (mundo.js)
   if (window.extrasCapitulo) extrasCapitulo({ caminho, nCap, ta, quando: () => $("#f-quando").value }).catch(() => {});
@@ -420,17 +422,26 @@ VISTAS.capitulo = async (caminho) => {
     const r = await api("/api/tiques?caminho=" + encodeURIComponent(caminho));
     const box = $("#tiques");
     if (!r.ocorrencias.length) { box.innerHTML = `<div class="sub" style="color:var(--verde)">Nada encontrado. ✓</div>`; return; }
-    // agrupa ocorrências da mesma regra na mesma linha (ex.: várias onomatopeias)
-    const grupos = [];
-    for (const o of r.ocorrencias) {
-      const g = grupos.find((x) => x.linha === o.linha && x.categoria === o.categoria);
-      if (g) g.n++; else grupos.push({ ...o, n: 1 });
-    }
-    box.innerHTML = `<div class="sub" style="margin-bottom:8px">${r.ocorrencias.length} ocorrência(s)</div>` +
-      grupos.map((o) => `<div class="tique" data-l="${o.linha}"><b>${esc(o.categoria)}</b> ${o.linha ? "· linha " + o.linha : ""}${o.n > 1 ? ` · ${o.n}×` : ""}<span>${esc(o.trecho)}</span></div>`).join("");
+    box.innerHTML = `<div class="sub" style="margin-bottom:8px">${r.ocorrencias.length} ocorrência(s)</div>` + htmlTiquesPorClasse(r.ocorrencias);
     $$(".tique", box).forEach((t) => (t.onclick = () => irParaLinha(+t.dataset.l)));
   };
 };
+
+/* Tiques agrupados por classe (Comparação e contraste, Ritmo e repetição…), cada classe abre e fecha. */
+function htmlTiquesPorClasse(ocorrencias) {
+  const classes = [];
+  for (const o of ocorrencias) {
+    const nome = o.classe || "Outros";
+    let c = classes.find((x) => x.nome === nome);
+    if (!c) { c = { nome, itens: [] }; classes.push(c); }
+    const g = c.itens.find((x) => x.linha === o.linha && x.categoria === o.categoria);
+    if (g) g.n++; else c.itens.push({ ...o, n: 1 });
+  }
+  return classes.map((c, i) => `<details class="classe-tique" ${i === 0 ? "open" : ""}>
+      <summary><b>${esc(c.nome)}</b> <span class="pilula">${c.itens.reduce((a, x) => a + x.n, 0)}</span></summary>
+      ${c.itens.map((o) => `<div class="tique" data-l="${o.linha}"><b>${esc(o.categoria.replace(/\s*\([^)]*\)\s*$/, ""))}</b> ${o.linha ? "· linha " + o.linha : ""}${o.n > 1 ? ` · ${o.n}×` : ""}<span>${esc(o.trecho)}</span></div>`).join("")}
+    </details>`).join("");
+}
 
 /* ------------------------------------------------------------ FICHAS (personagens, lugares, artefatos)
    Cada ficha tem uma foto de referência: imagem com o mesmo nome, ao lado do .md.
@@ -735,6 +746,7 @@ VISTAS.conversa = async () => {
         <div class="painel-cap-topo">
           <select id="sel-cap"></select>
           <div class="botoes-reescrita" id="botoes-cap">
+            <button class="botao pequeno gostei" id="cap-gostei" title="Registra o capítulo nos Acontecimentos, com a função na história">♥ Gostei</button>
             <button class="botao pequeno" id="cap-zero" title="Guarda o texto atual e o Claude escreve de novo, do zero">↺ Do zero</button>
             <button class="botao pequeno primario" id="cap-ajustar" title="Diga o que mudar e o que manter">✎ Ajustar</button>
           </div>
@@ -843,12 +855,12 @@ VISTAS.conversa = async () => {
       const g = grupos.find((x) => x.categoria === o.categoria);
       if (g) g.itens.push(o); else grupos.push({ categoria: o.categoria, itens: [o] });
     }
+    const porClasse = htmlTiquesPorClasse(r.ocorrencias);
     caixa.innerHTML = `<div class="ctx-bloco">
         <div class="ctx-linha"><b>${r.palavras.toLocaleString("pt-BR")} palavras · ${r.paragrafos} parágrafos</b>
           <span class="pilula ${r.ocorrencias.length ? "" : "ok"}">${r.ocorrencias.length ? r.ocorrencias.length + " apontamento(s)" : "nada encontrado"}</span></div>
         ${r.ocorrencias.length ? `<button class="botao pequeno primario" id="pedir-correcao">Pedir ao Claude para corrigir</button>` : ""}</div>
-      ${grupos.map((g) => `<div class="ctx-bloco"><h4>${esc(g.categoria)} · ${g.itens.length}</h4>
-        ${g.itens.slice(0, 12).map((o) => `<div class="tique"><b>${o.linha ? "linha " + o.linha : "geral"}</b><span>${esc(o.trecho)}</span></div>`).join("")}</div>`).join("")}`;
+      <div class="ctx-bloco">${porClasse}</div>`;
     const b = $("#pedir-correcao", caixa);
     if (b) b.onclick = () => enviar(`No capítulo ${capAtual.n}, corrija os apontamentos da checagem de tiques (${r.ocorrencias.length} itens: ${grupos.map((g) => g.categoria + " ×" + g.itens.length).join("; ")}). Mexa só nos trechos apontados e me diga em poucas linhas o que mudou.`);
   };
@@ -901,6 +913,7 @@ VISTAS.conversa = async () => {
     if (capAtual && !capAtual.novo) {
       const pal = palavras(($("#texto-folha") || {}).textContent || "");
       if (pal && pal < META_PALAVRAS) opcoes.push(["Continuar até 4.600 palavras", `O capítulo ${n} está com ${pal} palavras. Aprofunde as cenas do que eu pedi até passar de 4.600, sem enchimento e sem fato novo.`]);
+      opcoes.push(["♥ Gostei: canonizar", () => canonizarCapitulo({ caminho: capAtual.caminho, n, aoEnviar: enviar })]);
       opcoes.push(["✎ Ajustar", () => abrirAjuste({ caminho: capAtual.caminho, n, status: capAtual.status, aoEnviar: enviar })]);
       opcoes.push(["↺ Do zero", () => reescreverDoZero({ caminho: capAtual.caminho, n, meta: capAtual.meta || {}, status: capAtual.status, aoEnviar: enviarECarregar })]);
       opcoes.push(["Escrever o capítulo " + (n + 1), () => abrirPedido(n + 1)]);
@@ -968,6 +981,7 @@ VISTAS.conversa = async () => {
   };
   $("#cap-ajustar").onclick = () => capAtual && !capAtual.novo && abrirAjuste({ caminho: capAtual.caminho, n: capAtual.n, status: capAtual.status, aoEnviar: enviar,
     trecho: (document.getSelection() || "").toString().trim() });
+  $("#cap-gostei").onclick = () => capAtual && !capAtual.novo && canonizarCapitulo({ caminho: capAtual.caminho, n: capAtual.n, aoEnviar: enviar });
   $("#cap-zero").onclick = () => capAtual && !capAtual.novo && reescreverDoZero({ caminho: capAtual.caminho, n: capAtual.n, meta: capAtual.meta || {}, status: capAtual.status, aoEnviar: enviarECarregar });
   $("#abrir-pedido").onclick = () => abrirPedido();
 

@@ -14,9 +14,9 @@ Não existe roteiro pronto: o que acontece vem do **pedido do autor** (no chat o
 1. **Ler** (só isto):
    - o pedido e as notas do capítulo (`continuidade/notas-do-autor/cap-NN.md`), inclusive o que está em "manter"
    - **a escrita de quem escreve**: `estilo/escritas/<nome>.md` e, se ela herda de outra, a de cima também (o que estiver vazio vem de lá); `estilo/estilo.md` (regras gerais) e `estilo/guardrails.md`
-   - a ficha de quem escreve, com a foto e a versão de aparência da idade
-   - o capítulo anterior inteiro (`cap-(N-1).md`), se existir; `continuidade/resumos.md` e `continuidade/registro.md`
-   - as fichas dos personagens, lugares e artefatos do pedido, com as fotos de referência
+   - a ficha de quem escreve (a versão de aparência da idade); **não abra imagens**, use só as descrições
+   - o capítulo anterior inteiro (`cap-(N-1).md`), se existir; para os de antes, os **acontecimentos canonizados** (`biblia/acontecimentos/`: onde estava cada um, função) e `continuidade/resumos.md`; `continuidade/registro.md`
+   - as fichas dos personagens, lugares e artefatos do pedido (só o texto)
    - para o lugar da cena, a cadeia dele em `biblia/geografia.md` e as fichas dessa cadeia
    - os acontecimentos escolhidos (`biblia/acontecimentos/`) e o ciclo deles (`biblia/ciclos.md`); `biblia/relacoes.md` entre quem aparece
    - `biblia/calendario.md`: o nome do mês e os **feriados e festivais** que caem na data do capítulo (se cair, a cena pode e deve sentir isso)

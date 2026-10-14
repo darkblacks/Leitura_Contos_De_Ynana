@@ -142,3 +142,14 @@
 **Faça:** cada personagem pensa e fala do seu jeito (ficha: Voz, Persona, "Como escreve no diário"), e a entrada mantém o estilo dos capítulos oficiais.
 **Errado:** a Ynana e outro leitor escrevendo com o mesmo vocabulário, as mesmas piadas e o mesmo ritmo.
 **Reescrita:** releia a ficha de quem escreve e a seção Voz de quem fala; ajuste vocabulário, tamanho de frase e o que cada um nota.
+
+## 22. Repetição comparativa `[script]`
+
+**Faça:** diga a ação uma vez, com o detalhe que importa.
+**Errado:** "Amarelei às vezes, mas eu sempre amarelo." / "Entrei dentro do percurso, mas sempre entro." / "Vinculei o quadro, ou quando amarrei o sapato forte, ou quando…"
+**Reescrita:** "Sempre amarelo quando o mar fica grosso." / "Entrei no percurso pelo mesmo lado de sempre." / conte um momento só, inteiro, em vez de empilhar alternativas com "ou quando".
+
+## Não é tique: o jeito de escrever do autor
+
+- Onomatopeia entre asteriscos no meio da ação (`*Chua*`, `*Zap*`): é método, não conta como excesso.
+- Fala entre aspas com travessão dentro (`"— Olha mãe…" Disse…`), inclusive no meio da narração: é o formato de diálogo dos diários.

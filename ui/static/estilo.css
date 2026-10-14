@@ -674,3 +674,11 @@ a { color: var(--acento); }
 .msg-longa[open] summary::after { content: ""; }
 .msg-longa > div { margin-top: 8px; font-size: 13px; opacity: .92; }
 .cab-diario.editavel input { field-sizing: content; min-width: 7ch; }
+.classe-tique { margin-bottom: 8px; }
+.classe-tique summary { cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.classe-tique .tique { margin-left: 4px; }
+.botao.gostei { border-color: var(--verde); color: var(--verde); }
+.botao.gostei:hover { background: color-mix(in srgb, var(--verde) 12%, var(--papel)); }
+.funcao { font-family: var(--serif); font-style: italic; color: var(--acento); font-size: 15px; margin: 2px 0 4px; }
+.evento-corpo.filler { opacity: .78; }
+.evento-corpo.filler .funcao { color: var(--tinta-3); }

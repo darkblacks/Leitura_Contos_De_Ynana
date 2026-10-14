@@ -107,8 +107,73 @@ func trecho(texto string, ini, fim, margem int) string {
 
 func contarPalavras(s string) int { return len(rePalavra.FindAllString(s, -1)) }
 
+// O jeito de escrever do autor não é tique: fala entre aspas ("— ...") e onomatopeia entre asteriscos (*Chua*).
+const aspas = "\"“”«»"
+
+var (
+	reFalaEntreAspas = regexp.MustCompile(`"[^"\n]*"|“[^”\n]*”|«[^»\n]*»`)
+	reOnomAsterisco  = regexp.MustCompile(`\*[^*\n]{1,30}\*`)
+	reMasSempre      = regexp.MustCompile(`(?i)mas (?:eu |ele |ela |a gente |nós |eles |elas )?sempre (\pL+)`)
+	rePalavraLetra   = regexp.MustCompile(`\pL+`)
+)
+
+// semProtegidos troca os trechos protegidos por espaços do mesmo tamanho em caracteres
+// (o Python conta caracteres; aqui as posições são em bytes, então cada caractere vira
+// tantos espaços quantos bytes ele ocupa: as posições em bytes continuam valendo).
+func semProtegidos(texto string, res ...*regexp.Regexp) string {
+	for _, r := range res {
+		texto = r.ReplaceAllStringFunc(texto, func(m string) string { return strings.Repeat(" ", len(m)) })
+	}
+	return texto
+}
+
+var tiraAcento = strings.NewReplacer("á", "a", "à", "a", "â", "a", "ã", "a", "ä", "a", "é", "e", "è", "e", "ê", "e", "ë", "e",
+	"í", "i", "ì", "i", "î", "i", "ï", "i", "ó", "o", "ò", "o", "ô", "o", "õ", "o", "ö", "o", "ú", "u", "ù", "u", "û", "u", "ü", "u", "ç", "c", "ñ", "n")
+
+func raizPalavra(p string) string {
+	r := []rune(tiraAcento.Replace(strings.ToLower(p)))
+	if len(r) > 4 {
+		r = r[:4]
+	}
+	return string(r)
+}
+
+// Classes de tique: cada categoria entra na primeira classe cujo prefixo casa.
+var classesTique = []struct {
+	nome     string
+	prefixos []string
+}{
+	{"Comparação e contraste", []string{"contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa"}},
+	{"Ritmo e repetição", []string{"possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica"}},
+	{"Vocabulário artificial", []string{"palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto"}},
+	{"Exagero e efeito", []string{"linguagem grandiosa", "gancho artificial"}},
+	{"Emoção e corpo", []string{"emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou"}},
+	{"Formato", nil},
+}
+
+func classeDe(cat string) string {
+	for _, c := range classesTique {
+		for _, p := range c.prefixos {
+			if strings.HasPrefix(cat, p) {
+				return c.nome
+			}
+		}
+	}
+	return "Formato"
+}
+
+func indiceClasse(cat string) int {
+	n := classeDe(cat)
+	for i, c := range classesTique {
+		if c.nome == n {
+			return i
+		}
+	}
+	return len(classesTique)
+}
+
 func ehDialogo(texto string) bool {
-	t := strings.TrimLeft(texto, " \t")
+	t := strings.TrimLeft(strings.TrimLeft(strings.TrimLeft(texto, " \t"), aspas), " \t")
 	if t == "" {
 		return false
 	}
@@ -294,6 +359,7 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 	comparacao := compilarPy(`(?:como se|feito (?:uma|um)|tal qual|qual (?:uma|um)|semelhante a|parecia (?:uma|um))`, true, true)
 	comoUm := compilarPy(`como (?:uma|um)`, true, true)
 	travessaoSolto := regexp.MustCompile(`[—–]|\s(--?)\s`)
+	ouQuando := compilarPy(`ou quando`, true, true)
 
 	maxComp := cfg.numero("max_comparacoes_por_paragrafo", 1)
 	maxSuss := cfg.numero("max_sussurros_por_capitulo", 3)
@@ -313,6 +379,30 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 		texto, num := l.texto, l.num
 		if strings.TrimSpace(texto) == "" || reSeparadorCena.MatchString(texto) {
 			continue
+		}
+		// repetição comparativa: "amarelei às vezes, mas eu sempre amarelo"
+		for _, m := range reMasSempre.FindAllStringSubmatchIndex(texto, -1) {
+			if m[0] > 0 {
+				if r, _ := utf8.DecodeLastRuneInString(texto[:m[0]]); ehLetraPalavra(r) {
+					continue
+				}
+			}
+			r2 := raizPalavra(texto[m[2]:m[3]])
+			if utf8.RuneCountInString(r2) < 4 {
+				continue
+			}
+			ini := strings.LastIndexAny(texto[:m[0]], ".!?") + 1
+			for _, w := range rePalavraLetra.FindAllStringIndex(texto[ini:m[0]], -1) {
+				if raizPalavra(texto[ini+w[0]:ini+w[1]]) == r2 {
+					s := [2]int{ini + w[0], m[1]}
+					add(num, "repetição comparativa (21)", trecho(texto, s[0], s[1], 30), &s)
+					break
+				}
+			}
+		}
+		for _, s := range ouQuando.casamentos(texto) {
+			s := s
+			add(num, `alternativa comparativa "ou quando" (21)`, trecho(texto, s[0], s[1], 30), &s)
 		}
 		for _, g := range listas {
 			for _, p := range g.pads {
@@ -338,11 +428,12 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 			vistosOnom = append(vistosOnom, s)
 			totalOnom = append(totalOnom, achado{num, trecho(texto, s[0], s[1], 30)})
 		}
-		for _, s := range letraEsticada(texto) {
+		semMetodo := semProtegidos(texto, reOnomAsterisco, reFalaEntreAspas)
+		for _, s := range letraEsticada(semMetodo) {
 			registrarOnom(s)
 		}
 		for _, p := range onomatopeias {
-			for _, s := range p.casamentos(texto) {
+			for _, s := range p.casamentos(semMetodo) {
 				registrarOnom(s)
 			}
 		}
@@ -352,7 +443,7 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 			}
 		}
 		if soDialogo && !ehDialogo(texto) {
-			for _, m := range travessaoSolto.FindAllStringSubmatchIndex(texto, -1) {
+			for _, m := range travessaoSolto.FindAllStringSubmatchIndex(semProtegidos(texto, reFalaEntreAspas), -1) {
 				s := [2]int{m[0], m[1]}
 				if m[2] >= 0 {
 					s = [2]int{m[2], m[3]}
@@ -475,6 +566,9 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 	}
 
 	sort.SliceStable(ocorrencias, func(i, j int) bool {
+		if ci, cj := indiceClasse(ocorrencias[i].categoria), indiceClasse(ocorrencias[j].categoria); ci != cj {
+			return ci < cj
+		}
 		if ocorrencias[i].linha != ocorrencias[j].linha {
 			return ocorrencias[i].linha < ocorrencias[j].linha
 		}
@@ -522,8 +616,19 @@ func cmdTiques(args []string) int {
 		soma += t
 	}
 	fmt.Printf("# checa_tiques: %s\n", caminho)
-	fmt.Printf("# %d parágrafos, %d palavras, %d ocorrência(s)\n\n", len(tam), soma, len(oc))
+	fmt.Printf("# %d parágrafos, %d palavras, %d ocorrência(s)\n", len(tam), soma, len(oc))
+	atual := ""
 	for _, o := range oc {
+		if c := classeDe(o.categoria); c != atual {
+			atual = c
+			n := 0
+			for _, x := range oc {
+				if classeDe(x.categoria) == c {
+					n++
+				}
+			}
+			fmt.Printf("\n## %s (%d)\n", c, n)
+		}
 		local := "geral"
 		if o.linha != 0 {
 			local = fmt.Sprintf("linha %d", o.linha)
@@ -531,18 +636,29 @@ func cmdTiques(args []string) int {
 		fmt.Printf("%10s | %s | %s\n", local, o.categoria, o.trecho)
 	}
 	if resumo {
-		cont := map[string]int{}
-		var ordem []string
-		for _, o := range oc {
-			if cont[o.categoria] == 0 {
-				ordem = append(ordem, o.categoria)
+		fmt.Println("\n# resumo por classe")
+		for _, cl := range classesTique {
+			cont := map[string]int{}
+			var ordem []string
+			total := 0
+			for _, o := range oc {
+				if classeDe(o.categoria) != cl.nome {
+					continue
+				}
+				if cont[o.categoria] == 0 {
+					ordem = append(ordem, o.categoria)
+				}
+				cont[o.categoria]++
+				total++
 			}
-			cont[o.categoria]++
-		}
-		sort.SliceStable(ordem, func(i, j int) bool { return cont[ordem[i]] > cont[ordem[j]] })
-		fmt.Println("\n# resumo por categoria")
-		for _, c := range ordem {
-			fmt.Printf("%4d  %s\n", cont[c], c)
+			if total == 0 {
+				continue
+			}
+			sort.SliceStable(ordem, func(i, j int) bool { return cont[ordem[i]] > cont[ordem[j]] })
+			fmt.Printf("%4d  %s\n", total, cl.nome)
+			for _, c := range ordem {
+				fmt.Printf("      %4d  %s\n", cont[c], c)
+			}
 		}
 	}
 	return 0

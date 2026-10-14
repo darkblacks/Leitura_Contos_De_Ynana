@@ -539,7 +539,7 @@ func novoRoteador(estatico fs.FS) http.Handler {
 					soma += t
 				}
 				for _, o := range oc {
-					lista = append(lista, item{"linha": o.linha, "categoria": o.categoria, "trecho": o.trecho})
+					lista = append(lista, item{"linha": o.linha, "classe": classeDe(o.categoria), "categoria": o.categoria, "trecho": o.trecho})
 				}
 				responder(w, 200, item{"paragrafos": len(tam), "palavras": soma, "ocorrencias": lista})
 			case "/api/contexto":

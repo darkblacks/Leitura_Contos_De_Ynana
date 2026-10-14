@@ -267,6 +267,8 @@ function valorSeletorData(el, cal = _cal) {
 /* ============================================================ Acontecimentos */
 const MODOS = { acontece: "Acontece neste capítulo", lembranca: "Lembrança / flashback", mencao: "Menção / revelação" };
 const SITUACOES = ["planejado", "confirmado", "incerto"];
+const FUNCOES = ["dar abertura", "apresentar personagens", "virada", "plantar pista", "pagar pista", "aprofundar relação", "mostrar o mundo", "conflito", "clímax", "desfecho", "dar volume (filler)"];
+const ehFiller = (f) => /filler|volume/i.test(f || "");
 
 function lerAcontecimento(texto, caminho) {
   const doc = secoesMd(texto);
@@ -300,6 +302,8 @@ function lerAcontecimento(texto, caminho) {
     caminho, titulo, notas, campos, doc, infos, vinculos, intro: intro.join("\n").trim(),
     quando: semEx(campos.get("Quando")), ate: semEx(campos.get("Até")), situacao: semAcento(campos.get("Situação")).split(/\s/)[0] || "planejado",
     personagens: linksDe(campos.get("Personagens"), caminho), local: linksDe(campos.get("Local"), caminho), localTexto: campos.get("Local"),
+    funcao: semEx(campos.get("Função")), origem: semEx(campos.get("Origem")),
+    ondeCada: ((sec("Onde estava cada um") || {}).corpo || "").split("\n").filter((l) => /^[-*]\s/.test(l) && !/\(onde estava, o que fazia\)/.test(l)).join("\n"),
     fontes: semEx(campos.get("Fontes")), descricao: ((sec("Descrição") || {}).corpo || "").replace(/^O que aconteceu de fato.*$/m, "").trim(),
   };
 }
@@ -318,11 +322,14 @@ function escreverAcontecimento(ev) {
   c.set("Personagens", ev.personagens.map((p) => mdLink(p.nome, p.caminho, ev.caminho)).join(", "));
   c.set("Local", ev.local.length ? ev.local.map((p) => mdLink(p.nome, p.caminho, ev.caminho)).join(", ") : (ev.localTexto && !/\]\(/.test(ev.localTexto) ? ev.localTexto : ""));
   c.set("Fontes", ev.fontes || "");
+  if (ev.funcao) c.set("Função", ev.funcao); else c.remover("Função");
+  if (ev.origem) c.set("Origem", ev.origem);
   const cab = [`# ${ev.titulo}`, ev.notas ? "\n" + ev.notas : "", "", c.texto()].join("\n");
   const doc = ev.doc;
   doc.cabeca = cab.replace(/\n{3,}/g, "\n\n");
   const por = (titulo, corpo) => { const s = acharSecao(doc, titulo); if (s) s.corpo = corpo; else doc.secoes.push({ titulo, corpo }); };
   por("Descrição", ev.descricao || "(a definir)");
+  if (ev.ondeCada || acharSecao(doc, "Onde estava cada um")) por("Onde estava cada um", ev.ondeCada || "");
   por("Informações", ev.infos.length ? ev.infos.map((i) => "- " + i).join("\n") : "Partes que podem ser reveladas separadamente, uma por linha.");
   const blocos = ev.vinculos.map((v) => [`### ${v.cap} · ${MODOS[v.modo]}`,
     `- Revelado a: ${v.reveladoA || "leitor"}`,
@@ -1045,7 +1052,8 @@ VISTAS.acontecimentos = async () => {
   const linhasTempo = linhasDaLinhaDoTempo(h);
   const cartaoEv = (e) => `<div class="evento" data-ev="${esc(e.caminho)}">
       <div class="evento-data">${esc(e.data ? formatarData(e.data, cal) : e.quando && !vazio(e.quando) ? e.quando : "data a definir")}</div>
-      <div class="evento-corpo"><h3>${esc(e.titulo)} <span class="situacao ${esc(e.situacao)}">${esc(e.situacao)}</span></h3>
+      <div class="evento-corpo ${ehFiller(e.funcao) ? "filler" : ""}"><h3>${esc(e.titulo)} <span class="situacao ${esc(e.situacao)}">${esc(e.situacao)}</span>${e.origem ? ` <span class="etiqueta">${esc(e.origem)}</span>` : ""}</h3>
+        ${e.funcao ? `<div class="funcao">↳ ${esc(e.funcao)}</div>` : ""}
         <div class="sub">${e.personagens.map((p) => esc(p.nome)).join(", ")}${e.local.length ? " · " + e.local.map((p) => esc(p.nome)).join(", ") : ""}</div>
         ${e.vinculos.length ? `<div class="etiquetas">${e.vinculos.map((v) => `<span class="etiqueta">${esc(v.cap)}</span>`).join(" ")}</div>` : ""}</div></div>`;
   vista.innerHTML = cabecalho("Acontecimentos", "A história em ciclos: cada ciclo é uma fase, com os acontecimentos em ordem. Ao pedir um capítulo, você escolhe quais acontecimentos entram, e a data precisa bater.",
@@ -1141,6 +1149,13 @@ async function abrirAcontecimento(caminho, aoFechar) {
           `<option value="${esc(l.caminho)}" ${ev.local.some((x) => x.caminho === l.caminho) ? "selected" : ""}>${esc(l.titulo)}</option>`).join("")}</select></div>
         <div class="campo" style="flex:2"><label>Fontes</label><input id="ev-fontes" value="${esc(vazio(ev.fontes) ? "" : ev.fontes)}" placeholder="roteiro, capítulo, conversa…"></div>
       </div>
+      <div class="ev-linha">
+        <div class="campo" style="flex:2"><label>Função na história</label><input id="ev-funcao" list="ev-funcoes" value="${esc(ev.funcao)}" placeholder="apresentar a Ynana e o Rufus; dar abertura; virada; dar volume (filler)…">
+          <datalist id="ev-funcoes">${FUNCOES.map((f) => `<option value="${esc(f)}">`).join("")}</datalist></div>
+        ${ev.origem ? `<div class="campo"><label>Origem</label><input value="${esc(ev.origem)}" disabled></div>` : ""}
+      </div>
+      <div class="campo"><label>Onde estava cada um <span class="sub">(um por linha: quem, onde estava, o que fazia)</span></label>
+        <textarea id="ev-onde" rows="3" placeholder="- Ynana: no convés, jantando com os pais&#10;- Rufus: no leme">${esc(ev.ondeCada)}</textarea></div>
       <div class="campo"><label>Descrição <span class="sub">(a verdade da história, mesmo que ninguém saiba ainda)</span></label><textarea id="ev-desc" rows="4">${esc(vazio(ev.descricao) ? "" : ev.descricao)}</textarea></div>
       <div class="campo"><label>Informações <span class="sub">(partes que podem ser reveladas separadamente, uma por linha)</span></label>
         <textarea id="ev-infos" rows="3" placeholder="a data exata&#10;quem estava a bordo">${esc(ev.infos.join("\n"))}</textarea></div>
@@ -1166,6 +1181,8 @@ async function abrirAcontecimento(caminho, aoFechar) {
     ev.local = l ? [{ nome: l.titulo, caminho: l.caminho }] : [];
     if (l) ev.localTexto = "";
     ev.fontes = $("#ev-fontes", c).value.trim();
+    ev.funcao = $("#ev-funcao", c).value.trim();
+    ev.ondeCada = $("#ev-onde", c).value.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => (/^[-*]\s/.test(l) ? l : "- " + l)).join("\n");
     ev.descricao = $("#ev-desc", c).value.trim();
     ev.infos = $("#ev-infos", c).value.split("\n").map((x) => x.replace(/^[-*]\s*/, "").trim()).filter(Boolean);
     await gravarArquivo(caminho, escreverAcontecimento(ev));

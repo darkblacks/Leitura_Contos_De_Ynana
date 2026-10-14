@@ -76,7 +76,12 @@ Seções, em linguagem natural (nada de atributos de RPG): Identidade · Apelido
 ## Imagens: descrever pelo que se vê
 
 - Lugares, personagens (por versão de aparência) e artefatos podem ter várias imagens. Quando o autor pedir "descrever pela imagem" (ou `/descrever`), abra as imagens e escreva só o que dá para ver, marcando com `[img]`. Não apague nem mude o que o autor escreveu (`[autor]`); acrescente.
-- Ao escrever um capítulo, aparência, roupas, cores e arquitetura vêm das imagens das fichas, não da imaginação.
+- **Ao escrever, ajustar ou revisar capítulo, não abra imagens**: use só as descrições das fichas (gasta muito menos). Aparência, roupas, cores e arquitetura vêm dessas descrições, não da imaginação. Se a descrição de alguém que aparece estiver vazia, avise o autor que dá para usar "Descrever pela imagem".
+
+## Canonizar: o capítulo vira acontecimento
+
+- Quando o autor gosta de um capítulo ("♥ Gostei" ou `/canonizar N`), o que aconteceu nele vai para `biblia/acontecimentos/`, resumido e confirmado, com: data, ciclo, personagens, local, **Origem** (`cap-NN`), **Função na história** (apresentar personagens, dar abertura, virada, plantar ou pagar pista, aprofundar relação… ou **dar volume (filler)** quando não muda nada) e **Onde estava cada um** (onde estava e o que fazia cada personagem presente).
+- **Antes de escrever um capítulo, leia os acontecimentos canonizados** do ciclo e dos personagens envolvidos, em vez de reler capítulos antigos: é ali que estão onde cada um estava e o que já aconteceu. Isso evita furos (alguém em dois lugares, algo esquecido).
 
 ## Geografia: cada lugar herda a cadeia
 
@@ -135,9 +140,9 @@ Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `clau
 - **A primeira tela é este chat**, com o capítulo atual aberto ao lado. **Você mesmo escreve** o capítulo em `capitulos/cap-NN.md` (ele vê o texto surgindo). Nunca peça ao autor algo que já está nos arquivos.
 - Antes de escrever o capítulo N, reúna sem perguntar:
   1. **O pedido**: o que o autor disse no chat e a seção "Pedido" de `continuidade/notas-do-autor/cap-NN.md` (título, subtítulo, quem escreve, onde, quando, acontecimentos, o que acontece, tom).
-  2. **O capítulo anterior** inteiro e `continuidade/resumos.md` para os de antes.
-  3. **Quem escreve**: a escrita dele em `estilo/escritas/` (com a herança), a ficha e a foto.
-  4. **Os nomes**: as fichas de quem aparece, dos lugares e artefatos, com as imagens.
+  2. **O capítulo anterior** inteiro; para os de antes, os **acontecimentos canonizados** (onde estava cada um, função) e `continuidade/resumos.md`.
+  3. **Quem escreve**: a escrita dele em `estilo/escritas/` (com a herança) e a ficha (só o texto; não abra imagens).
+  4. **Os nomes**: as fichas de quem aparece, dos lugares e artefatos (só as descrições).
   5. **O mundo na data**: a cadeia do lugar em `biblia/geografia.md`, o calendário (feriados na data), os acontecimentos escolhidos e o ciclo deles, as relações entre quem aparece; siga "Inteligência narrativa".
   6. `continuidade/registro.md` sempre.
 - Depois siga o fluxo do `/escrever` (script, revisores, registro), sem narrar a parte interna para o autor.
@@ -148,5 +153,6 @@ Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `clau
 
 ## Comandos e revisores
 
-- Comandos em `.claude/commands/` (também usáveis no chat da Escrivaninha, digitando `/`): `/escrever`, `/revisar`, `/sincronizar`, `/ficha`, `/descrever`, `/estado`.
+- Comandos em `.claude/commands/` (também usáveis no chat da Escrivaninha, digitando `/`): `/escrever`, `/revisar`, `/sincronizar`, `/canonizar`, `/ficha`, `/descrever`, `/estado`.
+- **Tiques**: o script agrupa os achados por classe (Comparação e contraste, Ritmo e repetição, Vocabulário artificial, Exagero e efeito, Emoção e corpo, Formato). O jeito de escrever do autor não é tique: onomatopeia entre asteriscos (`*Chua*`) e fala entre aspas com travessão (`"— …" Disse…`). Repetição comparativa ("amarelei às vezes, mas eu sempre amarelo"; "… ou quando …") é tique (guardrail 22).
 - Subagentes em `.claude/agents/`: `revisor-continuidade` e `revisor-estilo`. Eles só listam problemas, nunca reescrevem.

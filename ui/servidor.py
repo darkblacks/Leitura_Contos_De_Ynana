@@ -197,7 +197,7 @@ def tiques(caminho):
     mod = carregar_checador()
     ocorrencias, tamanhos = mod.checar(p, mod.carregar_config())
     return {"paragrafos": len(tamanhos), "palavras": sum(tamanhos),
-            "ocorrencias": [{"linha": n, "categoria": c, "trecho": t} for n, c, t in ocorrencias]}
+            "ocorrencias": [{"linha": n, "classe": mod.classe_de(c), "categoria": c, "trecho": t} for n, c, t in ocorrencias]}
 
 
 def busca(q):

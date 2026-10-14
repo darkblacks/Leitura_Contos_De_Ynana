@@ -92,6 +92,24 @@ async function abrirAjuste({ caminho, n, status, trecho = "", aoEnviar }) {
   };
 }
 
+/* ============================================================ Gostei: canonizar
+   O capítulo vira cânone nos Acontecimentos: resumido, com a função na história e onde
+   estava cada personagem. Assim os próximos capítulos leem o resumo e não o capítulo todo. */
+function mensagemCanonizar(n, caminho) {
+  return `Gostei do capítulo ${n} (${caminho}). Canonize-o nos Acontecimentos (/canonizar ${n}):
+- Leia o capítulo e registre em biblia/acontecimentos/ o que ele mostra, resumido, seguindo biblia/acontecimentos/_modelo.md. Um arquivo por acontecimento (pode ser um só, se o capítulo for uma cena).
+- Para cada um: Quando (a data do capítulo), Ciclo (o de biblia/ciclos.md que contém a data), Situação: confirmado, Personagens, Local, Origem: cap-${String(n).padStart(2, "0")}, Função na história (ex.: apresentar a Ynana e o Rufus; dar abertura; virada; plantar pista; pagar pista; aprofundar relação; dar volume (filler) quando não muda nada), Descrição curta, Informações e "Onde estava cada um" (cada personagem presente: onde estava e o que fazia).
+- Se o acontecimento já existe (por exemplo, escolhido no pedido), complete esse em vez de criar outro, e marque como confirmado. Acrescente o bloco "Nos capítulos" com o trecho.
+- Só o que está no texto: não invente fato novo.
+- Se o capítulo estiver como rascunho, mude para revisado.
+Depois me diga em poucas linhas o que ficou canonizado e a função de cada um.`;
+}
+async function canonizarCapitulo({ caminho, n, aoEnviar }) {
+  if (!confirm(`Canonizar o capítulo ${n}? O Claude registra nos Acontecimentos o que aconteceu, a função disso na história e onde estava cada personagem.`)) return;
+  const msg = mensagemCanonizar(n, caminho);
+  aoEnviar ? aoEnviar(msg) : enviarAoClaude(msg, caminho);
+}
+
 /* ============================================================ Reescrever do zero */
 async function reescreverDoZero({ caminho, n, meta, status, aoEnviar }) {
   const doc = await lerNotas(n);
@@ -260,7 +278,7 @@ async function enviarPedido(n, p, modo, aoEnviar) {
     evTxt ? `Acontecimentos deste capítulo (registre o vínculo em "Nos capítulos" de cada um depois):\n${evTxt}` : "",
     p.acontece ? `O que acontece (do autor):\n${p.acontece}` : "",
     p.tom ? `Tom e cuidados: ${p.tom}` : "",
-    `Mínimo de ${p.tamanho.toLocaleString("pt-BR")} palavras. Reúna sozinho o capítulo anterior, as fichas (com fotos), a cadeia do lugar, o calendário (feriados na data) e as relações antes de escrever.`,
+    `Mínimo de ${p.tamanho.toLocaleString("pt-BR")} palavras. Reúna sozinho o capítulo anterior, os acontecimentos já canonizados, as fichas (só as descrições, sem abrir imagens), a cadeia do lugar, o calendário (feriados na data) e as relações antes de escrever.`,
   ].filter(Boolean).join("\n\n");
   if (aoEnviar) aoEnviar(msg, arqCap(n)); else enviarAoClaude(msg, arqCap(n));
 }
@@ -508,6 +526,7 @@ const COMANDOS = [
   { c: "/revisar", a: "1", d: "Só a lista de problemas do capítulo (continuidade e estilo), sem reescrever." },
   { c: "/sincronizar", a: "1", d: "Depois que você edita um capítulo à mão: atualiza fichas, resumos e acontecimentos." },
   { c: "/ficha", a: "nome", d: "Cria ou completa a ficha de um personagem, lugar ou artefato, perguntando o que falta." },
+  { c: "/canonizar", a: "1", d: "Gostou do capítulo: registra nos Acontecimentos o que aconteceu, a função na história e onde estava cada personagem." },
   { c: "/descrever", a: "nome", d: "Olha as imagens de um lugar, personagem ou artefato e escreve a descrição na ficha." },
   { c: "/estado", d: "Onde a história está: último capítulo, ciclo atual, o que falta." },
 ];

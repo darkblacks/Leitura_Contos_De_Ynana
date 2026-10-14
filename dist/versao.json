@@ -1,14 +1,10 @@
 {
-  "versao": "2.0.0",
-  "sha256": "1f0d8e5b35181a5571890ee759c83a614785239d04d08eeb8e618c9520b36101",
+  "versao": "2.1.0",
+  "sha256": "7ac7d752d7a4d4889c4e3e7af2e9968cbc5be62fc46b884cba56f57d0315a09d",
   "notas": [
-    "Menu mais enxuto: saíram Painel, Escaleta, História, Referências, Continuidade e Decisões",
-    "Capítulo sem roteiro pronto: você diz nome, quem escreve, onde, quando e os acontecimentos (a data tem que bater)",
-    "Não gostou? Ajustar (muda só o que pedir) ou Reescrever do zero (o texto antigo fica guardado)",
-    "Cabeçalho fixo do diário: TÍTULO - QUEM ESCREVE / subtítulo - local - data",
-    "Lugares com fotos, navegando de dentro para dentro; o Claude descreve lugares, aparências e artefatos pela imagem",
-    "Calendário simples (meses humanos com outros nomes) e Eventos: feriados e festivais",
-    "Acontecimentos em ciclos; Relações dentro de Personagens, com família e amor",
-    "Estilo por escritor, com herança e os seus exemplos; comandos usáveis no chat com /"
+    "Tiques agrupados por classe; o seu jeito de escrever (*Chua*, falas \"— …\") não conta mais como tique",
+    "Novo tique: repetição comparativa (\"amarelei às vezes, mas eu sempre amarelo\", \"… ou quando …\")",
+    "♥ Gostei: canoniza o capítulo nos Acontecimentos, com a função na história e onde estava cada personagem",
+    "Capítulos escritos só com as descrições das fichas, sem abrir imagens (gasta menos)"
   ]
 }

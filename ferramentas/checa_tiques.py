@@ -90,7 +90,7 @@ def raiz(palavra):
 # Classes de tique: cada categoria entra na primeira classe cujo prefixo casa.
 CLASSES = [
     ("Comparação e contraste", ("contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa")),
-    ("Ritmo e repetição", ("possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica")),
+    ("Ritmo e repetição", ("palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica")),
     ("Vocabulário artificial", ("palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto")),
     ("Exagero e efeito", ("linguagem grandiosa", "gancho artificial")),
     ("Emoção e corpo", ("emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou")),
@@ -105,10 +105,34 @@ def classe_de(categoria):
     return "Formato"
 
 
+FIM_FRASE = ".!?…"
+
+
 def trecho(texto, ini, fim, margem=30):
-    a = max(0, ini - margem)
-    b = min(len(texto), fim + margem)
+    """A frase onde o achado está (não o parágrafo inteiro). Frase longa demais: só o pedaço em volta."""
+    a = ini
+    while a > 0 and texto[a - 1] not in FIM_FRASE:
+        a -= 1
+    b = max(fim, ini)
+    while b < len(texto) and texto[b] not in FIM_FRASE:
+        b += 1
+    while b < len(texto) and texto[b] in FIM_FRASE + ASPAS:
+        b += 1
+    frase = texto[a:b].strip()
+    if len(frase) <= 240:
+        return frase
+    a = max(0, ini - 60)
+    b = min(len(texto), fim + 60)
     return ("..." if a > 0 else "") + texto[a:b].strip() + ("..." if b < len(texto) else "")
+
+
+# Palavras comuns que não contam como repetição.
+COMUNS = set("""para pelo pela pelos pelas como mais muito muita muitos muitas sobre entre quando onde porque então ainda também
+isso isto aquilo esse essa esses essas este esta estes estas aquele aquela aqueles aquelas minha minhas meus dele dela deles delas
+nossa nosso nossas nossos suas seus eram estava estavam estou está estão tinha tinham tenho foram fosse seria sido sendo fazer feito
+fazia disse dizer depois antes agora sempre nunca nada tudo todo toda todos todas algo alguém ninguém outro outra outros outras mesmo
+mesma cada qual quais quem assim aqui desde após contra umas pois porém enquanto durante talvez quase demais vezes coisa coisas
+havia haviam fiquei ficou estar pode podia podiam será seriam essa estou tive teve tudo você vocês""".split())
 
 
 def compilar(lista):
@@ -132,6 +156,7 @@ COMPARACAO = re.compile(r"(?<!\w)(como se|feito (um|uma)|tal qual|qual (um|uma)|
 COMO_UM = re.compile(r"(?<!\w)como (um|uma)\b", re.IGNORECASE)
 
 FRASES = re.compile(r"[^.!?…]+[.!?…]+")
+PALAVRA_TOKEN = re.compile(r"[^\W\d_]+")
 
 # Onomatopeia: letra esticada ("craaash", "toc-toc") ou termos da lista em tiques.json
 LETRA_ESTICADA = re.compile(r"\b\w*([^\W\d_])\1{2,}\w*\b", re.IGNORECASE)
@@ -150,7 +175,12 @@ def checar(caminho, cfg):
     ocorrencias = []  # (linha, categoria, trecho)
     vistos = {}  # (linha, categoria) -> spans já apontados, para não repetir achados sobrepostos
 
+    ja = set()
+
     def add(num, cat, txt, span=None):
+        if (num, cat, txt) in ja:
+            return  # mesma frase, mesmo tique: aparece uma vez só
+        ja.add((num, cat, txt))
         if span:
             spans = vistos.setdefault((num, cat), [])
             if any(span[0] < b and a < span[1] for a, b in spans):
@@ -244,8 +274,8 @@ def checar(caminho, cfg):
 
             comps = list(COMPARACAO.finditer(texto)) + list(COMO_UM.finditer(texto))
             if len(comps) > max_comp:
-                achados = "; ".join(trecho(texto, m.start(), m.end(), 15) for m in comps)
-                add(num0, f"comparações empilhadas: {len(comps)} no parágrafo (5)", achados)
+                for m in comps:
+                    add(num0, "comparações empilhadas (5)", trecho(texto, m.start(), m.end()), m.span())
 
             if not eh_dialogo(texto):
                 frases = [f.strip() for f in FRASES.findall(texto)]
@@ -266,6 +296,30 @@ def checar(caminho, cfg):
                     if seq == max_aberturas + 1:
                         add(num0, f"frases seguidas abrindo com \"{aberturas[i]}\" (20)",
                             " ".join(frases[i - max_aberturas:i + 1])[:160])
+
+    # Palavra repetida: a mesma palavra muitas vezes em poucos parágrafos ("Bruma… a Bruma… na Bruma…")
+    pars = [(par[0][0], " ".join(t.strip() for _, t in par)) for bloco in blocos for par in bloco]
+    limite = cfg.get("max_repeticoes_palavra", 3)
+    ignorar = COMUNS | set(cfg.get("palavras_comuns_extras", []))
+    tokens = [[(m.group().lower(), m.start(), m.end()) for m in PALAVRA_TOKEN.finditer(t)
+               if len(m.group()) >= 4 and m.group().lower() not in ignorar] for _, t in pars]
+    ultimo = {}
+    for i in range(len(pars)):
+        janela = range(i, min(i + 3, len(pars)))
+        cont = {}
+        for j in janela:
+            for w, _, _ in tokens[j]:
+                cont[w] = cont.get(w, 0) + 1
+        for w, n in cont.items():
+            if n <= limite or i <= ultimo.get(w, -10) + 2:
+                continue
+            ultimo[w] = i
+            usados = sum(1 for j in janela if any(x[0] == w for x in tokens[j]))
+            cat = f'palavra repetida: "{w}", {n}× em {usados} parágrafo(s) (23)'
+            for j in janela:
+                for x in tokens[j]:
+                    if x[0] == w:
+                        add(pars[j][0], cat, trecho(pars[j][1], x[1], x[2]), (x[1], x[2]))
 
     # Tamanho mínimo (estilo)
     minimo = cfg.get("palavras_minimas_capitulo")

@@ -153,3 +153,9 @@
 
 - Onomatopeia entre asteriscos no meio da ação (`*Chua*`, `*Zap*`): é método, não conta como excesso.
 - Fala entre aspas com travessão dentro (`"— Olha mãe…" Disse…`), inclusive no meio da narração: é o formato de diálogo dos diários.
+
+## 23. Palavra repetida `[script]`
+
+**Faça:** depois de nomear uma coisa, deixe o leitor carregar: pronome, um detalhe, ou nada.
+**Errado:** "Chegamos na Bruma de manhã. A Bruma estava fria e a Bruma cobria tudo. Na Bruma ninguém fala alto."
+**Reescrita:** "Chegamos na Bruma de manhã. Estava fria e cobria tudo, até o cais; ali ninguém fala alto."

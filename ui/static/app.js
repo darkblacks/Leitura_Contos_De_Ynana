@@ -338,8 +338,8 @@ VISTAS.capitulo = async (caminho) => {
         </div>
         <div class="cartao">
           <div style="display:flex;align-items:center;gap:8px"><h3 style="font-size:19px;margin:0">Tiques</h3>
-            <button class="botao pequeno" id="checar" style="margin-left:auto">Checar agora</button></div>
-          <div class="sub" style="margin:4px 0 10px">Varredura mecânica dos guardrails. Clique num item para ir até a linha.</div>
+            <button class="botao pequeno primario" id="checar" style="margin-left:auto">Ver tiques</button></div>
+          <div class="sub" style="margin:4px 0 10px">Mostra cada vício, por que incomoda e as frases onde aparece. Você corrige ou mantém.</div>
           <div id="tiques"></div>
         </div>
       </div>
@@ -419,29 +419,12 @@ VISTAS.capitulo = async (caminho) => {
   if (window.extrasCapitulo) extrasCapitulo({ caminho, nCap, ta, quando: () => $("#f-quando").value }).catch(() => {});
   $("#checar").onclick = async () => {
     await salvar();
-    const r = await api("/api/tiques?caminho=" + encodeURIComponent(caminho));
-    const box = $("#tiques");
-    if (!r.ocorrencias.length) { box.innerHTML = `<div class="sub" style="color:var(--verde)">Nada encontrado. ✓</div>`; return; }
-    box.innerHTML = `<div class="sub" style="margin-bottom:8px">${r.ocorrencias.length} ocorrência(s)</div>` + htmlTiquesPorClasse(r.ocorrencias);
-    $$(".tique", box).forEach((t) => (t.onclick = () => irParaLinha(+t.dataset.l)));
+    const res = await abrirTiques({ caminho, n: nCap, irParaLinha });
+    if (res) $("#tiques").innerHTML = res.classes.length
+      ? res.classes.map((c) => `<div class="tq-resumo"><b>${esc(c.nome)}</b> · ${c.tiques.map((t) => esc(t.nome)).join(", ")}</div>`).join("")
+      : `<div class="sub" style="color:var(--verde)">Nada encontrado. ✓</div>`;
   };
 };
-
-/* Tiques agrupados por classe (Comparação e contraste, Ritmo e repetição…), cada classe abre e fecha. */
-function htmlTiquesPorClasse(ocorrencias) {
-  const classes = [];
-  for (const o of ocorrencias) {
-    const nome = o.classe || "Outros";
-    let c = classes.find((x) => x.nome === nome);
-    if (!c) { c = { nome, itens: [] }; classes.push(c); }
-    const g = c.itens.find((x) => x.linha === o.linha && x.categoria === o.categoria);
-    if (g) g.n++; else c.itens.push({ ...o, n: 1 });
-  }
-  return classes.map((c, i) => `<details class="classe-tique" ${i === 0 ? "open" : ""}>
-      <summary><b>${esc(c.nome)}</b> <span class="pilula">${c.itens.reduce((a, x) => a + x.n, 0)}</span></summary>
-      ${c.itens.map((o) => `<div class="tique" data-l="${o.linha}"><b>${esc(o.categoria.replace(/\s*\([^)]*\)\s*$/, ""))}</b> ${o.linha ? "· linha " + o.linha : ""}${o.n > 1 ? ` · ${o.n}×` : ""}<span>${esc(o.trecho)}</span></div>`).join("")}
-    </details>`).join("");
-}
 
 /* ------------------------------------------------------------ FICHAS (personagens, lugares, artefatos)
    Cada ficha tem uma foto de referência: imagem com o mesmo nome, ao lado do .md.
@@ -847,22 +830,8 @@ VISTAS.conversa = async () => {
   const desenharRevisao = async () => {
     const caixa = $("#aba-revisao");
     if (!capAtual || capAtual.novo) { caixa.innerHTML = `<p class="sub" style="padding:18px">A revisão aparece depois que o capítulo existir.</p>`; return; }
-    caixa.innerHTML = `<p class="sub" style="padding:18px">Checando…</p>`;
-    const r = await api("/api/tiques?caminho=" + encodeURIComponent(capAtual.caminho)).catch((e) => ({ erro: e.message }));
-    if (r.erro) { caixa.innerHTML = `<p class="sub" style="padding:18px">${esc(r.erro)}</p>`; return; }
-    const grupos = [];
-    for (const o of r.ocorrencias) {
-      const g = grupos.find((x) => x.categoria === o.categoria);
-      if (g) g.itens.push(o); else grupos.push({ categoria: o.categoria, itens: [o] });
-    }
-    const porClasse = htmlTiquesPorClasse(r.ocorrencias);
-    caixa.innerHTML = `<div class="ctx-bloco">
-        <div class="ctx-linha"><b>${r.palavras.toLocaleString("pt-BR")} palavras · ${r.paragrafos} parágrafos</b>
-          <span class="pilula ${r.ocorrencias.length ? "" : "ok"}">${r.ocorrencias.length ? r.ocorrencias.length + " apontamento(s)" : "nada encontrado"}</span></div>
-        ${r.ocorrencias.length ? `<button class="botao pequeno primario" id="pedir-correcao">Pedir ao Claude para corrigir</button>` : ""}</div>
-      <div class="ctx-bloco">${porClasse}</div>`;
-    const b = $("#pedir-correcao", caixa);
-    if (b) b.onclick = () => enviar(`No capítulo ${capAtual.n}, corrija os apontamentos da checagem de tiques (${r.ocorrencias.length} itens: ${grupos.map((g) => g.categoria + " ×" + g.itens.length).join("; ")}). Mexa só nos trechos apontados e me diga em poucas linhas o que mudou.`);
+    caixa.innerHTML = `<div class="ctx-bloco" id="tiques-home"></div>`;
+    await desenharTiques($("#tiques-home"), { caminho: capAtual.caminho, n: capAtual.n, aoEnviar: enviar });
   };
 
   // ------------------------------------------------ trecho selecionado → ação

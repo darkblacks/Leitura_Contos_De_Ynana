@@ -89,12 +89,29 @@ func (pd padrao) casamentos(texto string) [][2]int {
 	return out
 }
 
+const fimFrase = ".!?…"
+
+// trecho devolve a frase onde o achado está (não o parágrafo inteiro); frase longa demais: só o pedaço em volta.
 func trecho(texto string, ini, fim, margem int) string {
 	runas := []rune(texto)
 	ri := utf8.RuneCountInString(texto[:ini])
 	rf := utf8.RuneCountInString(texto[:fim])
-	a := max(0, ri-margem)
-	b := min(len(runas), rf+margem)
+	a := ri
+	for a > 0 && !strings.ContainsRune(fimFrase, runas[a-1]) {
+		a--
+	}
+	b := max(rf, ri)
+	for b < len(runas) && !strings.ContainsRune(fimFrase, runas[b]) {
+		b++
+	}
+	for b < len(runas) && strings.ContainsRune(fimFrase+aspas, runas[b]) {
+		b++
+	}
+	if frase := strings.TrimSpace(string(runas[a:b])); utf8.RuneCountInString(frase) <= 240 {
+		return frase
+	}
+	a = max(0, ri-60)
+	b = min(len(runas), rf+60)
 	s := strings.TrimSpace(string(runas[a:b]))
 	if a > 0 {
 		s = "..." + s
@@ -138,13 +155,21 @@ func raizPalavra(p string) string {
 	return string(r)
 }
 
+// Palavras comuns que não contam como repetição (igual a COMUNS do checa_tiques.py).
+const palavrasComuns = `para pelo pela pelos pelas como mais muito muita muitos muitas sobre entre quando onde porque então ainda também
+isso isto aquilo esse essa esses essas este esta estes estas aquele aquela aqueles aquelas minha minhas meus dele dela deles delas
+nossa nosso nossas nossos suas seus eram estava estavam estou está estão tinha tinham tenho foram fosse seria sido sendo fazer feito
+fazia disse dizer depois antes agora sempre nunca nada tudo todo toda todos todas algo alguém ninguém outro outra outros outras mesmo
+mesma cada qual quais quem assim aqui desde após contra umas pois porém enquanto durante talvez quase demais vezes coisa coisas
+havia haviam fiquei ficou estar pode podia podiam será seriam essa estou tive teve tudo você vocês`
+
 // Classes de tique: cada categoria entra na primeira classe cujo prefixo casa.
 var classesTique = []struct {
 	nome     string
 	prefixos []string
 }{
 	{"Comparação e contraste", []string{"contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa"}},
-	{"Ritmo e repetição", []string{"possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica"}},
+	{"Ritmo e repetição", []string{"palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica"}},
 	{"Vocabulário artificial", []string{"palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto"}},
 	{"Exagero e efeito", []string{"linguagem grandiosa", "gancho artificial"}},
 	{"Emoção e corpo", []string{"emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou"}},
@@ -305,7 +330,13 @@ func letraEsticada(texto string) [][2]int {
 func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 	var ocorrencias []ocorrencia
 	vistos := map[string][][2]int{}
+	ja := map[string]bool{}
 	add := func(num int, cat, txt string, span *[2]int) {
+		chaveTxt := fmt.Sprintf("%d|%s|%s", num, cat, txt)
+		if ja[chaveTxt] {
+			return // mesma frase, mesmo tique: aparece uma vez só
+		}
+		ja[chaveTxt] = true
 		if span != nil {
 			chave := fmt.Sprintf("%d|%s", num, cat)
 			for _, s := range vistos[chave] {
@@ -491,11 +522,10 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 
 			comps := append(comparacao.casamentos(texto), comoUm.casamentos(texto)...)
 			if len(comps) > maxComp {
-				var ts []string
 				for _, s := range comps {
-					ts = append(ts, trecho(texto, s[0], s[1], 15))
+					s := s
+					add(num0, "comparações empilhadas (5)", trecho(texto, s[0], s[1], 15), &s)
 				}
-				add(num0, fmt.Sprintf("comparações empilhadas: %d no parágrafo (5)", len(comps)), strings.Join(ts, "; "), nil)
 			}
 
 			if !ehDialogo(texto) {
@@ -533,6 +563,86 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 							junto = junto[:160]
 						}
 						add(num0, fmt.Sprintf("frases seguidas abrindo com \"%s\" (20)", aberturas[i]), string(junto), nil)
+					}
+				}
+			}
+		}
+	}
+
+	// Palavra repetida: a mesma palavra muitas vezes em poucos parágrafos ("Bruma… a Bruma… na Bruma…")
+	type tok struct {
+		w        string
+		ini, fim int
+	}
+	type parTexto struct {
+		num   int
+		texto string
+	}
+	var pars []parTexto
+	for _, bloco := range blocos {
+		for _, par := range bloco {
+			partes := make([]string, len(par))
+			for i, l := range par {
+				partes[i] = strings.TrimSpace(l.texto)
+			}
+			pars = append(pars, parTexto{par[0].num, strings.Join(partes, " ")})
+		}
+	}
+	limite := cfg.numero("max_repeticoes_palavra", 3)
+	ignorar := map[string]bool{}
+	for _, w := range strings.Fields(palavrasComuns) {
+		ignorar[w] = true
+	}
+	for _, w := range cfg.lista("palavras_comuns_extras") {
+		ignorar[w] = true
+	}
+	tokens := make([][]tok, len(pars))
+	for j, p := range pars {
+		for _, loc := range rePalavraLetra.FindAllStringIndex(p.texto, -1) {
+			w := strings.ToLower(p.texto[loc[0]:loc[1]])
+			if utf8.RuneCountInString(w) >= 4 && !ignorar[w] {
+				tokens[j] = append(tokens[j], tok{w, loc[0], loc[1]})
+			}
+		}
+	}
+	ultimo := map[string]int{}
+	for i := range pars {
+		fimJ := min(i+3, len(pars))
+		cont := map[string]int{}
+		var ordem []string
+		for j := i; j < fimJ; j++ {
+			for _, t := range tokens[j] {
+				if cont[t.w] == 0 {
+					ordem = append(ordem, t.w)
+				}
+				cont[t.w]++
+			}
+		}
+		for _, w := range ordem {
+			n := cont[w]
+			u, visto := ultimo[w]
+			if !visto {
+				u = -10
+			}
+			if n <= limite || i <= u+2 {
+				continue
+			}
+			ultimo[w] = i
+			usados := 0
+			for j := i; j < fimJ; j++ {
+				for _, t := range tokens[j] {
+					if t.w == w {
+						usados++
+						break
+					}
+				}
+			}
+			cat := fmt.Sprintf("palavra repetida: \"%s\", %d× em %d parágrafo(s) (23)", w, n, usados)
+			for j := i; j < fimJ; j++ {
+				for _, t := range tokens[j] {
+					if t.w == w {
+						s := [2]int{t.ini, t.fim}
+						add(pars[j].num, cat, trecho(pars[j].texto, t.ini, t.fim, 30), &s)
 					}
 				}
 			}

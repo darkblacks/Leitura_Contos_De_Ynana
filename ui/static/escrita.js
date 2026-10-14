@@ -559,3 +559,110 @@ function ligarBarraComandos(entrada) {
   entrada.addEventListener("input", mostrar);
   entrada.addEventListener("blur", () => setTimeout(() => (lista.hidden = true), 150));
 }
+
+/* ============================================================ Tiques: Classe › Tique (com explicação) › Frases
+   Cada tique diz qual é o vício, por que incomoda, e mostra só as frases onde aparece.
+   "Manter" guarda a escolha nas notas do capítulo (seção "Tiques mantidos"). */
+const EXPLICA_TIQUE = [
+  ["palavra repetida", (t) => `Você repetiu “${t.palavra}” ${t.vezes || "muitas"} vezes em poucos parágrafos e acabou reforçando demais. Troque algumas por pronome, sinônimo ou corte.`],
+  ["repetição comparativa", () => "Você conta a ação e repete comparando com o “sempre” (“amarelei, mas sempre amarelo”): diz a mesma coisa duas vezes."],
+  ["alternativa comparativa", () => "Você empilha alternativas com “ou quando…”. Escolha um momento e conte inteiro."],
+  ["contraste falso", () => "Nega uma coisa para afirmar outra (“não era X, era Y”). Uma vez funciona; repetido vira fórmula."],
+  ["comparações empilhadas", () => "Mais de uma comparação no mesmo parágrafo (“como se…”, “como um…”). Uma imagem forte vale mais que várias."],
+  ["possível trinca de termos", () => "Três termos em fila (“frio, úmido e escuro”): ritmo de redação automática."],
+  ["trinca de frases curtas", () => "Três frases muito curtas seguidas: picota o ritmo."],
+  ["frases seguidas abrindo", () => "Frases seguidas começando com a mesma palavra (“Ele… Ele… Ele…”)."],
+  ["simetria mecânica", () => "Parágrafos quase todos do mesmo tamanho: o texto fica com cara de máquina."],
+  ["palavra-assinatura", () => "Palavras típicas de texto gerado por máquina (tapeçaria, sinfonia, ecoou, palpável…)."],
+  ["conectivo de redação", () => "Conectivo de redação escolar (além disso, no entanto, contudo…). Num diário soa artificial."],
+  ["gerúndio de comentário", () => "Gerúndio que explica o que a cena já mostrou (“…, mostrando que…”)."],
+  ["linguagem de folheto", () => "Adjetivo de propaganda (deslumbrante, de tirar o fôlego, imponente)."],
+  ["linguagem grandiosa", () => "Frase de efeito grandiosa (“nada seria como antes”, “mudou tudo”)."],
+  ["gancho artificial", () => "Suspense forçado (“mal sabia ela…”): quem escreve um diário não sabe o futuro."],
+  ["emoção nomeada", () => "A emoção é dita (“sentiu raiva”) em vez de mostrada pelo que a pessoa faz."],
+  ["clichê físico", () => "Reação física de clichê (coração martelando, nó na garganta, engoliu em seco)."],
+  ["personagem terapeutizado", () => "Vocabulário de terapia de hoje (gatilho, tóxico, limites) fora da época da história."],
+  ["sussurrou/murmurou", () => "Muitos “sussurrou/murmurou” no capítulo; varie ou deixe a fala falar sozinha."],
+  ["onomatopeias em excesso", () => "Onomatopeias demais fora do seu jeito *entre asteriscos*."],
+  ["travessão fora de diálogo", () => "Travessão usado como pausa na narração; nos diários o travessão é da fala."],
+  ["capítulo curto", () => "O capítulo está abaixo do mínimo de palavras."],
+  ["parágrafos por bloco", () => "O bloco não tem o número de parágrafos pedido pelo estilo."],
+];
+function chaveTique(cat) {
+  const rep = cat.match(/^palavra repetida: "([^"]+)"/);
+  if (rep) return `palavra repetida: "${rep[1]}"`;
+  return cat.replace(/:.*$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim();
+}
+function agruparTiques(ocorrencias, mantidos = new Set()) {
+  const classes = [], guardados = [];
+  for (const o of ocorrencias) {
+    const chave = chaveTique(o.categoria);
+    const lista = mantidos.has(chave) ? guardados : classes;
+    let c = lista.find((x) => x.nome === (o.classe || "Outros"));
+    if (!c) { c = { nome: o.classe || "Outros", tiques: [] }; lista.push(c); }
+    let t = c.tiques.find((x) => x.chave === chave);
+    if (!t) {
+      const rep = o.categoria.match(/^palavra repetida: "([^"]+)", (\d+)×/);
+      t = { chave, refs: [], palavra: rep && rep[1], vezes: 0, categoria: o.categoria };
+      c.tiques.push(t);
+    }
+    const vezes = o.categoria.match(/, (\d+)×/);
+    if (vezes) t.vezes = Math.max(t.vezes, +vezes[1]);
+    if (!t.refs.some((r) => r.frase === o.trecho && r.linha === o.linha)) t.refs.push({ linha: o.linha, frase: o.trecho });
+  }
+  for (const c of [...classes, ...guardados]) for (const t of c.tiques) {
+    const e = EXPLICA_TIQUE.find(([p]) => t.chave.startsWith(p));
+    t.explicacao = e ? e[1](t) : "";
+    t.nome = t.palavra ? `Palavra repetida: “${t.palavra}”` : t.chave.charAt(0).toUpperCase() + t.chave.slice(1);
+  }
+  return { classes, guardados };
+}
+async function tiquesMantidos(n) {
+  const doc = await lerNotas(n);
+  return { doc, set: new Set(((acharSecao(doc, "Tiques mantidos") || {}).corpo || "").split("\n").map((l) => l.replace(/^[-*]\s*/, "").trim()).filter(Boolean)) };
+}
+function htmlTiques(grupo, { mostrarAcoes = true } = {}) {
+  return grupo.map((c) => `
+    <section class="tq-classe"><h4>${esc(c.nome)} <span class="pilula">${c.tiques.reduce((a, t) => a + t.refs.length, 0)}</span></h4>
+      ${c.tiques.map((t) => `<div class="tq-tique" data-chave="${esc(t.chave)}">
+        <div class="tq-cab"><b>${esc(t.nome)}</b><span class="sub">${t.refs.length} frase${t.refs.length > 1 ? "s" : ""}</span>
+          ${mostrarAcoes ? `<span class="tq-acoes"><button class="botao pequeno" data-manter title="É intencional: não apontar mais neste capítulo">Manter</button><button class="botao pequeno primario" data-corrigir>Corrigir</button></span>`
+            : `<span class="tq-acoes"><button class="botao pequeno" data-voltar>Voltar a apontar</button></span>`}</div>
+        ${t.explicacao ? `<p class="tq-exp">${esc(t.explicacao)}</p>` : ""}
+        <ul class="tq-refs">${t.refs.map((r) => `<li data-l="${r.linha}">“${esc(r.frase)}”${r.linha ? ` <small>linha ${r.linha}</small>` : ""}</li>`).join("")}</ul>
+      </div>`).join("")}
+    </section>`).join("");
+}
+function mensagemCorrigir(n, tiques) {
+  return `No capítulo ${n}, corrija estes tiques mexendo só nas frases apontadas (o resto fica como está):\n\n` +
+    tiques.map((t) => `• ${t.nome}: ${t.explicacao}\n${t.refs.map((r) => `  - «${r.frase}»${r.linha ? ` (linha ${r.linha})` : ""}`).join("\n")}`).join("\n\n") +
+    `\n\nNão mexa nos tiques que eu marquei como "manter" (notas do capítulo). Depois me diga em poucas linhas o que mudou.`;
+}
+/* Mostra os tiques num container (aba da home ou modal) e liga os botões. */
+async function desenharTiques(caixa, { caminho, n, aoEnviar, irParaLinha }) {
+  caixa.innerHTML = `<p class="sub">Checando…</p>`;
+  const r = await api("/api/tiques?caminho=" + encodeURIComponent(caminho)).catch((e) => ({ erro: e.message }));
+  if (r.erro) { caixa.innerHTML = `<p class="sub">${esc(r.erro)}</p>`; return; }
+  const { doc, set } = await tiquesMantidos(n);
+  const { classes, guardados } = agruparTiques(r.ocorrencias, set);
+  const todos = classes.flatMap((c) => c.tiques);
+  caixa.innerHTML = `
+    <div class="tq-topo"><span>${r.palavras.toLocaleString("pt-BR")} palavras · <b>${todos.length}</b> tique(s) em ${classes.length} classe(s)</span>
+      ${todos.length ? `<button class="botao pequeno primario" data-corrigir-todos>Corrigir todos</button>` : ""}</div>
+    ${todos.length ? htmlTiques(classes) : `<p class="tq-limpo">Nenhum tique apontado. ✓</p>`}
+    ${guardados.length ? `<details class="tq-guardados"><summary>${guardados.reduce((a, c) => a + c.tiques.length, 0)} mantido(s) por você</summary>${htmlTiques(guardados, { mostrarAcoes: false })}</details>` : ""}`;
+  const gravarMantidos = async () => { porSecaoDoc(doc, "Tiques mantidos", [...set].map((x) => "- " + x).join("\n")); await gravarNotas(n, doc); };
+  const enviarMsg = (msg) => (aoEnviar ? aoEnviar(msg) : enviarAoClaude(msg, caminho));
+  $$("[data-manter]", caixa).forEach((b) => (b.onclick = async () => { set.add(b.closest(".tq-tique").dataset.chave); await gravarMantidos(); desenharTiques(caixa, { caminho, n, aoEnviar, irParaLinha }); }));
+  $$("[data-voltar]", caixa).forEach((b) => (b.onclick = async () => { set.delete(b.closest(".tq-tique").dataset.chave); await gravarMantidos(); desenharTiques(caixa, { caminho, n, aoEnviar, irParaLinha }); }));
+  $$("[data-corrigir]", caixa).forEach((b) => (b.onclick = () => { const t = todos.find((x) => x.chave === b.closest(".tq-tique").dataset.chave); if (document.querySelector("#modal.aberto")) fecharModal(); enviarMsg(mensagemCorrigir(n, [t])); }));
+  const tudo = $("[data-corrigir-todos]", caixa);
+  if (tudo) tudo.onclick = () => { if (document.querySelector("#modal.aberto")) fecharModal(); enviarMsg(mensagemCorrigir(n, todos)); };
+  if (irParaLinha) $$(".tq-refs li", caixa).forEach((li) => (li.onclick = () => { if (+li.dataset.l) { fecharModal(); irParaLinha(+li.dataset.l); } }));
+  return { classes, todos };
+}
+async function abrirTiques(opcoes) {
+  const c = modal(`<div class="tq-modal"><div class="tq-modal-topo"><h3>Tiques do capítulo ${opcoes.n}</h3><button class="botao pequeno" id="tq-fechar">Fechar</button></div><div id="tq-corpo"></div></div>`, "largo");
+  $("#tq-fechar", c).onclick = fecharModal;
+  return desenharTiques($("#tq-corpo", c), opcoes);
+}

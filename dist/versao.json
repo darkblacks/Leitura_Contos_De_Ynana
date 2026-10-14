@@ -1,10 +1,9 @@
 {
-  "versao": "2.1.0",
-  "sha256": "7ac7d752d7a4d4889c4e3e7af2e9968cbc5be62fc46b884cba56f57d0315a09d",
+  "versao": "2.2.0",
+  "sha256": "6a968e84631dc195f39591551c5e563228d4a9d3ff2057a4b62d0d00c3f56d5d",
   "notas": [
-    "Tiques agrupados por classe; o seu jeito de escrever (*Chua*, falas \"— …\") não conta mais como tique",
-    "Novo tique: repetição comparativa (\"amarelei às vezes, mas eu sempre amarelo\", \"… ou quando …\")",
-    "♥ Gostei: canoniza o capítulo nos Acontecimentos, com a função na história e onde estava cada personagem",
-    "Capítulos escritos só com as descrições das fichas, sem abrir imagens (gasta menos)"
+    "Tiques explicados: cada vício diz o que é e por quê, organizado por classe, com só as frases onde aparece",
+    "Novo tique: palavra repetida demais em poucos parágrafos",
+    "Em cada tique: Corrigir (o Claude mexe só naquelas frases) ou Manter (é intencional e não aparece mais naquele capítulo)"
   ]
 }

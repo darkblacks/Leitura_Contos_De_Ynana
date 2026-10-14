@@ -195,6 +195,8 @@ func arvore() map[string][]item {
 		"lugares":        listar("biblia/lugares", extTexto, true),
 		"artefatos":      listar("biblia/artefatos", extTexto, true),
 		"acontecimentos": listar("biblia/acontecimentos", extTexto, true),
+		"familias":       listar("biblia/familias", extTexto, true),
+		"empresas":       listar("biblia/empresas", extTexto, true),
 		"exemplos":       listar("estilo/exemplos", extTexto, false),
 		"ref_textos":     listar("referencias/textos", extTexto, false),
 		"ref_imagens":    listar("referencias/imagens", extImagem, false),
@@ -373,11 +375,11 @@ func criar(tipo, nome string) (string, error) {
 		if err := os.WriteFile(p, []byte(fmt.Sprintf(modeloCapitulo, n, nome)), 0o644); err != nil {
 			return "", err
 		}
-	case "personagem", "lugar", "artefato", "acontecimento":
+	case "personagem", "lugar", "artefato", "acontecimento", "familia", "empresa":
 		if nome == "" {
 			return "", errors.New("dê um nome")
 		}
-		pasta := map[string]string{"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos", "acontecimento": "acontecimentos"}[tipo]
+		pasta := map[string]string{"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos", "acontecimento": "acontecimentos", "familia": "familias", "empresa": "empresas"}[tipo]
 		os.MkdirAll(filepath.Join(raiz, "biblia", pasta), 0o755)
 		p = filepath.Join(raiz, "biblia", pasta, slug(nome)+".md")
 		if _, err := os.Stat(p); err == nil {
@@ -733,8 +735,9 @@ func salvarFoto(ficha, nome, dadosB64, variante string) (string, error) {
 		return "", err
 	}
 	rel := relativo(p)
-	if !strings.HasSuffix(rel, ".md") || !(strings.HasPrefix(rel, "biblia/personagens/") || strings.HasPrefix(rel, "biblia/lugares/") || strings.HasPrefix(rel, "biblia/artefatos/")) {
-		return "", errors.New("foto só para fichas de personagem, lugar ou artefato")
+	if !strings.HasSuffix(rel, ".md") || !(strings.HasPrefix(rel, "biblia/personagens/") || strings.HasPrefix(rel, "biblia/lugares/") || strings.HasPrefix(rel, "biblia/artefatos/") ||
+		strings.HasPrefix(rel, "biblia/empresas/") || strings.HasPrefix(rel, "biblia/familias/")) {
+		return "", errors.New("foto só para fichas de personagem, lugar, artefato, empresa ou família")
 	}
 	ext := strings.ToLower(filepath.Ext(nome))
 	if ext == ".jpeg" {

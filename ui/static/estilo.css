@@ -714,3 +714,56 @@ a { color: var(--acento); }
 /* janela mais alta que a tela rola por dentro (os botões do fim ficam alcançáveis) */
 .modal-caixa { max-height: 94vh; overflow-y: auto; }
 .ev-modal .modal-acoes { position: sticky; bottom: -24px; background: var(--papel); padding: 10px 0 4px; margin-bottom: -4px; }
+
+/* ---------- personagens: filtros, famílias, castas, empresas */
+.filtros-pers { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin: 0 0 16px; }
+.filtros-pers label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--tinta-3); }
+.filtros-pers select { background: var(--papel); border: 1px solid var(--linha-forte); border-radius: 8px; padding: 6px 8px; min-width: 150px; font-size: 13px; text-transform: none; letter-spacing: 0; color: var(--tinta); }
+.tags-pers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.tags-pers.centro { justify-content: center; margin: 4px 0 8px; }
+.tags-pers a.etiqueta { text-decoration: none; cursor: pointer; }
+.grade-familias, .grade-empresas { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.cartao-familia, .cartao-empresa { background: var(--papel); border: 1px solid var(--linha); border-radius: 14px; padding: 14px 16px; cursor: pointer; box-shadow: var(--sombra); }
+.cartao-familia h3, .cartao-empresa h3 { margin: 0 0 2px; font-family: var(--serif-titulo); font-size: 22px; }
+.rostos-familia { display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
+.rosto-mini img, .rosto-mini span { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; object-position: center 20%; display: grid; place-items: center; color: #fffc; font-family: var(--serif-titulo); font-weight: 700; }
+.arvore-cartao { overflow-x: auto; margin-bottom: 16px; }
+.arvore { position: relative; display: flex; flex-direction: column; gap: 46px; padding: 14px; min-width: max-content; }
+.arvore-linhas { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.arvore-linhas path, .arvore-linhas line { stroke: var(--ouro); stroke-width: 2; fill: none; }
+.arvore-linhas line.casal { stroke: var(--acento); stroke-dasharray: 4 3; }
+.nivel-arvore { display: flex; justify-content: center; gap: 34px; }
+.no-arvore { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 110px; padding: 8px; border-radius: 12px; background: var(--papel); border: 1px solid var(--linha); box-shadow: var(--sombra); cursor: pointer; text-align: center; }
+.no-arvore img, .no-arvore .sem { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; object-position: center 20%; display: grid; place-items: center; color: #fffc; font-family: var(--serif-titulo); font-size: 28px; font-weight: 700; }
+.no-arvore b { font-family: var(--serif-titulo); font-size: 16px; line-height: 1.1; }
+.no-arvore small { font-size: 10.5px; color: var(--tinta-3); }
+.familia-grade { display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; }
+.linha-membro { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr auto; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 12px; color: var(--tinta-3); }
+.linha-membro label { display: flex; flex-direction: column; gap: 2px; }
+.linha-membro input, .linha-membro select, .familia-grade textarea, .familia-grade select { border: 1px solid var(--linha-forte); background: var(--papel); border-radius: 7px; padding: 5px 8px; font-size: 13px; color: var(--tinta); width: 100%; }
+.castas-tela { display: grid; grid-template-columns: minmax(380px, 1.2fr) 1fr; gap: 22px; align-items: start; }
+.piramide { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0; }
+.camada { position: relative; height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #fff; }
+.camada-0 { width: 46%; height: 190px; clip-path: polygon(50% 0, 100% 100%, 0 100%); background: linear-gradient(#a8434f, #7a2e3a); justify-content: flex-end; padding-bottom: 12px; }
+.camada-0 .camada-nome { order: 2; font-size: 17px; }
+.camada-1 { width: 73%; clip-path: polygon(18.5% 0, 81.5% 0, 100% 100%, 0 100%); background: linear-gradient(#b8893a, #8f6a2b); }
+.camada-2 { width: 100%; clip-path: polygon(13.5% 0, 86.5% 0, 100% 100%, 0 100%); background: linear-gradient(#56704a, #3e5535); }
+.camada-nome { font-family: var(--serif-titulo); font-size: 20px; font-weight: 700; text-shadow: 0 1px 2px #0006; }
+.camada-nome span { font-size: 13px; opacity: .85; }
+.camada-rostos { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; max-width: 60%; }
+.camada-0 .camada-rostos { max-width: 46%; }
+.rosto-pir { border: 0; padding: 0; background: none; cursor: pointer; }
+.rosto-pir img, .rosto-pir span { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; object-position: center 20%; display: grid; place-items: center; color: #fff; font-family: var(--serif-titulo); font-weight: 700; box-shadow: 0 0 0 2px #fff8; }
+.castas-lado { display: flex; flex-direction: column; gap: 12px; }
+.casta-cartao h3 { margin: 0 0 8px; font-family: var(--serif-titulo); font-size: 21px; }
+.bolha { padding: 4px 0; border-bottom: 1px dashed var(--linha); font-size: 13.5px; }
+.cartao-empresa { display: flex; gap: 14px; align-items: flex-start; }
+.logo { width: 72px; height: 72px; border-radius: 14px; overflow: hidden; flex: none; background: var(--papel-2); border: 1px solid var(--linha); display: grid; place-items: center; }
+.logo img { width: 100%; height: 100%; object-fit: contain; }
+.logo span { width: 100%; height: 100%; display: grid; place-items: center; color: #fffc; font-family: var(--serif-titulo); font-size: 34px; font-weight: 700; }
+.logo.grande { width: 180px; height: 180px; border-radius: 22px; }
+.empresa-modal { display: grid; grid-template-columns: 220px 1fr; gap: 22px; padding: 20px 24px; }
+.empresa-logo { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.empresa-campos input, .empresa-campos select, .empresa-campos textarea { border: 1px solid var(--linha-forte); background: var(--papel); border-radius: 7px; padding: 6px 9px; width: 100%; }
+.linha-pessoa { grid-template-columns: 1fr 1fr auto !important; }
+@media (max-width: 900px) { .castas-tela, .familia-grade, .empresa-modal { grid-template-columns: 1fr; } }

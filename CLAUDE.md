@@ -53,6 +53,8 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `estilo/escritas/<nome>.md` | A escrita de cada escritor (persona, jeitos de escrever com exemplos, importante, herança) |
 | `estilo/estilo.md`, `estilo/guardrails.md` | Regras gerais para todos e padrões proibidos |
 | `biblia/personagens/<nome>.md` | Uma ficha por personagem (modelo em `_modelo.md`) |
+| `biblia/familias/<nome>.md` | Uma ficha por família: casta, empresa, descrição e **Membros** (cada um com pai, mãe e cônjuge: daí sai a árvore genealógica) |
+| `biblia/empresas/<nome>.md` | Uma ficha por empresa: ramo, sede, família, casta, descrição e **Pessoas** (com o papel de cada uma); a logo é a imagem com o mesmo nome |
 | `biblia/relacoes.md` | Relações entre personagens (`A → B`: o que B é para A — pai, filha, namorado, amigo, rival…; período; frase; indicadores de 1 a 5) |
 | `biblia/geografia.md` | **Geografia de Morcal**: a árvore de lugares (mundo › continente ou arquipélago › país › cidade › bairro › local) |
 | `biblia/lugares/<nome>.md` | Uma ficha por lugar, de qualquer nível, com os traços próprios |
@@ -72,6 +74,11 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 ## Ficha de personagem
 
 Seções, em linguagem natural (nada de atributos de RPG): Identidade · Apelidos (cada um com quem usa) · Aparência (uma versão `###` por idade ou fase, com Período, Idade, Tipo, Espécie, Imagem e a descrição) · Personalidade · Motivação · Sociedade · Segredos e conhecimento · Voz no diário · Observações narrativas · Estado atual. Família, amores, amizades e inimizades ficam em `biblia/relacoes.md`, não na ficha.
+
+## Dinâmicas de personagem
+
+- Família (`biblia/familias/`), casta (ficha › Sociedade; se faltar, a da família), empresa (`biblia/empresas/`) e profissão (ficha › Sociedade › Ocupação) definem as dinâmicas: quem deve a quem, quem compete com quem, quem trata quem como igual. Use ao escrever cenas com mais de uma pessoa. Nem todo personagem tem tudo preenchido: o que faltar, não invente.
+- Parentesco da árvore (pai, mãe, cônjuge) é fato; o sentimento entre as pessoas fica em `biblia/relacoes.md`.
 
 ## Imagens: descrever pelo que se vê
 

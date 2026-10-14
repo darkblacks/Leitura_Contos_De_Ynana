@@ -1,11 +1,10 @@
 {
-  "versao": "2.3.0",
-  "sha256": "a0fd107f36fdf8f25828fdeef3c45fd4e4240791317d8a16491ad0716bcdc281",
+  "versao": "2.4.0",
+  "sha256": "2c18269ab08815e3be71f1f427a5237f0cb0a9806e11636a906d082f85c27dc6",
   "notas": [
-    "Acontecimentos com três partes: onde estava cada personagem, mudanças nos lugares e mudanças nos objetos",
-    "Filtros Por personagem, Por lugar e Por objeto, com a linha do tempo e o estado mais recente",
-    "Fichas de lugar e artefato mostram tudo o que mudou ao longo da história",
-    "Canonizar registra as três partes; o Claude confere o estado de cada coisa na data antes de escrever",
-    "Janelas altas agora rolam (o Salvar do acontecimento ficava fora da tela)"
+    "Personagens: filtros por família, casta, empresa e profissão",
+    "Famílias com árvore genealógica (pai, mãe, cônjuge)",
+    "Castas na pirâmide, com os rostos em cada camada",
+    "Empresas com logo, descrição e pessoas"
   ]
 }

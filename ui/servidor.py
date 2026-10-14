@@ -133,6 +133,8 @@ def arvore():
         "lugares": listar("biblia/lugares", ocultar_modelos=True),
         "artefatos": listar("biblia/artefatos", ocultar_modelos=True),
         "acontecimentos": listar("biblia/acontecimentos", ocultar_modelos=True),
+        "familias": listar("biblia/familias", ocultar_modelos=True),
+        "empresas": listar("biblia/empresas", ocultar_modelos=True),
         "exemplos": listar("estilo/exemplos"),
         "ref_textos": listar("referencias/textos"),
         "ref_imagens": listar("referencias/imagens", EXT_IMAGEM),
@@ -267,11 +269,11 @@ def criar(tipo, nome):
         n = (max(existentes) + 1) if existentes else 1
         p = RAIZ / "capitulos" / f"cap-{n:02d}.md"
         p.write_text(MODELO_CAPITULO.format(n=n, titulo=nome), encoding="utf-8")
-    elif tipo in ("personagem", "lugar", "artefato", "acontecimento"):
+    elif tipo in ("personagem", "lugar", "artefato", "acontecimento", "familia", "empresa"):
         if not nome:
             raise ValueError("dê um nome")
         pasta = {"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos",
-                 "acontecimento": "acontecimentos"}[tipo]
+                 "acontecimento": "acontecimentos", "familia": "familias", "empresa": "empresas"}[tipo]
         (RAIZ / "biblia" / pasta).mkdir(parents=True, exist_ok=True)
         p = RAIZ / "biblia" / pasta / f"{slug(nome)}.md"
         if p.exists():
@@ -310,8 +312,8 @@ def salvar_foto(ficha, nome, dados_b64, variante=""):
     """Foto da ficha; com variante, uma imagem extra (ex.: aparência de outra idade): <ficha>--<variante>.ext"""
     p = caminho_seguro(ficha)
     rel = p.relative_to(RAIZ).as_posix()
-    if p.suffix != ".md" or not rel.startswith(("biblia/personagens/", "biblia/lugares/", "biblia/artefatos/")):
-        raise ValueError("foto só para fichas de personagem, lugar ou artefato")
+    if p.suffix != ".md" or not rel.startswith(("biblia/personagens/", "biblia/lugares/", "biblia/artefatos/", "biblia/empresas/", "biblia/familias/")):
+        raise ValueError("foto só para fichas de personagem, lugar, artefato, empresa ou família")
     ext = Path(nome).suffix.lower().replace(".jpeg", ".jpg")
     if ext not in EXT_FOTO:
         raise ValueError(f"formato de imagem não aceito: {ext} (use png, jpg ou webp)")

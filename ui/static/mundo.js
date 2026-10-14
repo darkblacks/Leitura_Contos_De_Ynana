@@ -1421,7 +1421,8 @@ async function vincularAcontecimento({ capNome, ta, evs, aoTerminar }) {
 }
 
 /* ============================================================ Tela: Relações */
-const abasPersonagens = (qual) => `<div class="abas"><div class="aba ${qual === "fichas" ? "ativa" : ""}" onclick="ir('personagens')">Fichas</div><div class="aba ${qual === "relacoes" ? "ativa" : ""}" onclick="ir('relacoes')">Relações</div></div>`;
+const ABAS_PERSONAGENS = [["fichas", "personagens", "Fichas"], ["relacoes", "relacoes", "Relações"], ["familias", "familias", "Famílias"], ["castas", "castas", "Castas"], ["empresas", "empresas", "Empresas"]];
+const abasPersonagens = (qual) => `<div class="abas">${ABAS_PERSONAGENS.map(([k, rota, nome]) => `<div class="aba ${qual === k ? "ativa" : ""}" onclick="ir('${rota}')">${nome}</div>`).join("")}</div>`;
 VISTAS.relacoes = async (foco) => {
   $$("#nav a").forEach((a) => a.classList.toggle("ativo", a.dataset.view === "personagens"));
   const { personagens } = await fichasDoMundo();

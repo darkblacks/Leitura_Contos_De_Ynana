@@ -303,9 +303,31 @@ function lerAcontecimento(texto, caminho) {
     quando: semEx(campos.get("Quando")), ate: semEx(campos.get("Até")), situacao: semAcento(campos.get("Situação")).split(/\s/)[0] || "planejado",
     personagens: linksDe(campos.get("Personagens"), caminho), local: linksDe(campos.get("Local"), caminho), localTexto: campos.get("Local"),
     funcao: semEx(campos.get("Função")), origem: semEx(campos.get("Origem")),
-    ondeCada: ((sec("Onde estava cada um") || {}).corpo || "").split("\n").filter((l) => /^[-*]\s/.test(l) && !/\(onde estava, o que fazia\)/.test(l)).join("\n"),
+    ...Object.fromEntries(PARTES.map(([k, titulo]) => [k, lerParte((sec(titulo) || {}).corpo || "", caminho)])),
     fontes: semEx(campos.get("Fontes")), descricao: ((sec("Descrição") || {}).corpo || "").replace(/^O que aconteceu de fato.*$/m, "").trim(),
   };
+}
+/* As partes filhas de um acontecimento: por personagem, por lugar e por objeto. */
+const PARTES = [
+  ["pessoas", "Onde estava cada um", "personagens", "onde estava, o que fazia"],
+  ["lugares", "Mudanças nos lugares", "lugares", "o que mudou no lugar"],
+  ["objetos", "Mudanças nos objetos", "artefatos", "o que mudou; com quem está; onde está"],
+];
+function lerParte(corpo, base) {
+  const prosa = [], itens = [];
+  for (const l of corpo.split("\n")) {
+    const m = l.match(/^[-*]\s+(?:\[([^\]]+)\]\(([^)]+)\)|([^:]+?))\s*:\s*(.*)$/);
+    if (!m) { if (l.trim() && !/^[-*]\s/.test(l)) prosa.push(l); continue; }
+    const texto = m[4].trim();
+    if (!texto || /^\(.*\)$/.test(texto) && /onde estava|o que mudou/.test(texto)) continue;
+    itens.push({ nome: (m[1] || m[3]).trim(), caminho: m[2] ? resolverRel(base, m[2]) : "", texto });
+  }
+  itens.prosa = prosa.join("\n");
+  return itens;
+}
+function escreverParte(itens, de) {
+  const linhas = itens.map((x) => `- ${x.caminho ? mdLink(x.nome, x.caminho, de) : x.nome}: ${x.texto}`);
+  return [itens.prosa || "", linhas.join("\n")].filter(Boolean).join("\n\n");
 }
 function semEx(v) { return /^\(ex\.?:|^\(a definir\)$/i.test((v || "").trim()) ? "" : v || ""; }
 function chaveModo(t) {
@@ -329,7 +351,7 @@ function escreverAcontecimento(ev) {
   doc.cabeca = cab.replace(/\n{3,}/g, "\n\n");
   const por = (titulo, corpo) => { const s = acharSecao(doc, titulo); if (s) s.corpo = corpo; else doc.secoes.push({ titulo, corpo }); };
   por("Descrição", ev.descricao || "(a definir)");
-  if (ev.ondeCada || acharSecao(doc, "Onde estava cada um")) por("Onde estava cada um", ev.ondeCada || "");
+  for (const [k, titulo] of PARTES) if ((ev[k] || []).length || acharSecao(doc, titulo)) por(titulo, escreverParte(ev[k] || [], ev.caminho));
   por("Informações", ev.infos.length ? ev.infos.map((i) => "- " + i).join("\n") : "Partes que podem ser reveladas separadamente, uma por linha.");
   const blocos = ev.vinculos.map((v) => [`### ${v.cap} · ${MODOS[v.modo]}`,
     `- Revelado a: ${v.reveladoA || "leitor"}`,
@@ -347,7 +369,7 @@ async function todosAcontecimentos() {
   }
   const cal = await calendario();
   evs.forEach((e) => { e.data = lerData(e.quando, cal); e.ord = e.data ? diaAbsoluto(e.data, cal).dias : Infinity; });
-  return evs.sort((a, b) => a.ord - b.ord || a.titulo.localeCompare(b.titulo));
+  return evs.sort((a, b) => a.ord - b.ord || numCap(a.origem || "cap-999") - numCap(b.origem || "cap-999") || a.titulo.localeCompare(b.titulo));
 }
 const numCap = (c) => +(String(c).match(/(\d+)/) || [])[1] || 0;
 const norm = (s) => semAcento(s).replace(/[“”«»"']/g, "").replace(/\s+/g, " ").trim();
@@ -679,7 +701,8 @@ async function abrirFichaPersonagem(caminho, aoFechar, abertas = null) {
   S("Acontecimentos", "Acontecimentos", meusEv.length ? `<div class="mini-linha">${meusEv.map((e) => `
       <div class="ev-mini" data-ev="${esc(e.caminho)}"><span class="ev-data">${esc(e.data ? formatarData(e.data, cal) : "sem data")}</span>
         <b>${esc(e.titulo)}</b> <span class="situacao ${esc(e.situacao)}">${esc(e.situacao)}</span>
-        ${e.vinculos.filter((v) => v.quem.some((q) => q.caminho === caminho)).map((v) => `<span class="sub"> · descobre em ${esc(v.cap)}</span>`).join("")}</div>`).join("")}</div>`
+        ${e.vinculos.filter((v) => v.quem.some((q) => q.caminho === caminho)).map((v) => `<span class="sub"> · descobre em ${esc(v.cap)}</span>`).join("")}
+        ${(e.pessoas || []).filter((x) => x.caminho === caminho).map((x) => `<div class="sub">↳ ${esc(x.texto)}</div>`).join("")}</div>`).join("")}</div>`
     : `<div class="sub">Nenhum acontecimento com ${esc(f.titulo)} ainda. Crie em Acontecimentos.</div>`, meusEv.length ? `${meusEv.length}` : "");
   const conhec = lerCampos(corpoDe("Segredos e conhecimento"));
   const descobertas = evs.flatMap((e) => e.vinculos.filter((v) => v.quem.some((q) => q.caminho === caminho)).map((v) => `${e.titulo} (${v.cap}${v.infos.length ? ": " + v.infos.join("; ") : ""})`));
@@ -1041,7 +1064,58 @@ async function ciclos() {
 }
 
 /* ============================================================ Tela: Acontecimentos (por ciclo) */
-VISTAS.acontecimentos = async () => {
+const ABAS_EV = [["", "História principal"], ["personagem", "Por personagem"], ["lugar", "Por lugar"], ["objeto", "Por objeto"]];
+const abasAcontecimentos = (qual) => `<div class="abas">${ABAS_EV.map(([k, t]) => `<div class="aba ${k === qual ? "ativa" : ""}" data-aba-ev="${k}">${t}</div>`).join("")}</div>`;
+function ligarAbasAcontecimentos() { $$("[data-aba-ev]").forEach((a) => (a.onclick = () => ir("acontecimentos", a.dataset.abaEv || undefined))); }
+
+/* Linha do tempo de um personagem, lugar ou objeto, juntando as partes filhas dos acontecimentos. */
+async function historicoDe(tipo, caminho, evs) {
+  evs = evs || (await todosAcontecimentos());
+  const k = { personagem: "pessoas", lugar: "lugares", objeto: "objetos" }[tipo];
+  const out = [];
+  for (const e of evs) {
+    const itens = (e[k] || []).filter((x) => x.caminho === caminho);
+    for (const x of itens) out.push({ e, texto: x.texto, mudanca: true });
+    if (!itens.length && tipo === "personagem" && e.personagens.some((p) => p.caminho === caminho)) out.push({ e, texto: "estava presente", mudanca: false });
+    if (!itens.length && tipo === "lugar" && e.local.some((p) => p.caminho === caminho)) out.push({ e, texto: "acontece aqui", mudanca: false });
+  }
+  return out;
+}
+async function vistaFiltroAcontecimentos(tipo, foco) {
+  const cal = await calendario(true);
+  const evs = await todosAcontecimentos();
+  const mundo = await fichasDoMundo();
+  const fichas = { personagem: mundo.personagens, lugar: mundo.lugares, objeto: mundo.artefatos }[tipo];
+  const contagem = {};
+  for (const f of fichas) contagem[f.caminho] = (await historicoDe(tipo, f.caminho, evs)).length;
+  const atual = foco && fichas.some((f) => f.caminho === foco) ? foco : (fichas.find((f) => contagem[f.caminho]) || fichas[0] || {}).caminho;
+  const nomeTipo = { personagem: "personagem", lugar: "lugar", objeto: "objeto" }[tipo];
+  vista.innerHTML = cabecalho("Acontecimentos", { personagem: "Onde cada personagem estava e o que fazia, acontecimento por acontecimento.", lugar: "O que mudou em cada lugar e o que aconteceu lá, em ordem.", objeto: "O que mudou em cada objeto (estado, com quem está, onde está), em ordem." }[tipo]) + abasAcontecimentos(tipo) +
+    (fichas.length ? `<div class="rel-tela">
+      <div class="rel-pessoas">${fichas.filter((f) => tipo !== "lugar" || contagem[f.caminho] || f.caminho === atual).map((f) => `<button class="rel-pessoa ${f.caminho === atual ? "sel" : ""}" data-foco="${esc(f.caminho)}">${miniRosto(f)}<span>${esc(f.titulo)}</span><span class="sub">${contagem[f.caminho] || ""}</span></button>`).join("")}
+        ${tipo === "lugar" ? `<div class="sub" style="padding:6px 8px">Só aparecem lugares com acontecimentos.</div>` : ""}</div>
+      <div id="hist"></div></div>` : `<div class="vazio">Nenhum ${nomeTipo} cadastrado.</div>`);
+  ligarAbasAcontecimentos();
+  $$("[data-foco]").forEach((b) => (b.onclick = () => ir("acontecimentos", tipo + ":" + b.dataset.foco)));
+  if (!atual) return;
+  const f = fichas.find((x) => x.caminho === atual);
+  const hist = await historicoDe(tipo, atual, evs);
+  const ultimaMud = [...hist].reverse().find((h) => h.mudanca);
+  $("#hist").innerHTML = `<div class="cabecalho-rel"><h2>${esc(f.titulo)}</h2><button class="botao" data-abrir-ficha-h="${esc(f.caminho)}">Abrir ficha</button></div>
+    ${ultimaMud && tipo !== "personagem" ? `<div class="cartao estado-atual"><div class="rotulo">Estado mais recente</div><div class="estado-texto">${esc(ultimaMud.texto)}</div>
+      <div class="sub">desde ${esc(ultimaMud.e.origem || "")} ${ultimaMud.e.data ? "· " + esc(formatarData(ultimaMud.e.data, cal)) : ""} · ${esc(ultimaMud.e.titulo)}</div></div>` : ""}
+    ${hist.length ? `<div class="linha-eventos">${hist.map((h) => `
+      <div class="evento ${h.mudanca ? "" : "so-presenca"}" data-ev="${esc(h.e.caminho)}">
+        <div class="evento-data">${esc(h.e.data ? formatarData(h.e.data, cal) : "sem data")}${h.e.origem ? `<br>${esc(h.e.origem)}` : ""}</div>
+        <div class="evento-corpo"><div class="hist-texto">${esc(h.texto)}</div><div class="sub">${esc(h.e.titulo)}</div></div>
+      </div>`).join("")}</div>`
+      : `<div class="vazio">Nada registrado para ${esc(f.titulo)} ainda. Ao canonizar um capítulo, o Claude registra onde cada um estava e o que mudou.</div>`}`;
+  $$("#hist [data-ev]").forEach((x) => (x.onclick = () => abrirAcontecimento(x.dataset.ev, () => vistaFiltroAcontecimentos(tipo, atual))));
+  $("[data-abrir-ficha-h]").onclick = () => abrirFicha(f.caminho);
+}
+
+VISTAS.acontecimentos = async (arg) => {
+  if (arg && /^(personagem|lugar|objeto)/.test(arg)) { const [tipo, ...resto] = arg.split(":"); return vistaFiltroAcontecimentos(tipo, resto.join(":")); }
   const cal = await calendario(true);
   const evs = await todosAcontecimentos();
   const cic = await ciclos();
@@ -1054,10 +1128,13 @@ VISTAS.acontecimentos = async () => {
       <div class="evento-data">${esc(e.data ? formatarData(e.data, cal) : e.quando && !vazio(e.quando) ? e.quando : "data a definir")}</div>
       <div class="evento-corpo ${ehFiller(e.funcao) ? "filler" : ""}"><h3>${esc(e.titulo)} <span class="situacao ${esc(e.situacao)}">${esc(e.situacao)}</span>${e.origem ? ` <span class="etiqueta">${esc(e.origem)}</span>` : ""}</h3>
         ${e.funcao ? `<div class="funcao">↳ ${esc(e.funcao)}</div>` : ""}
+        ${(e.pessoas || []).length || (e.lugares || []).length || (e.objetos || []).length ? `<div class="filhas">${[
+          (e.pessoas || []).length ? `☺ ${e.pessoas.length} personagem(ns)` : "", (e.lugares || []).length ? `⌂ ${e.lugares.map((x) => esc(x.nome)).join(", ")}` : "",
+          (e.objetos || []).length ? `◆ ${e.objetos.map((x) => esc(x.nome)).join(", ")}` : ""].filter(Boolean).join(" · ")}</div>` : ""}
         <div class="sub">${e.personagens.map((p) => esc(p.nome)).join(", ")}${e.local.length ? " · " + e.local.map((p) => esc(p.nome)).join(", ") : ""}</div>
         ${e.vinculos.length ? `<div class="etiquetas">${e.vinculos.map((v) => `<span class="etiqueta">${esc(v.cap)}</span>`).join(" ")}</div>` : ""}</div></div>`;
   vista.innerHTML = cabecalho("Acontecimentos", "A história em ciclos: cada ciclo é uma fase, com os acontecimentos em ordem. Ao pedir um capítulo, você escolhe quais acontecimentos entram, e a data precisa bater.",
-    `${linhasTempo.length && !evs.length ? `<button class="botao" id="importar-lt">Trazer da linha do tempo antiga</button>` : ""}<button class="botao" id="novo-ciclo">+ Ciclo</button><button class="botao primario" id="novo-ev">+ Acontecimento</button>`) +
+    `${linhasTempo.length && !evs.length ? `<button class="botao" id="importar-lt">Trazer da linha do tempo antiga</button>` : ""}<button class="botao" id="novo-ciclo">+ Ciclo</button><button class="botao primario" id="novo-ev">+ Acontecimento</button>`) + abasAcontecimentos("") +
     grupos.map((g, i) => `<section class="ciclo">
       <div class="ciclo-topo"><div><h2>${esc(g.c.nome)}</h2><div class="sub">${esc(g.c.periodo || "período a definir")}</div></div>
         <button class="botao pequeno" data-ed-ciclo="${i}">editar</button></div>
@@ -1067,6 +1144,7 @@ VISTAS.acontecimentos = async () => {
     (soltos.length ? `<section class="ciclo"><div class="ciclo-topo"><div><h2>Sem ciclo</h2><div class="sub">Sem data ou fora dos períodos dos ciclos</div></div></div><div class="linha-eventos">${soltos.map(cartaoEv).join("")}</div></section>` : "") +
     (!grupos.length && !soltos.length ? `<div class="vazio"><h3>Nada ainda</h3>Crie um ciclo (uma fase da história) e os acontecimentos dele.</div>` : "");
   $$("[data-ev]").forEach((x) => (x.onclick = () => abrirAcontecimento(x.dataset.ev, () => VISTAS.acontecimentos())));
+  ligarAbasAcontecimentos();
   const editarCiclo = (c) => {
     const novo = !c;
     c = c || { nome: "", periodo: "", resumo: "" };
@@ -1118,6 +1196,10 @@ function linhasDaLinhaDoTempo(historia) {
   }).filter((l) => l.titulo && !/^\(?lacuna/i.test(l.titulo));
 }
 
+function linhaParte(x, fichas, dica) {
+  return `<div class="linha-parte"><select><option value="">escolha…</option>${fichas.map((f) => `<option value="${esc(f.caminho)}" ${f.caminho === x.caminho ? "selected" : ""}>${esc(f.titulo)}</option>`).join("")}</select>
+    <input value="${esc(x.texto)}" placeholder="${esc(dica)}"><button class="botao pequeno" data-tirar-parte title="tirar">✕</button></div>`;
+}
 async function abrirAcontecimento(caminho, aoFechar) {
   const cal = await calendario();
   const mundo = await fichasDoMundo();
@@ -1154,8 +1236,10 @@ async function abrirAcontecimento(caminho, aoFechar) {
           <datalist id="ev-funcoes">${FUNCOES.map((f) => `<option value="${esc(f)}">`).join("")}</datalist></div>
         ${ev.origem ? `<div class="campo"><label>Origem</label><input value="${esc(ev.origem)}" disabled></div>` : ""}
       </div>
-      <div class="campo"><label>Onde estava cada um <span class="sub">(um por linha: quem, onde estava, o que fazia)</span></label>
-        <textarea id="ev-onde" rows="3" placeholder="- Ynana: no convés, jantando com os pais&#10;- Rufus: no leme">${esc(ev.ondeCada)}</textarea></div>
+      ${PARTES.map(([k, titulo, lista, dica]) => `
+        <div class="campo parte-ev" data-parte="${k}"><label>${esc(titulo)}</label>
+          <div class="linhas-parte">${(ev[k] || []).map((x) => linhaParte(x, mundo[lista], dica)).join("")}</div>
+          <button class="botao pequeno" data-mais-parte="${k}">+ ${k === "pessoas" ? "personagem" : k === "lugares" ? "lugar" : "objeto"}</button></div>`).join("")}
       <div class="campo"><label>Descrição <span class="sub">(a verdade da história, mesmo que ninguém saiba ainda)</span></label><textarea id="ev-desc" rows="4">${esc(vazio(ev.descricao) ? "" : ev.descricao)}</textarea></div>
       <div class="campo"><label>Informações <span class="sub">(partes que podem ser reveladas separadamente, uma por linha)</span></label>
         <textarea id="ev-infos" rows="3" placeholder="a data exata&#10;quem estava a bordo">${esc(ev.infos.join("\n"))}</textarea></div>
@@ -1170,6 +1254,11 @@ async function abrirAcontecimento(caminho, aoFechar) {
       <div class="modal-acoes"><button class="botao" id="ev-fechar">Fechar</button><button class="botao primario" id="ev-salvar">Salvar</button></div>
     </div>`, "largo");
   $$("#ev-pess input", c).forEach((i) => (i.onchange = () => i.parentElement.classList.toggle("sel", i.checked)));
+  $$("[data-mais-parte]", c).forEach((b) => (b.onclick = () => {
+    const [, , lista, dica] = PARTES.find(([k]) => k === b.dataset.maisParte);
+    $(".linhas-parte", b.parentElement).insertAdjacentHTML("beforeend", linhaParte({ caminho: "", texto: "" }, mundo[lista], dica));
+  }));
+  $(".ev-modal", c).addEventListener("click", (e) => { if (e.target.matches("[data-tirar-parte]")) e.target.closest(".linha-parte").remove(); });
   const salvar = async () => {
     ev.titulo = $("#ev-titulo", c).value.trim() || ev.titulo;
     ev.quando = valorSeletorData($("#ev-quando", c), cal) || $("#ev-quando-txt", c).value.trim() || "(a definir)";
@@ -1182,7 +1271,15 @@ async function abrirAcontecimento(caminho, aoFechar) {
     if (l) ev.localTexto = "";
     ev.fontes = $("#ev-fontes", c).value.trim();
     ev.funcao = $("#ev-funcao", c).value.trim();
-    ev.ondeCada = $("#ev-onde", c).value.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => (/^[-*]\s/.test(l) ? l : "- " + l)).join("\n");
+    for (const [k, , lista] of PARTES) {
+      const prosa = (ev[k] || {}).prosa;
+      ev[k] = $$(`[data-parte="${k}"] .linha-parte`, c).map((el) => {
+        const cam = $("select", el).value, texto = $("input", el).value.trim();
+        const f = mundo[lista].find((x) => x.caminho === cam);
+        return f && texto ? { nome: f.titulo, caminho: f.caminho, texto } : null;
+      }).filter(Boolean);
+      ev[k].prosa = prosa;
+    }
     ev.descricao = $("#ev-desc", c).value.trim();
     ev.infos = $("#ev-infos", c).value.split("\n").map((x) => x.replace(/^[-*]\s*/, "").trim()).filter(Boolean);
     await gravarArquivo(caminho, escreverAcontecimento(ev));

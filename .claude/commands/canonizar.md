@@ -11,6 +11,9 @@ Canonizar o capítulo **$ARGUMENTS**.
    - **Função**: o papel disso na história — apresentar personagens (quais), dar abertura, virada, plantar pista, pagar pista, aprofundar relação, mostrar o mundo, conflito, clímax, desfecho — ou **dar volume (filler)** quando não muda nada
    - **Descrição** curta (o que aconteceu de fato) e **Informações** (partes que podem ser reveladas)
    - **Onde estava cada um**: cada personagem presente, onde estava e o que fazia
+   - **Mudanças nos lugares**: o que mudou em cada lugar a partir daqui (algo saiu, entrou, quebrou, foi construído)
+   - **Mudanças nos objetos**: o que mudou em cada objeto/artefato (estado, cor, dano, com quem está, onde está)
+   - nessas três partes, cada linha começa com o link da ficha: `- [Synzoe](../artefatos/synzoe.md): ficou verde; com a Ynana`. Coisa sem ficha: o nome sem link
    - bloco em **Nos capítulos** (`### cap-NN · Acontece neste capítulo`, Revelado a, Quem descobre, Informações, Trecho exato)
 3. Já existe (escolhido no pedido)? Complete esse e marque confirmado. Não invente nada que não esteja no texto.
 4. Se o capítulo estiver `rascunho`, mude para `revisado`. Atualize `continuidade/resumos.md` e o "Estado atual" das fichas de quem aparece.

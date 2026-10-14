@@ -1,9 +1,11 @@
 {
-  "versao": "2.2.0",
-  "sha256": "6a968e84631dc195f39591551c5e563228d4a9d3ff2057a4b62d0d00c3f56d5d",
+  "versao": "2.3.0",
+  "sha256": "a0fd107f36fdf8f25828fdeef3c45fd4e4240791317d8a16491ad0716bcdc281",
   "notas": [
-    "Tiques explicados: cada vício diz o que é e por quê, organizado por classe, com só as frases onde aparece",
-    "Novo tique: palavra repetida demais em poucos parágrafos",
-    "Em cada tique: Corrigir (o Claude mexe só naquelas frases) ou Manter (é intencional e não aparece mais naquele capítulo)"
+    "Acontecimentos com três partes: onde estava cada personagem, mudanças nos lugares e mudanças nos objetos",
+    "Filtros Por personagem, Por lugar e Por objeto, com a linha do tempo e o estado mais recente",
+    "Fichas de lugar e artefato mostram tudo o que mudou ao longo da história",
+    "Canonizar registra as três partes; o Claude confere o estado de cada coisa na data antes de escrever",
+    "Janelas altas agora rolam (o Salvar do acontecimento ficava fora da tela)"
   ]
 }

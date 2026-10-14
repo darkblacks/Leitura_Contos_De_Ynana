@@ -81,6 +81,8 @@ Seções, em linguagem natural (nada de atributos de RPG): Identidade · Apelido
 ## Canonizar: o capítulo vira acontecimento
 
 - Quando o autor gosta de um capítulo ("♥ Gostei" ou `/canonizar N`), o que aconteceu nele vai para `biblia/acontecimentos/`, resumido e confirmado, com: data, ciclo, personagens, local, **Origem** (`cap-NN`), **Função na história** (apresentar personagens, dar abertura, virada, plantar ou pagar pista, aprofundar relação… ou **dar volume (filler)** quando não muda nada) e **Onde estava cada um** (onde estava e o que fazia cada personagem presente).
+- Cada acontecimento da história principal (num ciclo) tem **três partes filhas**: **Onde estava cada um** (por personagem), **Mudanças nos lugares** e **Mudanças nos objetos** (estado, com quem está, onde está). Uma mudança vale da data do acontecimento até outra mudança da mesma coisa.
+- **Estado vigente**: antes de escrever uma cena, para cada lugar e objeto que aparece, procure a última mudança registrada antes da data do capítulo (`grep` pelo nome em `biblia/acontecimentos/`). Ex.: se o Synzoe ficou verde no cap-03 e voltou ao normal no cap-06, no cap-05 ele está verde; se o sofá velho foi jogado fora, ele não está mais na Mansão.
 - **Antes de escrever um capítulo, leia os acontecimentos canonizados** do ciclo e dos personagens envolvidos, em vez de reler capítulos antigos: é ali que estão onde cada um estava e o que já aconteceu. Isso evita furos (alguém em dois lugares, algo esquecido).
 
 ## Geografia: cada lugar herda a cadeia

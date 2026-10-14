@@ -18,6 +18,7 @@ Não existe roteiro pronto: o que acontece vem do **pedido do autor** (no chat o
    - o capítulo anterior inteiro (`cap-(N-1).md`), se existir; para os de antes, os **acontecimentos canonizados** (`biblia/acontecimentos/`: onde estava cada um, função) e `continuidade/resumos.md`; `continuidade/registro.md`
    - as fichas dos personagens, lugares e artefatos do pedido (só o texto)
    - para o lugar da cena, a cadeia dele em `biblia/geografia.md` e as fichas dessa cadeia
+   - o **estado vigente** de cada lugar e objeto da cena: a última linha de "Mudanças nos lugares/objetos" antes da data do capítulo (busque o nome em `biblia/acontecimentos/`)
    - os acontecimentos escolhidos (`biblia/acontecimentos/`) e o ciclo deles (`biblia/ciclos.md`); `biblia/relacoes.md` entre quem aparece
    - `biblia/calendario.md`: o nome do mês e os **feriados e festivais** que caem na data do capítulo (se cair, a cena pode e deve sentir isso)
 

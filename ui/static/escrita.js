@@ -98,7 +98,11 @@ async function abrirAjuste({ caminho, n, status, trecho = "", aoEnviar }) {
 function mensagemCanonizar(n, caminho) {
   return `Gostei do capítulo ${n} (${caminho}). Canonize-o nos Acontecimentos (/canonizar ${n}):
 - Leia o capítulo e registre em biblia/acontecimentos/ o que ele mostra, resumido, seguindo biblia/acontecimentos/_modelo.md. Um arquivo por acontecimento (pode ser um só, se o capítulo for uma cena).
-- Para cada um: Quando (a data do capítulo), Ciclo (o de biblia/ciclos.md que contém a data), Situação: confirmado, Personagens, Local, Origem: cap-${String(n).padStart(2, "0")}, Função na história (ex.: apresentar a Ynana e o Rufus; dar abertura; virada; plantar pista; pagar pista; aprofundar relação; dar volume (filler) quando não muda nada), Descrição curta, Informações e "Onde estava cada um" (cada personagem presente: onde estava e o que fazia).
+- Para cada um: Quando (a data do capítulo), Ciclo (o de biblia/ciclos.md que contém a data), Situação: confirmado, Personagens, Local, Origem: cap-${String(n).padStart(2, "0")}, Função na história (ex.: apresentar a Ynana e o Rufus; dar abertura; virada; plantar pista; pagar pista; aprofundar relação; dar volume (filler) quando não muda nada), Descrição curta, Informações e as três partes filhas:
+  • "Onde estava cada um": cada personagem presente, onde estava e o que fazia;
+  • "Mudanças nos lugares": o que mudou em cada lugar a partir daqui (algo saiu, entrou, quebrou; ex.: o sofá velho foi jogado fora da Mansão);
+  • "Mudanças nos objetos": o que mudou em cada objeto ou artefato (estado, cor, dano, com quem está, onde está).
+  Cada linha começa com o link da ficha: "- [Synzoe](../artefatos/synzoe.md): ficou verde; com a Ynana, no pescoço".
 - Se o acontecimento já existe (por exemplo, escolhido no pedido), complete esse em vez de criar outro, e marque como confirmado. Acrescente o bloco "Nos capítulos" com o trecho.
 - Só o que está no texto: não invente fato novo.
 - Se o capítulo estiver como rascunho, mude para revisado.
@@ -278,7 +282,7 @@ async function enviarPedido(n, p, modo, aoEnviar) {
     evTxt ? `Acontecimentos deste capítulo (registre o vínculo em "Nos capítulos" de cada um depois):\n${evTxt}` : "",
     p.acontece ? `O que acontece (do autor):\n${p.acontece}` : "",
     p.tom ? `Tom e cuidados: ${p.tom}` : "",
-    `Mínimo de ${p.tamanho.toLocaleString("pt-BR")} palavras. Reúna sozinho o capítulo anterior, os acontecimentos já canonizados, as fichas (só as descrições, sem abrir imagens), a cadeia do lugar, o calendário (feriados na data) e as relações antes de escrever.`,
+    `Mínimo de ${p.tamanho.toLocaleString("pt-BR")} palavras. Confira o estado de cada lugar e objeto da cena nesta data (a última "Mudança" registrada antes dela nos acontecimentos). Reúna sozinho o capítulo anterior, os acontecimentos já canonizados, as fichas (só as descrições, sem abrir imagens), a cadeia do lugar, o calendário (feriados na data) e as relações antes de escrever.`,
   ].filter(Boolean).join("\n\n");
   if (aoEnviar) aoEnviar(msg, arqCap(n)); else enviarAoClaude(msg, arqCap(n));
 }
@@ -317,6 +321,8 @@ async function abrirFichaVisual(caminho, aoFechar) {
   const fotos = [f.foto, ...(f.imagens || [])].filter(Boolean);
   const nota = doc.cabeca.split("\n").filter((l) => /^>/.test(l)).join("\n");
   const tipoTxt = /\/lugares\//.test(caminho) ? "lugar" : "artefato";
+  const cal = await calendario();
+  const hist = await historicoDe(tipoTxt === "lugar" ? "lugar" : "objeto", caminho).catch(() => []);
   const c = modal(`
     <div class="ficha-modal ficha-visual">
       <div class="ficha-foto galeria-ficha">
@@ -336,9 +342,13 @@ async function abrirFichaVisual(caminho, aoFechar) {
             <summary><span>${esc(s.titulo)}</span><button class="botao pequeno editar-secao" data-editar="${i}">editar</button></summary>
             <div class="secao-corpo"><div class="md">${s.corpo.trim() ? markdown(s.corpo, caminho) : `<span class="sub">Nada escrito ainda.</span>`}</div></div>
           </details>`).join("")}
+        <details class="secao-ficha" open><summary><span>Ao longo da história</span><span class="sub resumo">${hist.length ? hist.length + " registro(s)" : ""}</span></summary>
+          <div class="secao-corpo">${hist.length ? `<div class="mini-linha">${hist.map((h) => `<div class="ev-mini" data-ev-h="${esc(h.e.caminho)}"><span class="ev-data">${esc([h.e.origem, h.e.data ? formatarData(h.e.data, cal) : ""].filter(Boolean).join(" · "))}</span> ${esc(h.texto)} <span class="sub">· ${esc(h.e.titulo)}</span></div>`).join("")}</div>`
+            : `<span class="sub">Nada mudou ainda. Ao canonizar um capítulo, as mudanças deste ${tipoTxt === "lugar" ? "lugar" : "objeto"} aparecem aqui.</span>`}</div></details>
       </div>
     </div>`, "largo");
   const recarregar = () => abrirFichaVisual(caminho, aoFechar);
+  $$("[data-ev-h]", c).forEach((x) => (x.onclick = () => abrirAcontecimento(x.dataset.evH, recarregar)));
   $("#fm-fechar", c).onclick = () => { fecharModal(); aoFechar && aoFechar(); };
   $("#fp-bruto", c).onclick = () => _abrirFichaGenerica(caminho, aoFechar);
   $$(".mini[data-i]", c).forEach((m) => (m.onclick = (e) => { if (e.target.closest("[data-tirar-foto]")) return; const g = $("#fv-grande", c); if (g) g.src = urlRepo(fotos[+m.dataset.i]); }));

@@ -13,7 +13,8 @@ Importe o material antigo de `entrada/` para o ambiente de escrita.
    - planejamento de capítulos → `escaleta/escaleta.md` (status `aprovada` só se o material já for um plano fechado; senão `proposta`)
    - capítulo já escrito → `capitulos/cap-NN.md` **com o texto sem alteração nenhuma** e `status: editado` (é texto do autor, portanto cânone)
    - fato de continuidade → `continuidade/registro.md` com a origem (`[cap-NN]` ou `[entrada/arquivo]`)
-   - pistas de estilo (como o autor escreve) → **não grave** em `estilo/estilo.md`; anote para usar na entrevista de estilo
+   - entradas de diário que sirvam de modelo de forma ou tom → copie sem alterar para `estilo/exemplos/` e me avise
+   - pistas de estilo → **não grave** regra em `estilo/estilo.md`; acrescente como `[DECIDIR]` na seção correspondente, com a pista como opção
 4. **Contradições**: quando duas versões discordarem (idade, nome, ordem de eventos, geografia), não escolha. Junte todas numa lista e me pergunte, uma de cada vez, qual vale. Mostre as duas versões e de que arquivo vem cada uma.
 5. Para cada capítulo importado, escreva o resumo em `continuidade/resumos.md` e extraia os fatos para o registro.
 6. Não apague nada de `entrada/`.

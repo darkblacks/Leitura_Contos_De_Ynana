@@ -2,6 +2,19 @@
 
 Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo minhas histórias conversando com você ao longo do dia. Todo o estado da história vive em arquivos, para que eu possa dar `/clear` entre capítulos sem perder nada.
 
+## Formato: os Contos de Ynana são um diário
+
+- A história é um **diário**. Cada capítulo é uma ou mais entradas escritas em primeira pessoa por quem está com o diário: a Ynana ou outros leitores que escrevem nele.
+- **O modelo de escrita vem dos exemplos do autor**, colocados em `estilo/exemplos/`. Eles valem mais que qualquer regra genérica.
+- **Quem escreve muda o tom**, conforme a Persona e a Voz da ficha dele (seção "Como escreve no diário"). A estrutura da entrada é a mesma para todos; o que muda é o tom.
+- Quem escreve só pode contar o que viu, ouviu ou ficou sabendo até a data da entrada. Não existe narrador que sabe tudo.
+
+## Decisões em aberto
+
+- Não faça entrevista no chat para decisões de estilo ou de formato. Registre a dúvida no arquivo certo como `[DECIDIR] pergunta (opções: ...)`, e o autor decide lá.
+- Enquanto um `[DECIDIR]` estiver aberto, siga os exemplos em `estilo/exemplos/`. Se não houver exemplo que resolva, não invente regra: avise.
+- `/estado` lista os `[DECIDIR]` abertos.
+
 ## Regras de custo
 
 - Tudo roda nesta sessão do Claude Code, no meu plano de assinatura.
@@ -16,7 +29,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 3. **Detalhe menor pode ser criado, mas vira fato fixo.** Nome de rua, cor de objeto, prato servido: pode criar, e registra na ficha ou no `continuidade/registro.md` com o capítulo de origem.
 4. **Português, direto e curto** na conversa. Arquivos da história também em português.
 5. **Conversa não é gravação.** Quando eu só quiser conversar (ideias, dúvidas, "e se..."), converse normalmente sem mexer em arquivo nenhum, até eu pedir para gravar.
-6. **Estilo é meu.** `estilo/estilo.md` só muda com minha aprovação explícita (regra precisa + parágrafo de exemplo aprovado).
+6. **Estilo é meu.** `estilo/estilo.md` só muda com minha aprovação explícita. Eu decido direto no arquivo (resolvendo os `[DECIDIR]`) ou pelos exemplos em `estilo/exemplos/`.
 7. Em dúvida entre duas versões de um fato, pergunte. Não escolha sozinho.
 
 ## Mapa dos arquivos
@@ -27,6 +40,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `biblia/personagens/<nome>.md` | Uma ficha por personagem (modelo em `_modelo.md`) |
 | `biblia/lugares/<nome>.md` | Uma ficha por lugar (modelo em `_modelo.md`) |
 | `estilo/estilo.md` | Como eu escrevo (definido por mim) |
+| `estilo/exemplos/` | Exemplos de entradas do diário, colados pelo autor: o modelo de escrita |
 | `estilo/guardrails.md` | Padrões proibidos e como reescrever cada um |
 | `escaleta/escaleta.md` | Beats de cada capítulo |
 | `continuidade/registro.md` | Fatos vigentes, curtos e verificáveis, com capítulo de origem |
@@ -48,7 +62,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
   capitulo: 1
   titulo:
   quando: (dia/hora na linha do tempo da história)
-  pov:
+  quem_escreve: (Ynana ou outro leitor; link para a ficha)
   ---
   ```
 
@@ -61,7 +75,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 
 ## Fluxo de trabalho
 
-1. Bíblia e estilo prontos (`/ficha`, entrevista de estilo, `/importar`).
+1. Bíblia e estilo prontos (`/ficha`, exemplos em `estilo/exemplos/`, `[DECIDIR]` resolvidos, `/importar`).
 2. `/escaleta N-M`: você propõe beats, eu aprovo.
 3. `/escrever N` ou `/escrever N-M`: loop de escrita e revisão por capítulo.
 4. Eu edito o capítulo e mudo para `status: editado`; depois rodo `/sincronizar N`.

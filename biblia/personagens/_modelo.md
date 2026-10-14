@@ -43,6 +43,18 @@ Como se apresenta aos outros, e onde isso difere de quem é.
 - O que nunca diria:
 - Exemplo de fala:
 
+## Como escreve no diário
+
+Só para quem escreve no diário. A forma da entrada é a mesma para todos (ver `estilo/estilo.md`); aqui fica o que muda o tom.
+
+- Escreve no diário? (sim / não)
+- Desde quando / como o diário chegou às mãos dele:
+- Para quem acha que escreve (para si, para a Ynana, para quem vier depois):
+- Tom: (a partir da Persona e da Voz)
+- O que conta e o que esconde até do diário:
+- Manias de escrita (abreviações, palavras repetidas, desenhos, riscos):
+- Exemplo em `estilo/exemplos/`:
+
 ## Opiniões
 
 Uma linha cada, com link para a ficha correspondente.

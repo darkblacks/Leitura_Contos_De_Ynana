@@ -6,6 +6,14 @@
 
 (a definir)
 
+## Formato: o diário
+
+A história é contada como um diário, escrito pela Ynana ou por outros leitores (ver `estilo/estilo.md` e `estilo/exemplos/`).
+
+- [DECIDIR] O diário é um objeto dentro da história (caderno que passa de mão em mão) ou só a forma de narrar?
+- [DECIDIR] Quem são os outros leitores que escrevem nele, e em que ordem o diário passa por eles?
+- [DECIDIR] Quem lê o diário dentro da história sabe o que os anteriores escreveram? (isso decide o que cada um pode saber)
+
 ## Premissa
 
 Duas ou três linhas: quem, quer o quê, contra o quê.

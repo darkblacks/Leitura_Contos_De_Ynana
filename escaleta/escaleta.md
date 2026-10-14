@@ -10,7 +10,8 @@
 
 - status: proposta
 - quando: (dia/hora na linha do tempo)
-- pov:
+- quem escreve: [Pessoa](../biblia/personagens/pessoa.md)
+- entradas: (quantas e de que datas)
 - lugares: [Lugar](../biblia/lugares/lugar.md)
 - presentes: [Pessoa](../biblia/personagens/pessoa.md)
 

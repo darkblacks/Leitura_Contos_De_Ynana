@@ -14,6 +14,8 @@ Antes de começar, para cada capítulo do intervalo:
 
 1. **Ler** (só isto):
    - `CLAUDE.md`, `estilo/estilo.md`, `estilo/guardrails.md`
+   - os exemplos em `estilo/exemplos/` (o modelo de escrita), dando preferência aos de quem escreve este capítulo
+   - a ficha de quem escreve (Persona, Voz, "Como escreve no diário"), sempre
    - os beats do capítulo em `escaleta/escaleta.md`
    - `continuidade/registro.md` e `continuidade/resumos.md`
    - o capítulo anterior inteiro (`cap-(N-1).md`), se existir
@@ -26,16 +28,16 @@ Antes de começar, para cada capítulo do intervalo:
    capitulo: N
    titulo:
    quando:
-   pov:
+   quem_escreve:
    ---
    ```
-   Siga o `estilo.md` à risca e os beats na ordem. Detalhe menor inventado: anote para registrar no passo 6. Fato novo importante fora da escaleta: não invente; pare e pergunte.
+   É uma entrada de diário em primeira pessoa: siga a forma dos exemplos e o `estilo.md`, com o tom de quem escreve, e os beats na ordem. Quem escreve só conta o que sabe até a data da entrada. Se um `[DECIDIR]` do estilo afetar o capítulo e os exemplos não resolverem, pare e avise. Detalhe menor inventado: anote para registrar no passo 6. Fato novo importante fora da escaleta: não invente; pare e pergunte.
 
 3. **Script**: rode `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md` e guarde a saída num arquivo temporário do scratchpad (ou cole no pedido ao revisor).
 
 4. **Revisores** (podem rodar em paralelo, cada um com contexto limpo). Passe só os caminhos dos arquivos necessários:
-   - `revisor-continuidade`: o capítulo, `continuidade/registro.md`, `continuidade/resumos.md`, os beats do capítulo, as fichas envolvidas e o capítulo anterior.
-   - `revisor-estilo`: o capítulo, `estilo/estilo.md`, `estilo/guardrails.md`, a saída do script e as fichas dos personagens que falam no capítulo.
+   - `revisor-continuidade`: o capítulo, a ficha de quem escreve, `continuidade/registro.md`, `continuidade/resumos.md`, os beats do capítulo, as fichas envolvidas e o capítulo anterior.
+   - `revisor-estilo`: o capítulo, `estilo/estilo.md`, `estilo/guardrails.md`, `estilo/exemplos/`, a saída do script, a ficha de quem escreve e as fichas dos personagens citados com fala.
 
 5. **Reescrever só os trechos apontados.** Não mexa no resto. Se discordar de um apontamento (falso positivo do script, por exemplo), mantenha e anote o motivo para o relatório final.
 

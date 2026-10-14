@@ -181,6 +181,7 @@ async function atualizarArvore() {
   $("#n-personagens").textContent = a.personagens.length || "";
   $("#n-lugares").textContent = a.lugares.length || "";
   $("#n-artefatos").textContent = (a.artefatos || []).length || "";
+  $("#n-acontecimentos").textContent = (a.acontecimentos || []).length || "";
   $("#n-referencias").textContent = (a.ref_imagens.length + a.ref_textos.length) || "";
   $("#n-decisoes").textContent = dec.length || "";
   return a;
@@ -366,6 +367,7 @@ VISTAS.capitulo = async (caminho) => {
         <div class="aviso" id="aviso-editado" style="display:none">Você mexeu num texto que ainda não está como <b>editado</b>. Pela regra, texto seu é cânone.
           <div style="margin-top:8px"><button class="botao pequeno" id="marcar-editado">Marcar como editado</button></div>
           <div class="sub" style="margin-top:6px">Depois rode <code>/sincronizar ${esc(meta.capitulo || "")}</code> no Claude.</div></div>
+        <div id="extras-capitulo"></div>
         <div class="cartao reescrita">
           <h3 style="font-size:19px;margin:0 0 2px">Reescrever com o Claude</h3>
           <div class="sub" style="margin-bottom:10px">Ficam salvas neste capítulo. O que estiver em <b>Manter</b> ele não mexe, nesta nem nas próximas reescritas.</div>
@@ -502,6 +504,8 @@ VISTAS.capitulo = async (caminho) => {
     } catch (e) { toast(e.message, true); }
   };
 
+  // acontecimentos vinculados, linha do tempo e idades (mundo.js)
+  if (window.extrasCapitulo) extrasCapitulo({ caminho, nCap, ta, quando: () => $("#f-quando").value }).catch(() => {});
   $("#checar").onclick = async () => {
     await salvar();
     const r = await api("/api/tiques?caminho=" + encodeURIComponent(caminho));

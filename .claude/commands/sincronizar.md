@@ -13,6 +13,7 @@ Minha versão é cânone. Você não altera uma palavra do capítulo.
    - `continuidade/registro.md` (risque o que deixou de valer, acrescente o novo com `[cap-NN]`)
    - o resumo do capítulo em `continuidade/resumos.md`
    - "Estado atual" e demais campos afetados nas fichas
+   - os blocos de "Nos capítulos" dos acontecimentos (`biblia/acontecimentos/`) que citam este capítulo: se o trecho vinculado mudou ou sumiu na minha edição, me avise (não troque o trecho sozinho)
    - se o cabeçalho ainda não estiver `status: editado`, mude para `editado`
 4. Verifique se a minha edição criou contradição com:
    - capítulos seguintes já escritos (use os resumos e o registro; abra o capítulo só se precisar citar o trecho)

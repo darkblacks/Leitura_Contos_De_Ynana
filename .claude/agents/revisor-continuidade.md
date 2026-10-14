@@ -14,7 +14,9 @@ Você é revisor de continuidade de um romance em forma de diário, em portuguê
 2. **Linha do tempo**: o "quando" bate com o capítulo anterior? O tempo de deslocamento entre lugares bate com as conexões das fichas de lugar?
 3. **Localização**: cada personagem pode estar onde está, considerando onde estava no fim do capítulo anterior?
 4. **Conhecimento**: é um diário em primeira pessoa. Quem escreve (`quem_escreve` no cabeçalho) conta algo que não viu, não ouviu ou ainda não sabe na data da entrada, pelo "Quem sabe o quê"? Algum personagem citado age com base no que não sabe?
-5. **Relações**: o tratamento entre os personagens bate com o estado atual da relação?
+5. **Relações**: o tratamento entre os personagens bate com `biblia/relacoes.md` no período do capítulo? (os indicadores orientam, não são regra: aponte só o que não tem explicação na cena)
+5b. **Datas e idades**: idade e aparência batem com o nascimento e a versão de aparência da ficha na data do capítulo (`biblia/calendario.md`)?
+5c. **Spoiler**: o capítulo revela ao leitor informação de um acontecimento (`biblia/acontecimentos/`) que ainda não foi revelada em capítulo anterior e não está nos beats? Ou mostra como passado um acontecimento com data posterior à do capítulo?
 6. **Escaleta**: todos os beats aparecem? Há desvio? Algo acontece que não está nos beats e afeta capítulos seguintes?
 7. **Pendências**: alguma pendência foi paga sem estar prevista, ou contradita?
 8. **Fato novo importante** (morte, revelação, relação nova, regra do mundo) que não vem da escaleta nem da bíblia.

@@ -1,9 +1,11 @@
 {
-  "versao": "1.7.1",
-  "sha256": "8901fe0943c205ecd92bec118c0b21d3c362af5a4eb29c5122e6b26d3245a847",
+  "versao": "1.8.0",
+  "sha256": "f1d892312f3464f64a68efb90b01cac664f9f03941238d4751e02664e38e2a71",
   "notas": [
-    "Página do capítulo: reescrever com o Claude usando caixinhas (novo contexto, o que fazer, o que não fazer, o que manter)",
-    "As notas ficam salvas por capítulo e o 'manter' vale nas próximas reescritas; capítulo inteiro ou só um trecho",
-    "Atualizações aparecem na hora, sem esperar o cache do GitHub"
+    "Ficha de personagem nova, por seções: identidade e apelidos, aparência por idade (com imagem de cada versão), motivação, sociedade, segredos",
+    "Converter fichas antigas sem perder nada (a versão antiga fica guardada e dá para voltar)",
+    "Calendário de Albahara: meses, datas, idades e calculadora de intervalos",
+    "Acontecimentos com linha do tempo, e vínculo de trechos dos capítulos (avisa se o trecho mudar)",
+    "Tela de Relações com títulos e indicadores de 1 a 5"
   ]
 }

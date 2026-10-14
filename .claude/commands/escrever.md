@@ -19,7 +19,8 @@ Antes de começar, para cada capítulo do intervalo:
    - os beats do capítulo em `escaleta/escaleta.md`
    - `continuidade/registro.md` e `continuidade/resumos.md`
    - o capítulo anterior inteiro (`cap-(N-1).md`), se existir
-   - só as fichas dos personagens, lugares e artefatos que aparecem nos beats ou no pedido do autor, **com as fotos de referência** (imagem com o mesmo nome da ficha, ao lado do `.md`): a aparência vem delas
+   - só as fichas dos personagens, lugares e artefatos que aparecem nos beats ou no pedido do autor, **com as fotos de referência** (imagem com o mesmo nome da ficha, ao lado do `.md`): a aparência vem delas. Para personagem, use a versão de aparência da idade/fase do capítulo
+   - `biblia/calendario.md` (datas e idades), os acontecimentos de `biblia/acontecimentos/` que envolvem esses nomes ou caem perto da data, e os blocos de `biblia/relacoes.md` entre quem aparece (no período do capítulo). Siga "Inteligência narrativa" do `CLAUDE.md`: quem sabe o quê e o que o leitor já sabe (controle de spoiler)
 
 2. **Escrever** `capitulos/cap-NN.md` (número com dois dígitos) com o cabeçalho:
    ```
@@ -36,7 +37,7 @@ Antes de começar, para cada capítulo do intervalo:
 3. **Script**: rode `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md` (no Windows sem Python: `.\Escrivaninha.exe tiques capitulos\cap-NN.md`, mesma saída) e guarde a saída num arquivo temporário do scratchpad (ou cole no pedido ao revisor).
 
 4. **Revisores** (podem rodar em paralelo, cada um com contexto limpo). Passe só os caminhos dos arquivos necessários:
-   - `revisor-continuidade`: o capítulo, a ficha de quem escreve, `continuidade/registro.md`, `continuidade/resumos.md`, os beats do capítulo, as fichas envolvidas e o capítulo anterior.
+   - `revisor-continuidade`: o capítulo, a ficha de quem escreve, `continuidade/registro.md`, `continuidade/resumos.md`, os beats do capítulo, as fichas envolvidas, o capítulo anterior, `biblia/calendario.md`, `biblia/relacoes.md` e os acontecimentos envolvidos.
    - `revisor-estilo`: o capítulo, `estilo/estilo.md`, `estilo/guardrails.md`, `estilo/exemplos/`, a saída do script, a ficha de quem escreve e as fichas dos personagens citados com fala.
 
 5. **Reescrever só os trechos apontados.** Não mexa no resto. Se discordar de um apontamento (falso positivo do script, por exemplo), mantenha e anote o motivo para o relatório final.
@@ -45,6 +46,7 @@ Antes de começar, para cada capítulo do intervalo:
    - `continuidade/registro.md`: novos fatos com `[cap-NN]`, fatos superados riscados, linha do tempo, pendências plantadas e pagas, detalhes criados.
    - `continuidade/resumos.md`: resumo do capítulo (até 5 linhas).
    - "Estado atual" das fichas de quem aparece; detalhes de lugar criados vão para a ficha do lugar.
+   - Em cada acontecimento que o capítulo mostra, lembra ou revela: bloco `### cap-NN · <Acontece neste capítulo | Lembrança / flashback | Menção / revelação>` em "Nos capítulos", com Revelado a, Quem descobre, Informações e o Trecho exato. O que um personagem descobriu também vai para "Sabe" da ficha dele, com `(cap-NN)`.
    - Mude o cabeçalho para `status: revisado`.
 
 7. **Furo grave → parar.** Se um revisor apontar contradição com fato estabelecido, personagem sabendo o que não sabe, ou desvio da escaleta que afeta capítulos seguintes, e não der para corrigir só no trecho sem mudar a história: pare, me explique em poucas linhas com as citações e espere eu decidir antes de seguir para o próximo capítulo.

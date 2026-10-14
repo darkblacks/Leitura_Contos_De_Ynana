@@ -187,14 +187,15 @@ func listar(pasta string, exts map[string]bool, ocultarModelos bool) []item {
 
 func arvore() map[string][]item {
 	return map[string][]item{
-		"capitulos":   listar("capitulos", extTexto, false),
-		"personagens": listar("biblia/personagens", extTexto, true),
-		"lugares":     listar("biblia/lugares", extTexto, true),
-		"artefatos":   listar("biblia/artefatos", extTexto, true),
-		"exemplos":    listar("estilo/exemplos", extTexto, false),
-		"ref_textos":  listar("referencias/textos", extTexto, false),
-		"ref_imagens": listar("referencias/imagens", extImagem, false),
-		"entrada":     listar("entrada", extTexto, false),
+		"capitulos":      listar("capitulos", extTexto, false),
+		"personagens":    listar("biblia/personagens", extTexto, true),
+		"lugares":        listar("biblia/lugares", extTexto, true),
+		"artefatos":      listar("biblia/artefatos", extTexto, true),
+		"acontecimentos": listar("biblia/acontecimentos", extTexto, true),
+		"exemplos":       listar("estilo/exemplos", extTexto, false),
+		"ref_textos":     listar("referencias/textos", extTexto, false),
+		"ref_imagens":    listar("referencias/imagens", extImagem, false),
+		"entrada":        listar("entrada", extTexto, false),
 	}
 }
 
@@ -203,7 +204,8 @@ func decisoes() []item {
 	for _, pasta := range []string{"estilo", "biblia", "escaleta"} {
 		var arqs []string
 		filepath.WalkDir(filepath.Join(raiz, pasta), func(p string, d fs.DirEntry, err error) error {
-			if err == nil && !d.IsDir() && strings.HasSuffix(p, ".md") && !strings.HasPrefix(d.Name(), "_") {
+			// pula modelos e cópias de segurança (_versoes-antigas/)
+			if err == nil && !d.IsDir() && strings.HasSuffix(p, ".md") && !strings.HasPrefix(d.Name(), "_") && !strings.Contains(relativo(p), "/_") {
 				arqs = append(arqs, p)
 			}
 			return nil
@@ -368,11 +370,11 @@ func criar(tipo, nome string) (string, error) {
 		if err := os.WriteFile(p, []byte(fmt.Sprintf(modeloCapitulo, n, nome)), 0o644); err != nil {
 			return "", err
 		}
-	case "personagem", "lugar", "artefato":
+	case "personagem", "lugar", "artefato", "acontecimento":
 		if nome == "" {
 			return "", errors.New("dê um nome")
 		}
-		pasta := map[string]string{"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos"}[tipo]
+		pasta := map[string]string{"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos", "acontecimento": "acontecimentos"}[tipo]
 		os.MkdirAll(filepath.Join(raiz, "biblia", pasta), 0o755)
 		p = filepath.Join(raiz, "biblia", pasta, slug(nome)+".md")
 		if _, err := os.Stat(p); err == nil {
@@ -623,7 +625,7 @@ func novoRoteador(estatico fs.FS) http.Handler {
 			}
 			responder(w, 200, item{"caminho": c})
 		case "/api/foto":
-			f, err := salvarFoto(texto("ficha"), texto("nome"), texto("dados"))
+			f, err := salvarFoto(texto("ficha"), texto("nome"), texto("dados"), texto("variante"))
 			if err != nil {
 				responderErro(w, err)
 				return
@@ -695,7 +697,9 @@ func fotoDe(ficha string) string {
 	return ""
 }
 
-func salvarFoto(ficha, nome, dadosB64 string) (string, error) {
+// salvarFoto grava a foto da ficha; com variante, uma imagem extra (ex.: aparência
+// de outra idade) em <ficha>--<variante>.ext.
+func salvarFoto(ficha, nome, dadosB64, variante string) (string, error) {
 	p, err := caminhoSeguro(ficha)
 	if err != nil {
 		return "", err
@@ -723,6 +727,9 @@ func salvarFoto(ficha, nome, dadosB64 string) (string, error) {
 		return "", errors.New("imagem maior que 15 MB")
 	}
 	base := strings.TrimSuffix(p, ".md")
+	if variante != "" {
+		base += "--" + slug(variante)
+	}
 	for _, e := range extFoto {
 		os.Remove(base + e)
 	}

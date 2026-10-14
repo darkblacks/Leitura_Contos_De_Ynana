@@ -128,6 +128,7 @@ def arvore():
         "personagens": listar("biblia/personagens", ocultar_modelos=True),
         "lugares": listar("biblia/lugares", ocultar_modelos=True),
         "artefatos": listar("biblia/artefatos", ocultar_modelos=True),
+        "acontecimentos": listar("biblia/acontecimentos", ocultar_modelos=True),
         "exemplos": listar("estilo/exemplos"),
         "ref_textos": listar("referencias/textos"),
         "ref_imagens": listar("referencias/imagens", EXT_IMAGEM),
@@ -139,8 +140,8 @@ def decisoes():
     achados = []
     for pasta in ("estilo", "biblia", "escaleta"):
         for p in sorted((RAIZ / pasta).rglob("*.md")):
-            if p.name.startswith("_"):
-                continue
+            if any(x.startswith("_") for x in p.relative_to(RAIZ).parts):
+                continue  # modelos e cópias de segurança (_versoes-antigas/)
             secao = ""
             todas = ler(p).splitlines()
             for i, linha in enumerate(todas, 1):
@@ -262,10 +263,11 @@ def criar(tipo, nome):
         n = (max(existentes) + 1) if existentes else 1
         p = RAIZ / "capitulos" / f"cap-{n:02d}.md"
         p.write_text(MODELO_CAPITULO.format(n=n, titulo=nome), encoding="utf-8")
-    elif tipo in ("personagem", "lugar", "artefato"):
+    elif tipo in ("personagem", "lugar", "artefato", "acontecimento"):
         if not nome:
             raise ValueError("dê um nome")
-        pasta = {"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos"}[tipo]
+        pasta = {"personagem": "personagens", "lugar": "lugares", "artefato": "artefatos",
+                 "acontecimento": "acontecimentos"}[tipo]
         (RAIZ / "biblia" / pasta).mkdir(parents=True, exist_ok=True)
         p = RAIZ / "biblia" / pasta / f"{slug(nome)}.md"
         if p.exists():
@@ -300,7 +302,8 @@ def foto_de(ficha):
     return ""
 
 
-def salvar_foto(ficha, nome, dados_b64):
+def salvar_foto(ficha, nome, dados_b64, variante=""):
+    """Foto da ficha; com variante, uma imagem extra (ex.: aparência de outra idade): <ficha>--<variante>.ext"""
     p = caminho_seguro(ficha)
     rel = p.relative_to(RAIZ).as_posix()
     if p.suffix != ".md" or not rel.startswith(("biblia/personagens/", "biblia/lugares/", "biblia/artefatos/")):
@@ -311,6 +314,8 @@ def salvar_foto(ficha, nome, dados_b64):
     dados = base64.b64decode(dados_b64)
     if len(dados) > 15 * 1024 * 1024:
         raise ValueError("imagem maior que 15 MB")
+    if variante:
+        p = p.with_name(p.stem + "--" + slug(variante) + ".md")
     for e in EXT_FOTO:
         p.with_suffix(e).unlink(missing_ok=True)
     p.with_suffix(ext).write_bytes(dados)
@@ -522,7 +527,7 @@ class Manipulador(BaseHTTPRequestHandler):
             if url.path == "/api/enviar":
                 return self._json({"caminho": enviar_arquivo(d["pasta"], d["nome"], d["dados"])})
             if url.path == "/api/foto":
-                return self._json({"foto": salvar_foto(d["ficha"], d["nome"], d["dados"])})
+                return self._json({"foto": salvar_foto(d["ficha"], d["nome"], d["dados"], d.get("variante", ""))})
             if url.path == "/api/apagar":
                 p = caminho_seguro(d["caminho"])
                 if not (p.relative_to(RAIZ).as_posix().startswith(("referencias/", "entrada/"))):

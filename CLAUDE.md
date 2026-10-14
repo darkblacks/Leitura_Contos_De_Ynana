@@ -41,6 +41,12 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `biblia/lugares/<nome>.md` | Uma ficha por lugar (modelo em `_modelo.md`) |
 | `biblia/artefatos/<nome>.md` | Uma ficha por objeto importante: Synzoe, o diário… (modelo em `_modelo.md`) |
 | `biblia/*/<nome>.png\|jpg\|webp` | **Foto de referência** da ficha: imagem com o mesmo nome, ao lado do `.md`. É a aparência canônica |
+| `biblia/personagens/<nome>--<versao>.webp` | Imagem de uma versão de aparência (idade ou fase), citada no campo `Imagem:` da versão |
+| `biblia/calendario.md` | Calendário de Albahara: meses (nome, dias, estação), semana, era, clima por região, festividades. Coluna "Proposta" não é cânone |
+| `biblia/acontecimentos/<titulo>.md` | Um acontecimento por arquivo: quando, situação (planejado/confirmado/incerto), personagens, local, descrição, informações e **Nos capítulos** (onde cada parte é revelada) |
+| `biblia/relacoes.md` | Relações entre personagens, vistas de um lado (`A → B`): título, papel, período, frase e indicadores de 1 a 5 |
+| `biblia/sociedade.md` | Sociedade de Sylvarene: castas e bolhas usadas na seção Sociedade das fichas |
+| `biblia/_versoes-antigas/` | Cópias de segurança feitas pela Escrivaninha antes de converter fichas. **Não são fonte**: não leia nem cite, a não ser que o autor peça |
 | `estilo/estilo.md` | Como eu escrevo (definido por mim) |
 | `estilo/exemplos/` | Exemplos de entradas do diário, colados pelo autor: o modelo de escrita |
 | `estilo/guardrails.md` | Padrões proibidos e como reescrever cada um |
@@ -56,6 +62,20 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `referencias/` | Textos e imagens de consulta sobre o universo (nunca apagados) |
 | `ui/` | Escrivaninha: interface local para escrever e organizar (`abrir-escrivaninha.bat` ou `.sh`) |
 | `dist/Escrivaninha.exe` | A mesma Escrivaninha num executável único para Windows; instala-se em `C:\Os_Contos_De_Ynana` (código em `ui/escrivaninha-go/`, gerar com `ui/escrivaninha-go/build.sh`) |
+
+## Ficha de personagem
+
+Seções, em linguagem natural (nada de atributos de RPG): Identidade (nome completo, nascimento no calendário de Albahara, origem) · Apelidos (cada um com quem usa) · Aparência (uma versão `###` por idade ou fase, com Período, Idade, Tipo — Humano, Meio-Híbrido ou Híbrido Completo —, Espécie, Imagem e a descrição) · Personalidade (pode ter `###` por fase) · Motivação (Objetivo, Medos e conflitos, Observações) · Sociedade (região, casta, bolha principal, outras bolhas, ocupação: família, profissão e riqueza são campos diferentes) · Segredos e conhecimento (Segredos, Sabe, Desconhece, Suspeita) · Voz no diário (Persona, Voz, Como escreve no diário) · Observações narrativas · Estado atual. As relações ficam em `biblia/relacoes.md`, não na ficha. Ficha no formato antigo (com "Nome / apelidos", "Ambição", "Opiniões"…) continua valendo; a Escrivaninha converte quando o autor pede.
+
+## Inteligência narrativa (antes de escrever qualquer cena)
+
+- **Data**: o `quando` do capítulo segue o calendário (`biblia/calendario.md`; se não existir, a seção Calendário de `biblia/historia.md`). Idade = data do capítulo − nascimento da ficha. Data, nascimento ou duração desconhecidos ficam `(a definir)` ou "por volta de": **nunca invente**; se a cena depender disso, pergunte.
+- **Aparência**: use a versão da ficha que corresponde à idade ou fase do capítulo (e a imagem dela). Não misture versões.
+- **Personalidade, motivação e relação** valem para o período do capítulo (`###` de fase na ficha; `Período` em `relacoes.md`). Traços e indicadores **orientam**, não são regra rígida: gente age fora do padrão quando a cena pede, desde que dê para entender por quê.
+- **Quem sabe o quê**: um personagem só sabe o que está em "Sabe" da ficha, o que viu nos capítulos anteriores, ou o que um acontecimento marca como descoberto por ele (`Quem descobre` em "Nos capítulos") num capítulo anterior ou neste.
+- **Controle de spoiler**: o leitor só sabe as informações de um acontecimento que aparecem em "Nos capítulos" com "Revelado a: leitor…" em capítulos de número menor. Acontecimento com data depois da data do capítulo ainda não aconteceu. A "Descrição" de um acontecimento é a verdade da história, não o que pode ser contado: não revele informação que ainda não foi revelada, nem dê pista forte dela, a não ser que a escaleta ou o autor peça.
+- **Revelação antecipada**: se o autor pedir para revelar algo antes do previsto, confirme em uma frase ("isso revela X ao leitor no cap-NN; confirma?"); depois de confirmado, escreva e registre o vínculo em "Nos capítulos" do acontecimento (`### cap-NN · Menção / revelação`, Revelado a, Quem descobre, Informações, Trecho).
+- **Depois de escrever**: para cada acontecimento que o capítulo mostra, lembra ou revela, acrescente o bloco em "Nos capítulos" com o trecho exato (copiado do capítulo, até 400 caracteres). Acontecimento novo importante só com aprovação (regra 2 de convivência); se aprovado, crie o arquivo a partir de `biblia/acontecimentos/_modelo.md` com situação `planejado` ou `incerto`.
 
 ## Convenções
 
@@ -77,6 +97,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
   - `rascunho`: escrito por você, ainda não revisado.
   - `revisado`: passou pelo loop de revisão do `/escrever`.
   - `editado`: eu mexi. Intocável para você. Só eu ponho esse status (ou você, quando eu pedir).
+- **Datas**: `10º dia de Tempestade de 1812`, `Tempestade de 1812`, `por volta de 1796`. Nome de mês que ainda é proposta não vale como cânone.
 - **Fatos no registro**: sempre com origem, ex.: `- [cap-03] Ynana perdeu a faca no rio.` Quando um fato deixa de valer, risque (`~~...~~`) e acrescente o novo com a origem; não apague.
 - **Separador de cena** dentro do capítulo: uma linha só com `* * *`.
 
@@ -109,11 +130,12 @@ Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `clau
 - O autor é usuário final, não programador. Responda em português, curto e direto, sem falar de arquivos técnicos, terminal ou comandos, a não ser que ele pergunte.
 - **A primeira tela da Escrivaninha é este chat**, com o capítulo atual aberto ao lado. O autor dá o contexto em poucas palavras; **você** reúne o resto sozinho e **você mesmo escreve** o capítulo em `capitulos/cap-NN.md` (ele vê o texto surgindo enquanto você grava). Nunca peça ao autor algo que já está nos arquivos.
 - Antes de escrever o capítulo N, reúna sem perguntar:
-  1. **O acontecimento**: os beats do capítulo N em `escaleta/escaleta.md`, mais o que o autor disse no chat (o pedido dele vale mais que a escaleta; se contradizer fato estabelecido, avise em uma frase).
+  1. **O que acontece**: os beats do capítulo N em `escaleta/escaleta.md`, mais o que o autor disse no chat (o pedido dele vale mais que a escaleta; se contradizer fato estabelecido, avise em uma frase).
   2. **O contexto do capítulo anterior**: `capitulos/cap-(N-1).md` inteiro (onde parou, tom, última cena) e `continuidade/resumos.md` para os anteriores.
   3. **Quem escreve**: a ficha dele (Persona, Voz, "Como escreve no diário") e a **foto** dele.
-  4. **Os nomes**: as fichas de todos os personagens, lugares e artefatos citados nos beats ou no pedido, com as **fotos de referência** (abra as imagens: aparência, roupas e cores vêm delas, não da imaginação).
-  5. **As referências**: `referencias/` e `estilo/exemplos/` quando o capítulo tocar no que está lá; `continuidade/registro.md` sempre.
+  4. **Os nomes**: as fichas de todos os personagens, lugares e artefatos citados nos beats ou no pedido, com as **fotos de referência** (abra as imagens: aparência, roupas e cores vêm delas, não da imaginação). Para personagem, a versão de aparência da idade do capítulo.
+  5. **O mundo na data**: `biblia/calendario.md`, os acontecimentos ligados aos nomes e à data (`biblia/acontecimentos/`), as relações entre quem aparece (`biblia/relacoes.md`) e o que cada um sabe; siga "Inteligência narrativa".
+  6. **As referências**: `referencias/` e `estilo/exemplos/` quando o capítulo tocar no que está lá; `continuidade/registro.md` sempre.
 - Depois siga o fluxo do `/escrever` (script, revisores, continuidade).
 - **Reescrita com notas**: quando o pedido vier da página do capítulo, ele traz o novo contexto, o que fazer, o que não fazer e o que manter (também em `continuidade/notas-do-autor/cap-NN.md`). Mude só o necessário para cumprir as notas; **o que está em "manter" fica exatamente como está**, nesta e nas próximas reescritas desse capítulo. Leia esse arquivo sempre que for mexer no capítulo N. Pedido "só este trecho" mexe só no trecho citado.
 - **Tamanho: cada capítulo tem no mínimo 4.600 palavras.** Se ficar curto, aprofunde as cenas dos beats (sem enchimento, sem fato novo) até passar do mínimo.

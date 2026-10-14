@@ -1,41 +1,67 @@
 # (Nome)
 
-> Modelo de ficha. Copie para `biblia/personagens/<nome>.md`. Campo desconhecido: `(a definir)`.
+> Modelo de ficha. Copie para `biblia/personagens/<nome>.md`. Campo desconhecido: `(a definir)`. Escreva em linguagem natural: nada de atributos de RPG.
 
-## Nome / apelidos
+## Identidade
 
 - Nome completo:
-- Apelidos (quem usa cada um):
+- Nascimento: (data no calendário de Albahara, ex.: 10º dia de Tempestade de 1796; se for estimada, escreva "por volta de 1796")
+- Origem:
+
+## Apelidos
+
+Um por linha: o apelido e quem usa (personagens com link, ou grupos como imprensa, população).
+
+- "(apelido)" · usado por: [Pessoa](pessoa.md)
 
 ## Aparência
 
-Traços fixos que não podem mudar sem motivo na história.
+Uma versão por idade ou fase. A imagem fica ao lado da ficha (`<nome>--<versao>.webp`); a principal é `<nome>.webp`.
 
-- Idade:
-- Corpo / altura:
-- Cabelo / olhos / pele:
-- Marcas (cicatrizes, tatuagens, jeito de andar):
-- Roupa habitual:
-
-## Ambição
-
-O que quer conquistar a longo prazo.
+### (Nome) — (idade) anos
+- Período: (ex.: 1812, antes do naufrágio)
+- Idade: 
+- Tipo: (Humano / Meio-Híbrido / Híbrido Completo)
+- Espécie:
+- Imagem:
+- (traços em linguagem natural: corpo, rosto, cabelo, olhos, marcas, roupa)
 
 ## Personalidade
 
+Em linguagem natural. Se muda com a fase, use um subtítulo por fase (`### Depois do naufrágio`).
+
 ## Motivação
 
-O que move a pessoa agora.
+- Objetivo:
+- Medos e conflitos:
+- Observações:
 
-## Desmotivação
+## Sociedade
 
-O que a faz travar, desistir ou recuar.
+Escolha na estrutura de `biblia/sociedade.md`. Família, profissão e riqueza são coisas diferentes.
 
-## Persona
+- Região / sociedade:
+- Casta:
+- Bolha principal:
+- Outras bolhas:
+- Ocupação:
+
+## Segredos e conhecimento
+
+O que a pessoa sabe, desconhece ou suspeita, de preferência ligado a um acontecimento (`biblia/acontecimentos/`) ou capítulo.
+
+- Segredos:
+- Sabe:
+- Desconhece:
+- Suspeita:
+
+## Voz no diário
+
+### Persona
 
 Como se apresenta aos outros, e onde isso difere de quem é.
 
-## Voz
+### Voz
 
 - Vocabulário:
 - Ritmo de fala:
@@ -43,31 +69,18 @@ Como se apresenta aos outros, e onde isso difere de quem é.
 - O que nunca diria:
 - Exemplo de fala:
 
-## Como escreve no diário
+### Como escreve no diário
 
 Só para quem escreve no diário. A forma da entrada é a mesma para todos (ver `estilo/estilo.md`); aqui fica o que muda o tom.
 
 - Escreve no diário? (sim / não)
 - Desde quando / como o diário chegou às mãos dele:
-- Para quem acha que escreve (para si, para a Ynana, para quem vier depois):
-- Tom: (a partir da Persona e da Voz)
+- Para quem acha que escreve:
+- Tom:
 - O que conta e o que esconde até do diário:
-- Manias de escrita (abreviações, palavras repetidas, desenhos, riscos):
-- Exemplo em `estilo/exemplos/`:
+- Manias de escrita:
 
-## Opiniões
-
-Uma linha cada, com link para a ficha correspondente.
-
-- Sobre [Lugar](../lugares/lugar.md):
-- Sobre [Pessoa](pessoa.md):
-- Sobre (objeto):
-
-## Segredos / o que sabe e o que não sabe
-
-- Segredos:
-- Sabe:
-- Não sabe:
+## Observações narrativas
 
 ## Estado atual
 

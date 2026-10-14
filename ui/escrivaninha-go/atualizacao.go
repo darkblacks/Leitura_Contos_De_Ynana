@@ -33,9 +33,35 @@ import (
 var (
 	versao        = "0.0.0-dev"
 	urlBaseUpdate = "https://raw.githubusercontent.com/darkblacks/Leitura_Contos_De_Ynana/main/"
+	// Pergunta ao GitHub o commit atual da main, para baixar pelo endereço exato e
+	// fugir do cache de alguns minutos do endereço ".../main/". Vazio desliga.
+	urlRefMain = "https://api.github.com/repos/darkblacks/Leitura_Contos_De_Ynana/commits/main"
 )
 
+// baseDaVersao devolve o endereço base do commit atual da main (ou o da main, se falhar).
+func baseDaVersao() string {
+	if urlRefMain == "" {
+		return urlBaseUpdate
+	}
+	req, _ := http.NewRequest("GET", urlRefMain, nil)
+	req.Header.Set("Accept", "application/vnd.github.sha")
+	req.Header.Set("User-Agent", "Escrivaninha/"+versao)
+	cli := http.Client{Timeout: 5 * time.Second}
+	r, err := cli.Do(req)
+	if err != nil {
+		return urlBaseUpdate
+	}
+	defer r.Body.Close()
+	b, _ := io.ReadAll(io.LimitReader(r.Body, 100))
+	sha := strings.TrimSpace(string(b))
+	if r.StatusCode != 200 || len(sha) != 40 {
+		return urlBaseUpdate
+	}
+	return strings.TrimSuffix(urlBaseUpdate, "main/") + sha + "/"
+}
+
 type manifesto struct {
+	base   string   // de onde veio (para baixar o exe do mesmo commit)
 	Versao string   `json:"versao"`
 	Sha256 string   `json:"sha256"`
 	Notas  []string `json:"notas"`
@@ -75,7 +101,8 @@ func buscarManifesto() (*manifesto, error) {
 		return cacheManif, nil
 	}
 	cli := http.Client{Timeout: 6 * time.Second}
-	r, err := cli.Get(urlBaseUpdate + "dist/versao.json?t=" + strconv.FormatInt(time.Now().Unix(), 10))
+	base := baseDaVersao()
+	r, err := cli.Get(base + "dist/versao.json?t=" + strconv.FormatInt(time.Now().Unix(), 10))
 	if err != nil {
 		return nil, errors.New("sem internet para procurar atualização")
 	}
@@ -87,6 +114,7 @@ func buscarManifesto() (*manifesto, error) {
 	if err := json.NewDecoder(io.LimitReader(r.Body, 64*1024)).Decode(&m); err != nil || m.Versao == "" {
 		return nil, errors.New("arquivo de versão inválido")
 	}
+	m.base = base
 	cacheManif, cacheQuando = &m, time.Now()
 	return &m, nil
 }
@@ -135,7 +163,7 @@ func aplicarAtualizacao() error {
 	exe, _ = filepath.EvalSymlinks(exe)
 	novo, velho := exe+".novo", strings.TrimSuffix(exe, filepath.Ext(exe))+".velho"+filepath.Ext(exe)
 
-	r, err := clienteUpdate.Get(urlBaseUpdate + "dist/Escrivaninha.exe?v=" + m.Versao)
+	r, err := clienteUpdate.Get(m.base + "dist/Escrivaninha.exe?v=" + m.Versao)
 	if err != nil {
 		return falhou(errors.New("não consegui baixar a versão nova"))
 	}

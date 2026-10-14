@@ -1,9 +1,9 @@
 {
-  "versao": "1.7.0",
-  "sha256": "68ebb050e59e0354e34dd1d309757347ef58e4d44fccdbd413b68ebb6ab2e9c0",
+  "versao": "1.7.1",
+  "sha256": "8901fe0943c205ecd92bec118c0b21d3c362af5a4eb29c5122e6b26d3245a847",
   "notas": [
     "Página do capítulo: reescrever com o Claude usando caixinhas (novo contexto, o que fazer, o que não fazer, o que manter)",
-    "As notas ficam salvas por capítulo e o que está em 'manter' é respeitado nas próximas reescritas",
-    "Dá para reescrever o capítulo inteiro ou só um trecho selecionado"
+    "As notas ficam salvas por capítulo e o 'manter' vale nas próximas reescritas; capítulo inteiro ou só um trecho",
+    "Atualizações aparecem na hora, sem esperar o cache do GitHub"
   ]
 }

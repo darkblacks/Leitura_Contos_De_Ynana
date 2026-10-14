@@ -10,14 +10,14 @@
 ## 1. Contraste falso `[script]`
 
 **Faça:** afirme direto o que é.
-**Errado:** "Não era medo, era pavor." / "Não foi só uma briga; foi o fim." / "Não é sobre o dinheiro, é sobre respeito."
+**Errado:** "Ele não era o mais bonito, era o mais incrível." / "Não era medo, era pavor." / "Não foi só uma briga; foi o fim." / "Não é sobre o dinheiro, é sobre respeito."
 **Reescrita:** "Ele travou na porta e não conseguiu soltar a maçaneta." (mostre o pavor) / "Depois daquela briga, ela não voltou."
 
 ## 2. Trincas `[script]`
 
 **Faça:** escolha um adjetivo, uma imagem, uma frase: a melhor.
-**Errado:** "Silêncio. Escuridão. Medo." / "Era frio, úmido e escuro."
-**Reescrita:** "A vela apagou e ninguém se mexeu." / "A parede suava."
+**Errado:** "Silêncio. Escuridão. Medo." / "Era frio, úmido e escuro." / parágrafo picotado em frases de duas ou três palavras.
+**Reescrita:** "A vela apagou e ninguém se mexeu." / "A parede suava." Mantenha a pontuação e o tamanho de frase dos capítulos oficiais.
 
 ## 3. Frase de efeito no fim do parágrafo ou da cena `[script, parcial]`
 
@@ -125,4 +125,20 @@
 
 ## Itens do autor
 
-(acrescentar aqui)
+## 19. Onomatopeia de quadrinho `[script]`
+
+**Faça:** use onomatopeia só quando o som importa para a cena (impacto, passo, porta, objeto), uma por vez, integrada à frase.
+**Errado:** "Toc, toc. Craaash! Bum. Pá." / onomatopeia em toda cena.
+**Reescrita:** "Bateram duas vezes, toc, toc, e esperaram." / "A louça caiu inteira no chão da cozinha."
+
+## 20. Repetição mecânica `[script, parcial]`
+
+**Faça:** varie a estrutura das frases, as palavras e o jeito de mostrar cada emoção.
+**Errado:** "Ele abriu a porta. Ele olhou o corredor. Ele chamou o irmão." / a mesma reação de medo ("as mãos tremeram") em três entradas seguidas.
+**Reescrita:** "Abriu a porta e olhou o corredor antes de chamar o irmão." / cada emoção mostrada de um jeito novo, coerente com a ficha.
+
+## 21. Voz igual para todos
+
+**Faça:** cada personagem pensa e fala do seu jeito (ficha: Voz, Persona, "Como escreve no diário"), e a entrada mantém o estilo dos capítulos oficiais.
+**Errado:** a Ynana e outro leitor escrevendo com o mesmo vocabulário, as mesmas piadas e o mesmo ritmo.
+**Reescrita:** releia a ficha de quem escreve e a seção Voz de quem fala; ajuste vocabulário, tamanho de frase e o que cada um nota.

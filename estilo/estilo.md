@@ -7,6 +7,21 @@
 > **Regra:** instrução precisa e verificável.
 > **Exemplo:** trecho tirado de `estilo/exemplos/` ou aprovado pelo autor.
 
+## Diretrizes do autor (aprovadas)
+
+Vindas da tabela de diretrizes do autor. Valem para toda entrada, de qualquer autor.
+
+| Elemento | Regra |
+|---|---|
+| Comparações | Evitar construções comparativas repetitivas ou previsíveis, como "Ele não era o mais bonito, era o mais incrível". Preferir descrições naturais, específicas e originais. (guardrails 1 e 5) |
+| Pensamentos | Usar a mesma convenção dos capítulos oficiais (ver "Formato de pensamento" abaixo). |
+| Pontuação | Respeitar a pontuação e a divisão de parágrafos do estilo original, sem fragmentar o texto com frases curtas em excesso. (guardrail 2) |
+| Onomatopeias | Usar quando fizerem sentido para a cena (impactos, passos, portas, objetos), sem exagerar nem transformar a prosa em história em quadrinhos. (guardrail 19) |
+| Repetições | Evitar repetir estruturas de frase, palavras e descrições de emoção de forma mecânica. (guardrails 13 e 20) |
+| Voz narrativa | Preservar a voz dos personagens e o estilo dos capítulos oficiais, sem fazer todos os personagens pensarem ou falarem da mesma forma. |
+
+**Capítulos oficiais** = os textos do autor já publicados na plataforma. Eles ficam em `estilo/exemplos/` e são a referência de pontuação, parágrafos, pensamento e voz.
+
 ## Formato geral: diário
 
 **Regra:** a história é um diário. Cada capítulo é composto de entradas escritas em primeira pessoa por quem está com o diário.
@@ -37,11 +52,20 @@ Em diário, a fala dos outros chega pela memória de quem escreve.
 
 ## Formato de pensamento
 
-- [DECIDIR] Pensamento de quem escreve se separa do relato? (opções: não separa, o diário já é pensamento / ponto e depois o pensamento / parênteses / como nos exemplos)
+**Regra:** usar a convenção dos capítulos oficiais (`estilo/exemplos/`).
 
-## Estrutura de parágrafos
+- [DECIDIR] Qual é a convenção dos capítulos oficiais? (opções: entre travessões / em itálico / integrado à narração). O Claude identifica nos exemplos e propõe aqui; o autor confirma.
+
+## Estrutura de parágrafos e pontuação
+
+**Regra:** respeitar a pontuação e a divisão de parágrafos dos capítulos oficiais, sem fragmentar o texto com frases curtas em excesso.
 
 - [DECIDIR] Há número fixo de parágrafos por entrada ou por bloco? Se sim, quantos? (vai também para `paragrafos_por_bloco` em `ferramentas/tiques.json`)
+
+## Onomatopeias
+
+**Regra:** só quando fizerem sentido para a cena (impactos, passos, portas, objetos). Poucas por capítulo; nunca em sequência, como em quadrinhos.
+Limite usado pelo script: `max_onomatopeias_por_capitulo` em `ferramentas/tiques.json` (hoje 4).
 
 ## Tamanho
 

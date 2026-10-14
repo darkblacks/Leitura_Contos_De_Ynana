@@ -94,6 +94,9 @@ COMO_UM = re.compile(r"(?<!\w)como (um|uma)\b", re.IGNORECASE)
 
 FRASES = re.compile(r"[^.!?…]+[.!?…]+")
 
+# Onomatopeia: letra esticada ("craaash", "toc-toc") ou termos da lista em tiques.json
+LETRA_ESTICADA = re.compile(r"\b\w*([^\W\d_])\1{2,}\w*\b", re.IGNORECASE)
+
 
 def contar_palavras(s):
     return len(re.findall(r"[^\W_]+", s))
@@ -129,11 +132,15 @@ def checar(caminho, cfg):
     max_comp = cfg.get("max_comparacoes_por_paragrafo", 1)
     max_suss = cfg.get("max_sussurros_por_capitulo", 3)
     curta = cfg.get("palavras_frase_curta", 3)
+    onomatopeias = [LETRA_ESTICADA] + [re.compile(r"(?<!\w)" + o + r"(?!\w)", re.IGNORECASE) for o in cfg.get("onomatopeias", [])]
+    max_onom = cfg.get("max_onomatopeias_por_capitulo", 4)
+    max_aberturas = cfg.get("max_aberturas_iguais_seguidas", 2)
     n_por_bloco = cfg.get("paragrafos_por_bloco")
     so_dialogo = cfg.get("travessao_so_em_dialogo", True)
 
     # Varredura linha a linha
     total_sussurros = []
+    total_onom = []
     for num, texto in linhas:
         if not texto.strip() or SEPARADOR_CENA.match(texto):
             continue
@@ -144,6 +151,12 @@ def checar(caminho, cfg):
         for r in CONTRASTE:
             for m in r.finditer(texto):
                 add(num, "contraste falso (1)", trecho(texto, m.start(), m.end()), m.span())
+        vistos_onom = []
+        for r in onomatopeias:
+            for m in r.finditer(texto):
+                if not any(m.start() < b and a < m.end() for a, b in vistos_onom):
+                    vistos_onom.append(m.span())
+                    total_onom.append((num, trecho(texto, m.start(), m.end())))
         for r in sussurros:
             for m in r.finditer(texto):
                 total_sussurros.append((num, trecho(texto, m.start(), m.end())))
@@ -157,6 +170,10 @@ def checar(caminho, cfg):
     if len(total_sussurros) > max_suss:
         for num, t in total_sussurros:
             add(num, f"sussurrou/murmurou em excesso: {len(total_sussurros)} no capítulo, limite {max_suss} (8)", t)
+
+    if len(total_onom) > max_onom:
+        for num, t in total_onom:
+            add(num, f"onomatopeias em excesso: {len(total_onom)} no capítulo, limite {max_onom} (19)", t)
 
     # Varredura por parágrafo
     tamanhos = []
@@ -184,6 +201,15 @@ def checar(caminho, cfg):
                             add(num0, "trinca de frases curtas (2)", " ".join(frases[i - 2:i + 1]))
                     else:
                         seq = 0
+
+                # Repetição mecânica (20): frases seguidas que começam com a mesma palavra
+                aberturas = [(re.findall(r"[^\W\d_]+", f.lower()) or [""])[0] for f in frases]
+                seq = 1
+                for i in range(1, len(aberturas)):
+                    seq = seq + 1 if aberturas[i] and aberturas[i] == aberturas[i - 1] else 1
+                    if seq == max_aberturas + 1:
+                        add(num0, f"frases seguidas abrindo com \"{aberturas[i]}\" (20)",
+                            " ".join(frases[i - max_aberturas:i + 1])[:160])
 
     # Simetria mecânica (13)
     if len(tamanhos) >= 6:

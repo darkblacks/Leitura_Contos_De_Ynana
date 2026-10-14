@@ -8,6 +8,13 @@
   "max_comparacoes_por_paragrafo": 1,
   "max_sussurros_por_capitulo": 3,
   "palavras_frase_curta": 3,
+  "max_onomatopeias_por_capitulo": 4,
+  "max_aberturas_iguais_seguidas": 2,
+
+  "onomatopeias": [
+    "toc", "tum", "bum", "pá", "plaft", "crec", "crack", "crash", "bang", "tic-tac", "tique-taque",
+    "nhec", "vrum", "splash", "zás", "pof", "puf", "trim", "blam", "pow", "tsc"
+  ],
 
   "palavras_assinatura": [
     "tapeçaria", "tapeçarias", "sinfonia", "sinfonias", "dança d[eao]s?", "ecoou", "ecoava", "ecoaram",

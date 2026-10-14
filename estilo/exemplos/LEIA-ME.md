@@ -1,6 +1,6 @@
 # estilo/exemplos/
 
-Cole aqui exemplos de entradas do diário, do jeito que estão na sua plataforma. Eles são o modelo de escrita.
+Cole aqui os **capítulos oficiais** e outros exemplos de entradas do diário, do jeito que estão na sua plataforma. Eles são o modelo de escrita: pontuação, parágrafos, convenção de pensamento e voz.
 
 - Um arquivo por exemplo: `<quem-escreve>-<n>.md` (ex.: `ynana-01.md`, `outro-leitor-01.md`).
 - No topo de cada arquivo, se quiser, uma linha com o que o exemplo mostra (ex.: "entrada curta, Ynana irritada").

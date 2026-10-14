@@ -1,10 +1,8 @@
 {
-  "versao": "1.6.0",
-  "sha256": "7701bb4405773416d9979aab6695e05532e87668fee617df6693319168f74c49",
+  "versao": "1.6.1",
+  "sha256": "4f5d179b0ab825fa2863c0665e8015c6ca81e85e124ea805ad6e8b1c3ce8cfcf",
   "notas": [
-    "Nova mesa de escrita na home: pedido de capítulo guiado (quem escreve, quem aparece, onde, o que acontece)",
-    "Etapas visíveis enquanto o Claude trabalha: contexto, escrita, tiques, revisores, continuidade",
-    "Capítulo atual em abas: Folha, Contexto (escaleta e onde paramos) e Revisão",
-    "Selecione um trecho da folha para reescrever, expandir, pôr mais diálogo ou mais tensão"
+    "Corrige a instalação por cima: a versão nova fecha a antiga que ficava aberta em segundo plano e assume o lugar",
+    "Nova mesa de escrita na home, fichas com foto e atualização automática (da 1.6.0)"
   ]
 }

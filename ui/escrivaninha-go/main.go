@@ -172,27 +172,41 @@ func escolherPorta(fixa int, pasta string, esperarLiberar bool) (net.Listener, s
 		if err == nil {
 			return ouvinte, endereco, false
 		}
-		if ehNossa(endereco, pasta) {
-			return nil, endereco, true
+		if nossa, versaoDela := ehNossa(endereco, pasta); nossa {
+			if versaoDela == versao {
+				return nil, endereco, true
+			}
+			// Outra versão da Escrivaninha (normalmente a antiga, escondida em segundo
+			// plano) está nesta porta: encerra e assume o lugar.
+			logar("Encerrando a versão %q que estava aberta em %s.", versaoDela, endereco)
+			encerrarOutrasInstancias()
+			for i := 0; i < 40; i++ {
+				if o, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p)); err == nil {
+					return o, endereco, false
+				}
+				time.Sleep(250 * time.Millisecond)
+			}
+			continue
 		}
 		logar("Porta %d ocupada por outro programa; tentando a próxima.", p)
 	}
 	return nil, "", false
 }
 
-// ehNossa pergunta ao servidor da porta se ele é uma Escrivaninha desta pasta.
-func ehNossa(endereco, pasta string) bool {
+// ehNossa pergunta ao servidor da porta se ele é uma Escrivaninha desta pasta,
+// e qual a versão dele (versões antigas não informam: volta "").
+func ehNossa(endereco, pasta string) (bool, string) {
 	cli := http.Client{Timeout: 800 * time.Millisecond}
 	r, err := cli.Get(endereco + "/api/ping")
 	if err != nil {
-		return false
+		return false, ""
 	}
 	defer r.Body.Close()
 	var d map[string]string
 	if json.NewDecoder(io.LimitReader(r.Body, 4096)).Decode(&d) != nil {
-		return false
+		return false, ""
 	}
-	return d["app"] == assinatura && strings.EqualFold(filepath.Clean(d["pasta"]), filepath.Clean(pasta))
+	return d["app"] == assinatura && strings.EqualFold(filepath.Clean(d["pasta"]), filepath.Clean(pasta)), d["versao"]
 }
 
 // pastaBase decide onde a história mora. No Windows, se o exe não estiver em
@@ -217,11 +231,18 @@ func pastaBase() (string, error) {
 		return "", err
 	}
 	destino := filepath.Join(pastaPadraoWindows, nomeExe)
-	if err := copiarArquivo(exe, destino); err != nil {
-		// Se a cópia falhar porque o exe instalado está aberto, segue com o que já está lá.
-		if _, e2 := os.Stat(destino); e2 != nil {
-			return "", fmt.Errorf("copiar o programa: %w", err)
+	// A versão instalada pode estar aberta (escondida): encerra antes de trocar o arquivo.
+	encerrarOutrasInstancias()
+	var errCopia error
+	for i := 0; i < 20; i++ {
+		if errCopia = copiarArquivo(exe, destino); errCopia == nil {
+			break
 		}
+		time.Sleep(300 * time.Millisecond)
+	}
+	if errCopia != nil && !mesmoConteudo(exe, destino) {
+		// Nunca abrir a versão antiga em silêncio.
+		return "", fmt.Errorf("não consegui substituir %s (%v).\nReinicie o computador e abra este arquivo de novo", destino, errCopia)
 	}
 	criarAtalhos(destino)
 
@@ -279,6 +300,12 @@ func ehSistema(rel string) bool {
 		return true
 	}
 	return false
+}
+
+func mesmoConteudo(a, b string) bool {
+	x, e1 := os.ReadFile(a)
+	y, e2 := os.ReadFile(b)
+	return e1 == nil && e2 == nil && string(x) == string(y)
 }
 
 func copiarArquivo(de, para string) error {

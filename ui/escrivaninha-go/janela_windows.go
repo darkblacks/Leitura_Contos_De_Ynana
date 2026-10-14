@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -87,4 +88,19 @@ func abrirJanela(url string) {
 		logar("Não consegui abrir a janela (%v); abrindo no navegador padrão.", err)
 		abrirNavegador(url)
 	}
+}
+
+// encerrarOutrasInstancias fecha qualquer outra Escrivaninha aberta (inclusive versões
+// antigas escondidas em segundo plano), menos este processo.
+func encerrarOutrasInstancias() {
+	nomes := map[string]bool{"Escrivaninha.exe": true}
+	if exe, err := os.Executable(); err == nil {
+		nomes[filepath.Base(exe)] = true
+	}
+	for nome := range nomes {
+		cmd := exec.Command("taskkill", "/F", "/FI", fmt.Sprintf("PID ne %d", os.Getpid()), "/IM", nome)
+		esconderJanela(cmd)
+		_ = cmd.Run()
+	}
+	time.Sleep(700 * time.Millisecond)
 }

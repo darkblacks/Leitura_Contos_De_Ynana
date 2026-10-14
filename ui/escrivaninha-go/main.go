@@ -297,8 +297,14 @@ func extrairProjeto(pasta string) (int, error) {
 		novos++
 		return nil
 	})
+	// Arquivos do sistema que saíram do app (comandos aposentados).
+	for _, rel := range obsoletos {
+		os.Remove(filepath.Join(pasta, filepath.FromSlash(rel)))
+	}
 	return novos, err
 }
+
+var obsoletos = []string{".claude/commands/escaleta.md", ".claude/commands/importar.md"}
 
 // veioDoApp diz se o conteúdo é idêntico a alguma versão já publicada do arquivo.
 func veioDoApp(rel string, conteudo []byte) bool {

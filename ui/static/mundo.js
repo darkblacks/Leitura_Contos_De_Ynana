@@ -107,107 +107,80 @@ async function guardarCopia(caminho, texto) {
   return alvo;
 }
 
-/* ============================================================ Calendário de Albahara */
+/* ============================================================ Calendário de Albahara
+   É o calendário humano com outros nomes: 12 meses com os mesmos dias (fevereiro com 29 nos
+   anos bissextos), semana de 7 dias. O que muda é o nome dos meses. Feriados e festivais
+   ficam na seção "Feriados e festivais" (repetem todo ano). */
 const MESES_GREG = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 const PROPOSTAS_MESES = { 1: "Chuvas Rápidas", 5: "Florescimento", 7: "Sol Ardente", 8: "Ventos Quentes", 9: "Trovoadas" };
+const DIAS_GREG = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 let _cal = null;
 
 function lerCalendario(texto) {
   const doc = secoesMd(texto || "");
-  const geral = lerCampos((acharSecao(doc, "Geral") || {}).corpo || "");
   const meses = [];
+  let col = null;
   for (const l of ((acharSecao(doc, "Meses") || {}).corpo || "").split("\n")) {
     if (!/^\|/.test(l) || /^\|[\s:|-]+\|$/.test(l)) continue;
     const c = l.replace(/^\||\|$/g, "").split("|").map((x) => x.trim());
-    if (!/^\d+$/.test(c[0])) continue;
-    meses.push({ n: +c[0], nome: c[1] || "", equivale: c[2] || "", dias: parseInt(c[3], 10) || null, estacao: c[4] || "", proposta: c[5] || "" });
+    if (!/^\d+$/.test(c[0])) { col = c.map(semAcento); continue; }
+    const pega = (nome) => { const i = (col || []).findIndex((x) => x.startsWith(nome)); return i >= 0 ? c[i] || "" : ""; };
+    meses.push({ n: +c[0], nome: pega("nome") || c[1] || "", equivale: pega("equivale") || MESES_GREG[+c[0] - 1], proposta: pega("proposta") });
   }
+  for (let n = 1; n <= 12; n++) if (!meses.some((m) => m.n === n)) meses.push({ n, nome: "", equivale: MESES_GREG[n - 1], proposta: PROPOSTAS_MESES[n] || "" });
   meses.sort((a, b) => a.n - b.n);
-  return { doc, geral, meses, existe: !!texto };
+  const secFer = acharSecao(doc, "Feriados e festivais", "Festividades", "Eventos");
+  const feriados = ((secFer || {}).corpo || "").split("\n").map((l) => l.match(/^[-*]\s+(.*)$/)).filter(Boolean)
+    .map((m) => m[1].split(/\s+·\s+/)).filter((p) => p[0] && !/^\(a definir\)$/.test(p[0]))
+    .map((p) => (p.length >= 2 && /dia|\d/.test(semAcento(p[0])) ? { data: p[0], nome: p[1] || "", desc: p.slice(2).join(" · ") } : { data: p[1] || "", nome: p[0], desc: p.slice(2).join(" · ") }));
+  return { doc, meses, feriados, existe: !!texto };
 }
 function escreverCalendario(cal) {
-  const sec = acharSecao(cal.doc, "Meses");
-  const notas = sec ? sec.corpo.split("\n").filter((l) => !/^\|/.test(l)).join("\n").trim() : "";
-  const tabela = ["| Nº | Nome | Equivale a | Dias | Estação | Proposta (não é cânone) |", "|---|---|---|---|---|---|",
-    ...cal.meses.map((m) => `| ${m.n} | ${m.nome || "(a definir)"} | ${m.equivale} | ${m.dias || "(a definir)"} | ${m.estacao} | ${m.proposta} |`)].join("\n");
-  const corpo = (notas ? notas + "\n\n" : "") + tabela;
-  if (sec) sec.corpo = corpo; else cal.doc.secoes.splice(1, 0, { titulo: "Meses", corpo });
-  const g = acharSecao(cal.doc, "Geral");
-  if (g) g.corpo = cal.geral.texto();
-  return juntarMd(cal.doc);
+  const doc = cal.doc;
+  doc.cabeca = `# Calendário de Albahara
+
+> É o calendário humano com outros nomes: 12 meses com os mesmos dias (fevereiro tem 29 nos anos bissextos) e semana de 7 dias. Só os nomes mudam.
+> Nome de mês com proposta ainda não é cânone. Data no texto: \`12º dia de Tempestade de 1812\`.`;
+  const tabela = ["| Nº | Nome | Equivale a | Dias | Proposta (não é cânone) |", "|---|---|---|---|---|",
+    ...cal.meses.map((m) => `| ${m.n} | ${nomeMes(m) || "(a definir)"} | ${m.equivale} | ${m.n === 2 ? "28 (29 no bissexto)" : DIAS_GREG[m.n - 1]} | ${nomeMes(m) ? "" : m.proposta || ""} |`)].join("\n");
+  const notas = ((acharSecao(doc, "Meses") || {}).corpo || "").split("\n").filter((l) => !/^\|/.test(l)).join("\n").trim();
+  const fer = cal.feriados.length ? cal.feriados.map((f) => `- ${[f.data || "(data a definir)", f.nome, f.desc].filter(Boolean).join(" · ")}`).join("\n") : "Nenhum ainda.";
+  const fora = ["meses", "feriados e festivais", "festividades", "eventos", "geral"];
+  doc.secoes = [{ titulo: "Meses", corpo: [tabela, notas].filter(Boolean).join("\n\n") },
+    { titulo: "Feriados e festivais", corpo: "Repetem todo ano. Um por linha: data · nome · o que acontece.\n\n" + fer.replace(/^Repetem todo ano.*\n\n/, "") },
+    ...doc.secoes.filter((s) => !fora.includes(semAcento(s.titulo)) && !/a definir/.test(s.corpo.replace(/\s+/g, " ").slice(0, 40)))];
+  return juntarMd(doc);
 }
 async function calendario(forcar = false) {
   if (_cal && !forcar) return _cal;
   const t = await lerSeExiste(ARQ_CALENDARIO);
   if (t !== null) { _cal = lerCalendario(t); return _cal; }
-  // ainda não migrado: usa a tabela da História só para ler datas
+  // ainda não existe: nasce dos nomes de mês que já estão na História
   const h = (await lerSeExiste("biblia/historia.md")) || "";
-  _cal = lerCalendario(calendarioDaHistoria(h).texto);
-  _cal.existe = false;
+  _cal = lerCalendario(calendarioDaHistoria(h));
+  try { await gravarArquivo(ARQ_CALENDARIO, escreverCalendario(_cal)); _cal.existe = true; } catch {}
   return _cal;
 }
 const nomeMes = (m) => (m && m.nome && !/a definir/i.test(m.nome) ? m.nome : "");
 const rotuloMes = (m) => nomeMes(m) || `${m.n}º mês`;
-const diasDoMes = (cal, n) => { const m = cal.meses.find((x) => x.n === n); return m && m.dias ? { d: m.dias, certo: true } : { d: 30, certo: false }; };
+const bissexto = (a) => (a % 4 === 0 && a % 100 !== 0) || a % 400 === 0;
+const diasDoMes = (cal, n, ano = 1) => ({ d: n === 2 && bissexto(ano) ? 29 : DIAS_GREG[n - 1], certo: true });
 
-/* Cria o texto de biblia/calendario.md a partir da seção "Calendário" de historia.md. */
 function calendarioDaHistoria(historia) {
   const doc = secoesMd(historia);
   const sec = acharSecao(doc, "Calendário", "Calendario");
   const nomes = {};
-  const extras = [];
   if (sec) {
     for (const l of sec.corpo.split("\n")) {
       const c = l.replace(/^\||\|$/g, "").split("|").map((x) => x.trim());
       const i = MESES_GREG.indexOf(semAcento(c[0]).replace("marco", "março"));
-      if (/^\|/.test(l) && i >= 0) { if (!/a definir/i.test(c[1] || "")) nomes[i + 1] = c[1]; continue; }
-      if (/^\|/.test(l) || /^Os meses têm nomes/.test(l)) continue;
-      extras.push(l);
+      if (/^\|/.test(l) && i >= 0 && !/a definir/i.test(c[1] || "")) nomes[i + 1] = c[1];
     }
+    const dec = sec.corpo.match(/Metal[^\n]*→\s*\*\*([^*]+)\*\*/);
+    if (dec) { const i = MESES_GREG.indexOf(semAcento(dec[1]).replace("marco", "março")); if (i >= 0 && !nomes[i + 1]) nomes[i + 1] = "Metal"; }
   }
-  // decisão já tomada sobre "Metal" vira nome do mês
-  const dec = extras.join("\n").match(/Metal[^\n]*→\s*\*\*([^*]+)\*\*/);
-  if (dec) { const i = MESES_GREG.indexOf(semAcento(dec[1]).replace("marco", "março")); if (i >= 0 && !nomes[i + 1]) nomes[i + 1] = "Metal"; }
-  const linhas = MESES_GREG.map((g, i) => {
-    const n = i + 1, nome = nomes[n] || "(a definir)";
-    const prop = nomes[n] ? "" : PROPOSTAS_MESES[n] || "";
-    return `| ${n} | ${nome} | ${g} | (a definir) |  | ${prop} |`;
-  });
-  const texto = `# Calendário de Albahara
-
-> Usado para datas, idades, intervalos e a ordem dos capítulos. Só vale como cânone o que está nas colunas Nome, Dias e Estação; a coluna Proposta é sugestão do Claude até o autor aceitar.
-> Formato de data: \`10º dia de Tempestade de 1812\`. Mês sem dia: \`Tempestade de 1812\`. Data estimada: \`por volta de 1796\`.
-
-## Geral
-
-- Nome do calendário: (a definir)
-- Dias por semana: (a definir)
-- Nomes dos dias: (a definir)
-- Era / contagem dos anos: (a definir) (a história se passa por volta de 1700–1900; o Arco 1 em 1812–1814)
-- Anos bissextos: (a definir)
-- Dias por mês, enquanto não definidos: 30 (só para cálculo; as contas aparecem como aproximadas)
-
-## Meses
-
-| Nº | Nome | Equivale a | Dias | Estação | Proposta (não é cânone) |
-|---|---|---|---|---|---|
-${linhas.join("\n")}
-${extras.join("\n").trim() ? "\n" + extras.join("\n").trim() + "\n" : ""}
-## Estações
-
-(a definir) Quantas são, quando começam e como se sentem em Albahara.
-
-## Clima por região
-
-- [Albahara](lugares/albahara.md): (a definir) (estação das chuvas, estação seca, ventos, neblina)
-
-## Festividades
-
-Uma por linha: nome · data · o que acontece.
-
-- (a definir)
-`;
-  return { texto, temSecao: !!sec };
+  const linhas = MESES_GREG.map((g, i) => `| ${i + 1} | ${nomes[i + 1] || "(a definir)"} | ${g} | ${nomes[i + 1] ? "" : PROPOSTAS_MESES[i + 1] || ""} |`);
+  return `# Calendário de Albahara\n\n## Meses\n\n| Nº | Nome | Equivale a | Proposta |\n|---|---|---|---|\n${linhas.join("\n")}\n\n## Feriados e festivais\n\n`;
 }
 
 /* Datas fictícias: "10º dia de Chuvas Rápidas, 1812", "Tempestade de 1812", "jun 1812", "por volta de 1796" */
@@ -217,45 +190,47 @@ function lerData(txt, cal = _cal) {
   const anos = s.match(/\b(\d{3,4})\b/g);
   if (!anos) return null;
   const ano = +anos[anos.length - 1];
-  const aprox = /por volta|~|cerca|aprox|estimad|\?/.test(s);
-  let mes = null, dia = null;
+  const dm = lerDiaMes(s, cal);
+  return { ano, mes: dm.mes, dia: dm.mes ? dm.dia : null, aprox: /por volta|~|cerca|aprox|estimad|\?/.test(s) };
+}
+function lerDiaMes(txt, cal = _cal) {
+  const s = semAcento(txt);
+  let mes = null;
   if (cal) {
     const nomes = cal.meses.map((m) => ({ n: m.n, nome: semAcento(nomeMes(m)) })).filter((m) => m.nome).sort((a, b) => b.nome.length - a.nome.length);
     for (const m of nomes) if (new RegExp(`(^|[^a-z])${m.nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z]|$)`).test(s)) { mes = m.n; break; }
   }
   if (!mes) { const m = s.match(/(\d{1,2})\s*[ºo°]?\s*mes\b/); if (m) mes = +m[1]; }
-  if (!mes) {
-    for (let i = 0; i < 12; i++) {
-      const g = semAcento(MESES_GREG[i]);
-      if (new RegExp(`(^|[^a-z])(${g}|${g.slice(0, 3)})([^a-z]|$)`).test(s)) { mes = i + 1; break; }
-    }
+  if (!mes) for (let i = 0; i < 12; i++) {
+    const g = semAcento(MESES_GREG[i]);
+    if (new RegExp(`(^|[^a-z])(${g}|${g.slice(0, 3)})([^a-z]|$)`).test(s)) { mes = i + 1; break; }
   }
   const md = s.match(/(\d{1,2})\s*[ºo°]?\s*dia/) || s.match(/(?:^|[^\d])(\d{1,2})\s*[ºo°]?\s+d[eo]\s/);
-  if (md && mes) dia = +md[1];
-  return { ano, mes, dia, aprox };
+  return { mes, dia: md ? +md[1] : null };
 }
 function formatarData(d, cal = _cal) {
   if (!d) return "";
   const m = cal && d.mes ? cal.meses.find((x) => x.n === d.mes) : null;
   const nome = m ? nomeMes(m) : "";
   const t = !d.mes ? `${d.ano}`
-    : d.dia ? `${d.dia}º dia ${nome ? "de " + nome : `do ${d.mes}º mês`} de ${d.ano}`
-    : `${nome || d.mes + "º mês"} de ${d.ano}`;
+    : d.dia ? `${d.dia}º dia ${nome ? "de " + nome : `do ${d.mes}º mês`}${d.ano ? " de " + d.ano : ""}`
+    : `${nome || d.mes + "º mês"}${d.ano ? " de " + d.ano : ""}`;
   return (d.aprox ? "por volta de " : "") + t;
 }
-/* Dia absoluto (para ordenar e subtrair). certo=false quando algum mês ainda não tem dias definidos. */
-function diaAbsoluto(d, cal = _cal) {
-  let certo = !d.aprox && !!d.mes && !!d.dia, total = 0, ano = 0;
-  for (let n = 1; n <= 12; n++) { const x = diasDoMes(cal, n); ano += x.d; if (!x.certo) certo = false; }
-  total = d.ano * ano;
-  for (let n = 1; n < (d.mes || 1); n++) total += diasDoMes(cal, n).d;
-  total += (d.dia || 1) - 1;
-  return { dias: total, certo, diasAno: ano };
+/* Dia absoluto (dias desde a era), igual ao calendário humano. */
+const _utc = (a, m, d) => { const x = new Date(Date.UTC(2000, m - 1, d)); x.setUTCFullYear(a); return Math.round(x.getTime() / 86400000); };
+function diaAbsoluto(d) {
+  return { dias: _utc(d.ano, d.mes || 1, d.dia || 1), certo: !d.aprox && !!d.mes && !!d.dia, diasAno: bissexto(d.ano) ? 366 : 365 };
 }
-function intervalo(a, b, cal = _cal) {
-  const x = diaAbsoluto(a, cal), y = diaAbsoluto(b, cal);
-  return { dias: y.dias - x.dias, certo: x.certo && y.certo };
+function deDiaAbsoluto(n) { const x = new Date(n * 86400000); return { ano: x.getUTCFullYear(), mes: x.getUTCMonth() + 1, dia: x.getUTCDate() }; }
+/* Faixa de dias que uma data cobre: dia exato, o mês inteiro ou o ano inteiro. */
+function faixaData(d) {
+  const ini = diaAbsoluto(d).dias;
+  if (d.dia) return [ini, ini];
+  if (d.mes) return [ini, ini + diasDoMes(null, d.mes, d.ano).d - 1];
+  return [ini, ini + (bissexto(d.ano) ? 365 : 364)];
 }
+function intervalo(a, b) { const x = diaAbsoluto(a), y = diaAbsoluto(b); return { dias: y.dias - x.dias, certo: x.certo && y.certo }; }
 function idadeEm(nasc, em) {
   if (!nasc || !em) return null;
   let anos = em.ano - nasc.ano;
@@ -264,30 +239,28 @@ function idadeEm(nasc, em) {
   return { anos, aprox: !sabe || nasc.aprox || em.aprox || (em.mes === nasc.mes && !(nasc.dia && em.dia)) };
 }
 const textoIdade = (i) => (i ? (i.aprox ? "≈ " : "") + `${i.anos} anos` : "");
-function textoIntervalo(dias, certo, cal = _cal) {
-  const ano = diaAbsoluto({ ano: 0, mes: 1, dia: 1 }, cal).diasAno;
-  const abs = Math.abs(dias), anos = Math.floor(abs / ano), resto = abs % ano;
-  const partes = [];
-  if (anos) partes.push(`${anos} ano${anos > 1 ? "s" : ""}`);
-  if (resto) partes.push(`${resto} dia${resto > 1 ? "s" : ""}`);
-  return (certo ? "" : "≈ ") + (partes.join(" e ") || "mesmo dia");
+/* Feriados e festivais que caem numa data (mesmo dia e mês; sem dia = o mês inteiro). */
+function feriadosEm(d, cal = _cal) {
+  if (!d || !d.mes || !cal) return [];
+  return cal.feriados.filter((f) => { const x = lerDiaMes(f.data, cal); return x.mes === d.mes && (!x.dia || !d.dia || x.dia === d.dia); });
 }
 
 /* Seletor de data fictícia (dia, mês do calendário, ano, estimada) */
-function htmlSeletorData(id, valor, cal = _cal) {
-  const d = lerData(valor, cal) || {};
+function htmlSeletorData(id, valor, cal = _cal, { semAno = false } = {}) {
+  const d = (semAno ? { ...lerDiaMes(valor || "", cal) } : lerData(valor, cal)) || {};
   return `<span class="seletor-data" id="${id}">
-    <input type="number" min="1" max="60" placeholder="dia" data-p="dia" value="${d.dia || ""}">
+    <input type="number" min="1" max="31" placeholder="dia" data-p="dia" value="${d.dia || ""}">
     <select data-p="mes"><option value="">mês…</option>${(cal ? cal.meses : []).map((m) =>
       `<option value="${m.n}" ${d.mes === m.n ? "selected" : ""}>${esc(rotuloMes(m))}${nomeMes(m) ? "" : m.proposta ? ` (proposta: ${esc(m.proposta)})` : ""}</option>`).join("")}</select>
-    <input type="number" min="1" max="3000" placeholder="ano" data-p="ano" value="${d.ano || ""}">
-    <label class="sub"><input type="checkbox" data-p="aprox" ${d.aprox ? "checked" : ""}> estimada</label></span>`;
+    ${semAno ? "" : `<input type="number" min="1" max="3000" placeholder="ano" data-p="ano" value="${d.ano || ""}">
+    <label class="sub"><input type="checkbox" data-p="aprox" ${d.aprox ? "checked" : ""}> estimada</label>`}</span>`;
 }
 function valorSeletorData(el, cal = _cal) {
   const v = (p) => $(`[data-p=${p}]`, el);
+  const mes = +v("mes").value || null;
+  if (!v("ano")) return mes ? formatarData({ ano: 0, mes, dia: +v("dia").value || null }, cal) : "";
   const ano = +v("ano").value;
   if (!ano) return "";
-  const mes = +v("mes").value || null;
   return formatarData({ ano, mes, dia: mes ? +v("dia").value || null : null, aprox: v("aprox").checked }, cal);
 }
 
@@ -379,9 +352,13 @@ function trechoPresente(trecho, texto) {
 
 /* ============================================================ Relações */
 const TITULOS_REL = [
-  ["Parente", ["Pai", "Mãe", "Irmão", "Irmã", "Tio", "Tia", "Parente distante", "Parente de Consideração"]],
-  ["Outros", ["Amigo", "Possível Atração Romântica", "Inimigo", "Inimigo Potencial Amigável"]],
+  ["Família", ["Pai", "Mãe", "Filho", "Filha", "Irmão", "Irmã", "Marido", "Esposa", "Avô", "Avó", "Neto", "Neta", "Tio", "Tia", "Sobrinho", "Sobrinha", "Primo", "Prima",
+    "Padrasto", "Madrasta", "Enteado", "Enteada", "Sogro", "Sogra", "Genro", "Nora", "Cunhado", "Cunhada", "Padrinho", "Madrinha", "Afilhado", "Afilhada", "Parente distante", "Parente de Consideração"]],
+  ["Amor", ["Namorado", "Namorada", "Noivo", "Noiva", "Amante", "Ex-namorado", "Ex-namorada", "Ex-marido", "Ex-esposa", "Paixão secreta", "Possível Atração Romântica"]],
+  ["Convívio", ["Amigo", "Amiga", "Melhor amigo", "Melhor amiga", "Mentor", "Aprendiz", "Colega", "Sócio", "Patrão", "Empregado", "Protetor", "Protegido", "Conhecido"]],
+  ["Conflito", ["Rival", "Inimigo", "Inimigo Potencial Amigável"]],
 ];
+const listaTitulos = (id) => `<datalist id="${id}">${TITULOS_REL.flatMap(([, ts]) => ts).map((t) => `<option value="${esc(t)}">`).join("")}</datalist>`;
 const INDICADORES = [
   ["Vínculo Afetivo", "quanto um gosta do outro"], ["Liberdade de Contato", "quão à vontade para chegar, tocar, falar"],
   ["Confiança", "quanto acredita no outro"], ["Intimidade Emocional", "quanto se abre"], ["Rivalidade", "quanto compete"],
@@ -622,7 +599,7 @@ async function imagensDaFicha(caminho) {
 
 const _abrirFichaGenerica = abrirFicha;
 abrirFicha = async function (caminho, aoFechar) {
-  if (!/^biblia\/personagens\//.test(caminho)) return _abrirFichaGenerica(caminho, aoFechar);
+  if (!/^biblia\/personagens\//.test(caminho)) return (/^biblia\/(lugares|artefatos)\//.test(caminho) && window.abrirFichaVisual ? abrirFichaVisual : _abrirFichaGenerica)(caminho, aoFechar);
   return abrirFichaPersonagem(caminho, aoFechar);
 };
 
@@ -673,7 +650,7 @@ async function abrirFichaPersonagem(caminho, aoFechar, abertas = null) {
   S("Aparência", "Aparência por idade", ap.versoes.length ? `<div class="versoes">${ap.versoes.map((v, i) => `
       <div class="versao-ap">
         <div class="versao-img">${imgs[i] ? `<img src="${urlRepo(imgs[i])}" alt="">` : f.foto && i === 0 ? `<img src="${urlRepo(f.foto)}" alt="">` : `<span>sem imagem</span>`}</div>
-        <div><h4>${esc(v.titulo)}</h4>
+        <div><h4>${esc(v.titulo)}${imgs[i] || (f.foto && i === 0) ? ` <button class="botao pequeno" data-descrever-v="${i}" title="O Claude olha a imagem e escreve a descrição desta versão">✨ Descrever pela imagem</button>` : ""}</h4>
           <div class="etiquetas">${["Período", "Idade", "Tipo", "Espécie"].map((k) => !vazio(v.campos.get(k)) ? `<span class="etiqueta">${esc(k)}: ${inline(v.campos.get(k))}</span>` : "").join(" ")}</div>
           <div class="md">${markdown(v.campos.itens.filter((it) => !(it.chave && ["periodo", "idade", "tipo", "especie", "imagem"].includes(semAcento(it.chave))))
             .map((it) => it.bruto !== undefined ? it.bruto : [`- ${it.chave}: ${it.valor}`, ...it.sub.map((s) => "  " + s)].join("\n")).join("\n"), caminho)}</div></div>
@@ -756,6 +733,12 @@ async function abrirFichaPersonagem(caminho, aoFechar, abertas = null) {
     d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
   $$("[data-ev]", c).forEach((x) => (x.onclick = () => abrirAcontecimento(x.dataset.ev, recarregar)));
+  $$("[data-descrever-v]", c).forEach((b) => (b.onclick = (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const i = +b.dataset.descreverV, v = ap.versoes[i], img = imgs[i] || f.foto;
+    pedirEEsperar(`Descreva pela imagem a aparência de ${f.titulo} na versão "${v.titulo}" (ficha ${caminho}, seção Aparência, subtítulo "### ${v.titulo}"). Olhe a imagem ${img}.
+Escreva em linguagem natural, um traço por linha (corpo, rosto, cabelo, olhos, orelhas/traços híbridos, marcas, roupa, cores), só o que dá para ver, marcando com \`[img]\`. Mexa só nessa versão; não apague o que o autor escreveu, acrescente. Depois me diga em duas linhas o que escreveu.`, $(".ficha-texto", c), recarregar);
+  }));
   $$("[data-abrir-rel]", c).forEach((x) => (x.onclick = () => { fecharModal(); ir("relacoes", caminho); }));
   const irRel = $("#fp-ir-rel", c); if (irRel) irRel.onclick = () => { fecharModal(); ir("relacoes", caminho); };
   $("#fp-bruto", c).onclick = () => _abrirFichaGenerica(caminho, aoFechar);
@@ -966,12 +949,13 @@ function htmlVersao(v, i, img) {
 const _vistaPersonagens = VISTAS.personagens;
 VISTAS.personagens = async () => {
   await _vistaPersonagens();
+  $(".cabecalho-vista", vista).insertAdjacentHTML("afterend", abasPersonagens("fichas"));
   const a = estado.arvore;
   const antigas = [];
   for (const f of a.personagens) { const t = await lerSeExiste(f.caminho); if (t && ehFichaAntiga(t)) antigas.push(f.caminho); }
   if (!antigas.length) return;
-  const cab = $(".cabecalho-vista", vista);
-  cab.insertAdjacentHTML("afterend", `<div class="aviso" style="margin:-8px 0 18px">${antigas.length} ficha(s) no formato antigo.
+  const cab = $(".abas", vista);
+  cab.insertAdjacentHTML("afterend", `<div class="aviso" style="margin:0 0 18px">${antigas.length} ficha(s) no formato antigo.
     A conversão reorganiza nas seções novas (Identidade, Aparência por idade, Motivação, Sociedade…) sem apagar nada; a versão antiga fica guardada e dá para voltar.
     <button class="botao pequeno primario" id="converter-todas" style="margin-left:8px">Converter todas</button></div>`);
   $("#converter-todas").onclick = async () => {
@@ -979,172 +963,124 @@ VISTAS.personagens = async () => {
   };
 };
 
-/* ============================================================ Tela: Calendário */
-VISTAS.calendario = async () => {
+/* ============================================================ Tela: Calendário (Meses · Eventos) */
+VISTAS.calendario = async (aba) => {
   const cal = await calendario(true);
-  if (!cal.existe) {
-    const h = (await lerSeExiste("biblia/historia.md")) || "";
-    vista.innerHTML = cabecalho("Calendário de Albahara", "Datas, idades, intervalos e a ordem dos capítulos.") + `
-      <div class="cartao" style="max-width:640px">
-        <h3>Criar o calendário</h3>
-        <p>Os nomes de mês que já existem na História (${cal.meses.filter((m) => nomeMes(m)).map((m) => esc(m.nome)).join(", ") || "nenhum"}) passam para o calendário novo.
-          Os meses sem nome ganham uma <b>proposta</b>, que só vale quando você aceitar. Nada é inventado como cânone.</p>
-        <p class="sub">A seção Calendário da História passa a apontar para cá (uma cópia da História fica guardada).</p>
-        <button class="botao primario" id="criar-cal">Criar o calendário</button>
-      </div>`;
-    $("#criar-cal").onclick = async () => {
-      try {
-        const { texto, temSecao } = calendarioDaHistoria(h);
-        await gravarArquivo(ARQ_CALENDARIO, texto);
-        if (temSecao) {
-          await guardarCopia("biblia/historia.md", h);
-          const doc = secoesMd(h);
-          const s = acharSecao(doc, "Calendário", "Calendario");
-          s.corpo = "O calendário agora fica em [Calendário de Albahara](calendario.md): meses, dias, estações, clima e festividades.";
-          await gravarArquivo("biblia/historia.md", juntarMd(doc));
-        }
-        toast("Calendário criado"); VISTAS.calendario();
-      } catch (e) { toast(e.message, true); }
+  aba = aba === "eventos" ? "eventos" : "meses";
+  vista.innerHTML = cabecalho("Calendário de Albahara", "O calendário humano com outros nomes: os mesmos 12 meses e os mesmos dias. Os eventos repetem todo ano e o Claude lembra deles quando um capítulo cai na data.") +
+    `<div class="abas"><div class="aba ${aba === "meses" ? "ativa" : ""}" data-aba="meses">Meses</div><div class="aba ${aba === "eventos" ? "ativa" : ""}" data-aba="eventos">Eventos · feriados e festivais <span class="sub">${cal.feriados.length || ""}</span></div></div><div id="cal-corpo"></div>`;
+  $$(".abas .aba").forEach((a) => (a.onclick = () => ir("calendario", a.dataset.aba)));
+  const corpo = $("#cal-corpo");
+  const gravar = async () => { await gravarArquivo(ARQ_CALENDARIO, escreverCalendario(cal)); _cal = null; toast("Calendário salvo"); };
+  if (aba === "meses") {
+    corpo.innerHTML = `<div class="meses-grade">${cal.meses.map((m, i) => `
+      <div class="mes-cartao ${nomeMes(m) ? "" : "sem-nome"}" data-i="${i}">
+        <div class="mes-topo"><span class="mes-n">${m.n}</span><span class="sub">${esc(m.equivale)} · ${m.n === 2 ? "28/29" : DIAS_GREG[m.n - 1]} dias</span></div>
+        <input class="mes-nome" value="${esc(nomeMes(m))}" placeholder="${m.proposta ? "proposta: " + esc(m.proposta) : "nome do mês"}">
+        ${!nomeMes(m) && m.proposta ? `<button class="botao pequeno" data-aceitar="${i}">✓ usar “${esc(m.proposta)}”</button>` : ""}
+      </div>`).join("")}</div>
+      <div style="margin-top:14px"><button class="botao primario" id="salvar-meses">Salvar nomes</button></div>`;
+    $$("[data-aceitar]").forEach((b) => (b.onclick = () => { const el = b.closest(".mes-cartao"); $(".mes-nome", el).value = cal.meses[+b.dataset.aceitar].proposta; b.remove(); el.classList.remove("sem-nome"); }));
+    $("#salvar-meses").onclick = async () => {
+      $$(".mes-cartao").forEach((el) => { cal.meses[+el.dataset.i].nome = $(".mes-nome", el).value.trim(); });
+      try { await gravar(); VISTAS.calendario("meses"); } catch (e) { toast(e.message, true); }
     };
     return;
   }
-  const ehCanone = (m) => !!nomeMes(m);
-  vista.innerHTML = cabecalho("Calendário de Albahara", "Datas, idades, intervalos e a ordem dos capítulos. O que é proposta só vale quando você aceitar.",
-    `<button class="botao" data-abrir="${ARQ_CALENDARIO}">Texto completo</button>`) + `
-    <div class="cal-grade">
-      <div class="cartao">
-        <h3>Meses</h3>
-        <div class="sub" style="margin-bottom:10px">Clique para editar. Dias e estação vazios ficam “a definir”; as contas usam 30 dias e aparecem com ≈.</div>
-        <div class="meses">${cal.meses.map((m, i) => `
-          <div class="mes ${ehCanone(m) ? "" : "sem-nome"}" data-i="${i}">
-            <span class="mes-n">${m.n}</span>
-            <input data-m="nome" value="${esc(ehCanone(m) ? m.nome : "")}" placeholder="${m.proposta ? "proposta: " + esc(m.proposta) : "(a definir)"}">
-            <input data-m="dias" type="number" min="1" max="99" value="${m.dias || ""}" placeholder="dias">
-            <input data-m="estacao" value="${esc(m.estacao)}" placeholder="estação">
-            <span class="sub mes-eq">${esc(m.equivale)}</span>
-            ${!ehCanone(m) && m.proposta ? `<button class="botao pequeno" data-aceitar="${i}" title="Aceitar a proposta “${esc(m.proposta)}” como nome do mês">✓ aceitar proposta</button>` : ""}
-          </div>`).join("")}</div>
-        <div style="margin-top:10px;display:flex;gap:8px"><button class="botao primario pequeno" id="salvar-meses">Salvar meses</button><span class="sub" id="meses-ok"></span></div>
-      </div>
-      <div class="cartao">
-        <h3>Geral</h3>
-        ${["Nome do calendário", "Dias por semana", "Nomes dos dias", "Era / contagem dos anos", "Anos bissextos"].map((k, i) =>
-          { const limpo = cal.geral.get(k).replace("(a definir)", "").trim(), nota = /^\(.*\)$/.test(limpo);
-            return `<div class="campo"><label>${k}</label><input data-g="${i}" value="${esc(nota ? "" : limpo)}" placeholder="${esc(nota ? "(a definir) " + limpo : "(a definir)")}"></div>`; }).join("")}
-        <button class="botao pequeno primario" id="salvar-geral">Salvar</button>
-      </div>
-      <div class="cartao cal-calc">
-        <h3>Calculadora</h3>
-        <div class="campo"><label>De</label>${htmlSeletorData("c-a", "", cal)}</div>
-        <div class="campo"><label>Até</label>${htmlSeletorData("c-b", "", cal)}</div>
-        <div class="resultado-calc" id="c-res">Escolha duas datas para ver o intervalo.</div>
-        <div class="campo" style="margin-top:12px"><label>Viagem: da data “De”, somar</label><div style="display:flex;gap:6px;align-items:center"><input id="c-dias" type="number" min="1" style="max-width:100px"> dias
-          <span class="resultado-calc" id="c-chegada"></span></div></div>
-      </div>
-      ${["Estações", "Clima por região", "Festividades"].map((t) => `
-        <div class="cartao bloco-livre" data-livre="${esc(t)}"><div style="display:flex;align-items:center"><h3 style="margin:0">${esc(t)}</h3>
-          <button class="botao pequeno" data-ed-livre style="margin-left:auto">editar</button></div>
-          <div class="md">${markdown((acharSecao(cal.doc, t) || {}).corpo || "(a definir)", ARQ_CALENDARIO)}</div></div>`).join("")}
-    </div>
-    <h2 style="margin-top:26px">Cronologia</h2>
-    <div class="sub" style="margin-bottom:10px">Capítulos (pela data “Quando”) e acontecimentos, em ordem. Sem data reconhecida vão para o fim.</div>
-    <div id="cronologia"></div>`;
-
-  const gravarCal = async () => { await gravarArquivo(ARQ_CALENDARIO, escreverCalendario(cal)); _cal = null; };
-  $$("[data-aceitar]").forEach((b) => (b.onclick = () => {
-    const el = b.closest(".mes"); const m = cal.meses[+el.dataset.i];
-    $("[data-m=nome]", el).value = m.proposta; b.remove(); el.classList.remove("sem-nome");
-    $("#meses-ok").textContent = "não salvo ainda";
-  }));
-  $$(".mes input").forEach((i) => (i.oninput = () => ($("#meses-ok").textContent = "não salvo ainda")));
-  $("#salvar-meses").onclick = async () => {
-    $$(".mes").forEach((el) => {
-      const m = cal.meses[+el.dataset.i];
-      const nome = $("[data-m=nome]", el).value.trim();
-      if (nome && nome !== m.nome) { if (semAcento(nome) === semAcento(m.proposta)) m.proposta = ""; m.nome = nome; }
-      if (!nome) m.nome = "(a definir)";
-      m.dias = parseInt($("[data-m=dias]", el).value, 10) || null;
-      m.estacao = $("[data-m=estacao]", el).value.trim();
-    });
-    try { await gravarCal(); toast("Meses salvos"); VISTAS.calendario(); } catch (e) { toast(e.message, true); }
+  const linhaEv = (f, i) => `<div class="feriado" data-i="${i}">
+      ${htmlSeletorData("fd-" + i, f.data, cal, { semAno: true })}
+      <input data-f="nome" placeholder="nome (ex.: Festa das Lanternas)" value="${esc(f.nome)}">
+      <input data-f="desc" placeholder="o que acontece (opcional)" value="${esc(f.desc)}">
+      <button class="botao pequeno" data-tirar title="tirar">✕</button></div>`;
+  corpo.innerHTML = `<div class="cartao">
+      <div class="sub" style="margin-bottom:10px">Feriados, festivais, datas religiosas, aniversários da cidade… Repetem todo ano. Sem dia = o mês inteiro.</div>
+      <div id="feriados">${cal.feriados.map(linhaEv).join("") || ""}</div>
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="botao" id="mais-feriado">+ evento</button><button class="botao primario" id="salvar-feriados">Salvar</button></div></div>`;
+  $("#mais-feriado").onclick = () => $("#feriados").insertAdjacentHTML("beforeend", linhaEv({ data: "", nome: "", desc: "" }, Date.now()));
+  $("#feriados").addEventListener("click", (e) => { if (e.target.matches("[data-tirar]")) e.target.closest(".feriado").remove(); });
+  $("#salvar-feriados").onclick = async () => {
+    cal.feriados = $$(".feriado").map((el) => ({ data: valorSeletorData($(".seletor-data", el), cal), nome: $("[data-f=nome]", el).value.trim(), desc: $("[data-f=desc]", el).value.trim() })).filter((f) => f.nome);
+    try { await gravar(); VISTAS.calendario("eventos"); } catch (e) { toast(e.message, true); }
   };
-  $("#salvar-geral").onclick = async () => {
-    ["Nome do calendário", "Dias por semana", "Nomes dos dias", "Era / contagem dos anos", "Anos bissextos"].forEach((k, i) => {
-      const v = $(`[data-g="${i}"]`).value.trim();
-      if (v) cal.geral.set(k, v); else if (!/a definir/.test(cal.geral.get(k))) cal.geral.set(k, "(a definir)");
-    });
-    try { await gravarCal(); toast("Salvo"); } catch (e) { toast(e.message, true); }
-  };
-  $$("[data-ed-livre]").forEach((b) => (b.onclick = () => {
-    const box = b.closest("[data-livre]"), t = box.dataset.livre;
-    const atual = (acharSecao(cal.doc, t) || {}).corpo || "";
-    $(".md", box).innerHTML = `<textarea rows="7" style="width:100%">${esc(atual)}</textarea><div class="editar-rodape"><button class="botao pequeno primario">Pronto</button></div>`;
-    b.remove();
-    $(".editar-rodape button", box).onclick = async () => {
-      const s = acharSecao(cal.doc, t);
-      const v = $("textarea", box).value.trim();
-      if (s) s.corpo = v; else cal.doc.secoes.push({ titulo: t, corpo: v });
-      try { await gravarCal(); VISTAS.calendario(); } catch (e) { toast(e.message, true); }
-    };
-  }));
-  const calc = () => {
-    const a = lerData(valorSeletorData($("#c-a"), cal), cal), b = lerData(valorSeletorData($("#c-b"), cal), cal);
-    $("#c-res").textContent = a && b ? (() => {
-      const x = intervalo(a, b, cal), t = textoIntervalo(x.dias, x.certo, cal);
-      return Math.abs(x.dias) >= diaAbsoluto({ ano: 1, mes: 1, dia: 1 }, cal).diasAno ? `${t} (${Math.abs(x.dias)} dias)` : t;
-    })() + (a && b && !intervalo(a, b, cal).certo ? " · aproximado: há meses sem número de dias definido" : "") : "Escolha duas datas para ver o intervalo.";
-    const n = +$("#c-dias").value;
-    if (a && n) {
-      let { dias } = diaAbsoluto({ ...a, mes: a.mes || 1, dia: a.dia || 1 }, cal); dias += n;
-      $("#c-chegada").textContent = "chega em " + formatarData(deDiaAbsoluto(dias, cal), cal) + (diaAbsoluto(a, cal).certo ? "" : " (≈)");
-    } else $("#c-chegada").textContent = "";
-  };
-  $$("#c-a, #c-b, #c-dias").forEach((el) => el.addEventListener("input", calc));
-  $$("#c-a, #c-b").forEach((el) => el.addEventListener("change", calc));
-  await desenharCronologia($("#cronologia"), cal);
 };
-function deDiaAbsoluto(n, cal) {
-  const ano = diaAbsoluto({ ano: 0, mes: 1, dia: 1 }, cal).diasAno;
-  const a = Math.floor(n / ano); let r = n - a * ano, mes = 1;
-  while (mes < 12 && r >= diasDoMes(cal, mes).d) { r -= diasDoMes(cal, mes).d; mes++; }
-  return { ano: a, mes, dia: r + 1 };
-}
-async function desenharCronologia(el, cal, { destaque } = {}) {
-  const a = estado.arvore || (await atualizarArvore());
-  const itens = [];
-  for (const c of a.capitulos) {
-    const d = lerData((c.meta || {}).quando, cal);
-    itens.push({ tipo: "cap", titulo: `Capítulo ${numCap(c.nome)}${c.meta && c.meta.titulo ? " · " + c.meta.titulo : ""}`, caminho: c.caminho, d, txt: (c.meta || {}).quando || "" });
-  }
-  for (const e of await todosAcontecimentos()) itens.push({ tipo: "ev", titulo: e.titulo, caminho: e.caminho, d: e.data, txt: e.quando, situacao: e.situacao });
-  itens.forEach((x) => (x.ord = x.d ? diaAbsoluto(x.d, cal).dias : Infinity));
-  itens.sort((x, y) => x.ord - y.ord || (x.tipo === "ev" ? -1 : 1));
-  el.innerHTML = itens.length ? `<div class="cronologia">${itens.map((x) => `
-    <div class="crono-item ${x.tipo} ${x.caminho === destaque ? "destaque" : ""}" data-crono="${esc(x.caminho)}">
-      <span class="crono-data">${esc(x.d ? formatarData(x.d, cal) : x.txt || "sem data")}</span>
-      <span class="crono-pino"></span>
-      <span class="crono-titulo">${x.tipo === "cap" ? "✎ " : ""}${esc(x.titulo)}${x.situacao ? ` <span class="situacao ${esc(x.situacao)}">${esc(x.situacao)}</span>` : ""}</span>
-    </div>`).join("")}</div>` : `<div class="vazio">Nada com data ainda.</div>`;
-  $$("[data-crono]", el).forEach((x) => (x.onclick = () => (x.classList.contains("ev") ? abrirAcontecimento(x.dataset.crono, () => desenharCronologia(el, cal, { destaque })) : ir("capitulo", x.dataset.crono))));
+
+/* ============================================================ Ciclos (as fases da história) */
+const ARQ_CICLOS = "biblia/ciclos.md";
+async function ciclos() {
+  const t = (await lerSeExiste(ARQ_CICLOS)) || "# Ciclos da história\n";
+  const doc = secoesMd(t);
+  const cal = await calendario();
+  const lista = doc.secoes.map((s) => {
+    const c = lerCampos(s.corpo);
+    const per = c.get("Período");
+    const [a, b] = per.split(/\s+até\s+|\s+a\s+(?=\d|\D*\d{3,4})|\s+→\s+/);
+    const ini = lerData(a, cal), fim = lerData(b || a, cal);
+    return { nome: s.titulo, periodo: per, resumo: c.get("Resumo"), secao: s, faixa: ini && fim ? [faixaData(ini)[0], faixaData(fim)[1]] : null };
+  });
+  return {
+    doc, lista,
+    deEvento(ev) {
+      const pelo = ev.campos.get("Ciclo");
+      if (pelo) return lista.find((x) => semAcento(x.nome) === semAcento(pelo)) || null;
+      if (!ev.data) return null;
+      const d = faixaData(ev.data)[0];
+      return lista.find((x) => x.faixa && d >= x.faixa[0] && d <= x.faixa[1]) || null;
+    },
+    async gravar() {
+      doc.secoes = lista.map((x) => ({ titulo: x.nome, corpo: [`- Período: ${x.periodo || "(a definir)"}`, `- Resumo: ${x.resumo || "(a definir)"}`].join("\n") }));
+      await gravarArquivo(ARQ_CICLOS, juntarMd(doc));
+    },
+  };
 }
 
-/* ============================================================ Tela: Acontecimentos */
+/* ============================================================ Tela: Acontecimentos (por ciclo) */
 VISTAS.acontecimentos = async () => {
   const cal = await calendario(true);
   const evs = await todosAcontecimentos();
+  const cic = await ciclos();
+  const grupos = cic.lista.map((c) => ({ c, evs: [] }));
+  const soltos = [];
+  for (const e of evs) { const c = cic.deEvento(e); const g = c && grupos.find((x) => x.c === c); (g ? g.evs : soltos).push(e); }
   const h = (await lerSeExiste("biblia/historia.md")) || "";
   const linhasTempo = linhasDaLinhaDoTempo(h);
-  vista.innerHTML = cabecalho("Acontecimentos", "O que acontece na história, quando, com quem e em que capítulo cada parte é revelada.",
-    `${linhasTempo.length ? `<button class="botao" id="importar-lt">Trazer da linha do tempo da História</button>` : ""}<button class="botao primario" id="novo-ev">+ Novo acontecimento</button>`) +
-    (evs.length ? `<div class="linha-eventos">${evs.map((e) => `
-      <div class="evento" data-ev="${esc(e.caminho)}">
-        <div class="evento-data">${esc(e.data ? formatarData(e.data, cal) : e.quando && !vazio(e.quando) ? e.quando : "data a definir")}</div>
-        <div class="evento-corpo"><h3>${esc(e.titulo)} <span class="situacao ${esc(e.situacao)}">${esc(e.situacao)}</span></h3>
-          <div class="sub">${e.personagens.map((p) => esc(p.nome)).join(", ")}${e.local.length ? " · " + e.local.map((p) => esc(p.nome)).join(", ") : ""}</div>
-          ${e.vinculos.length ? `<div class="etiquetas">${e.vinculos.map((v) => `<span class="etiqueta">${esc(v.cap)} · ${esc(MODOS[v.modo].split(" ")[0])}</span>`).join(" ")}</div>` : ""}</div>
-      </div>`).join("")}</div>`
-    : `<div class="vazio"><h3>Nenhum acontecimento ainda</h3>Crie aqui, ou traga da linha do tempo da História. Exemplo: “Naufrágio da família Merx”, com a data a confirmar.</div>`);
+  const cartaoEv = (e) => `<div class="evento" data-ev="${esc(e.caminho)}">
+      <div class="evento-data">${esc(e.data ? formatarData(e.data, cal) : e.quando && !vazio(e.quando) ? e.quando : "data a definir")}</div>
+      <div class="evento-corpo"><h3>${esc(e.titulo)} <span class="situacao ${esc(e.situacao)}">${esc(e.situacao)}</span></h3>
+        <div class="sub">${e.personagens.map((p) => esc(p.nome)).join(", ")}${e.local.length ? " · " + e.local.map((p) => esc(p.nome)).join(", ") : ""}</div>
+        ${e.vinculos.length ? `<div class="etiquetas">${e.vinculos.map((v) => `<span class="etiqueta">${esc(v.cap)}</span>`).join(" ")}</div>` : ""}</div></div>`;
+  vista.innerHTML = cabecalho("Acontecimentos", "A história em ciclos: cada ciclo é uma fase, com os acontecimentos em ordem. Ao pedir um capítulo, você escolhe quais acontecimentos entram, e a data precisa bater.",
+    `${linhasTempo.length && !evs.length ? `<button class="botao" id="importar-lt">Trazer da linha do tempo antiga</button>` : ""}<button class="botao" id="novo-ciclo">+ Ciclo</button><button class="botao primario" id="novo-ev">+ Acontecimento</button>`) +
+    grupos.map((g, i) => `<section class="ciclo">
+      <div class="ciclo-topo"><div><h2>${esc(g.c.nome)}</h2><div class="sub">${esc(g.c.periodo || "período a definir")}</div></div>
+        <button class="botao pequeno" data-ed-ciclo="${i}">editar</button></div>
+      ${g.c.resumo && !vazio(g.c.resumo) ? `<p class="ciclo-resumo">${inline(g.c.resumo)}</p>` : ""}
+      ${g.evs.length ? `<div class="linha-eventos">${g.evs.map(cartaoEv).join("")}</div>` : `<div class="sub">Nenhum acontecimento neste ciclo ainda.</div>`}
+    </section>`).join("") +
+    (soltos.length ? `<section class="ciclo"><div class="ciclo-topo"><div><h2>Sem ciclo</h2><div class="sub">Sem data ou fora dos períodos dos ciclos</div></div></div><div class="linha-eventos">${soltos.map(cartaoEv).join("")}</div></section>` : "") +
+    (!grupos.length && !soltos.length ? `<div class="vazio"><h3>Nada ainda</h3>Crie um ciclo (uma fase da história) e os acontecimentos dele.</div>` : "");
   $$("[data-ev]").forEach((x) => (x.onclick = () => abrirAcontecimento(x.dataset.ev, () => VISTAS.acontecimentos())));
+  const editarCiclo = (c) => {
+    const novo = !c;
+    c = c || { nome: "", periodo: "", resumo: "" };
+    const p = c.periodo.split(/\s+até\s+/);
+    const m = modal(`<h3>${novo ? "Novo ciclo" : "Ciclo"}</h3>
+      <div class="campo"><label>Nome</label><input id="ci-nome" value="${esc(c.nome)}" placeholder="Ex.: Arco 1, O luto, A volta ao porto"></div>
+      <div class="campo"><label>Começa</label>${htmlSeletorData("ci-ini", p[0], cal)}</div>
+      <div class="campo"><label>Termina</label>${htmlSeletorData("ci-fim", p[1] || "", cal)}</div>
+      <div class="campo"><label>Resumo</label><textarea id="ci-res" rows="4">${esc(vazio(c.resumo) ? "" : c.resumo)}</textarea></div>
+      <div class="modal-acoes">${novo ? "" : `<button class="botao" id="ci-tirar" style="margin-right:auto">Tirar ciclo</button>`}<button class="botao" id="ci-no">Cancelar</button><button class="botao primario" id="ci-ok">Salvar</button></div>`);
+    $("#ci-no", m).onclick = fecharModal;
+    if (!novo) $("#ci-tirar", m).onclick = async () => { if (!confirm("Tirar este ciclo? Os acontecimentos continuam.")) return; cic.lista.splice(cic.lista.indexOf(c), 1); await cic.gravar(); fecharModal(); VISTAS.acontecimentos(); };
+    $("#ci-ok", m).onclick = async () => {
+      const nome = $("#ci-nome", m).value.trim(); if (!nome) { toast("Dê um nome.", true); return; }
+      const a = valorSeletorData($("#ci-ini", m), cal), b = valorSeletorData($("#ci-fim", m), cal);
+      Object.assign(c, { nome, periodo: a && b ? `${a} até ${b}` : a || b, resumo: $("#ci-res", m).value.trim() });
+      if (novo) cic.lista.push(c);
+      try { await cic.gravar(); fecharModal(); VISTAS.acontecimentos(); } catch (e) { toast(e.message, true); }
+    };
+  };
+  $$("[data-ed-ciclo]").forEach((b) => (b.onclick = () => editarCiclo(grupos[+b.dataset.edCiclo].c)));
+  $("#novo-ciclo").onclick = () => editarCiclo(null);
   $("#novo-ev").onclick = async () => {
     const n = await pedirTexto("Novo acontecimento", "Título (ex.: Naufrágio da família Merx)");
     if (!n) return;
@@ -1153,19 +1089,15 @@ VISTAS.acontecimentos = async () => {
   };
   const imp = $("#importar-lt");
   if (imp) imp.onclick = async () => {
-    const existentes = new Set(evs.map((e) => norm(e.titulo)));
-    const novos = linhasTempo.filter((l) => !existentes.has(norm(l.titulo)));
-    if (!novos.length) { toast("Tudo da linha do tempo já está aqui."); return; }
-    if (!confirm(`Criar ${novos.length} acontecimento(s) a partir da linha do tempo da História? Todos entram como “planejado”, com a data como está escrita lá.`)) return;
+    if (!confirm(`Criar ${linhasTempo.length} acontecimento(s) a partir da linha do tempo antiga da História? Entram como “planejado”.`)) return;
     try {
-      for (const l of novos) {
+      for (const l of linhasTempo) {
         const { caminho } = await api("/api/novo", { tipo: "acontecimento", nome: l.titulo.slice(0, 80) });
         const ev = lerAcontecimento(await lerArquivo(caminho), caminho);
-        ev.titulo = l.titulo; ev.quando = l.quando; ev.situacao = "planejado"; ev.fontes = `linha do tempo da História${l.fonte ? " (" + l.fonte + ")" : ""}`;
-        ev.descricao = l.titulo; ev.notas = "";
+        Object.assign(ev, { titulo: l.titulo, quando: l.quando, situacao: "planejado", fontes: "linha do tempo antiga da História", descricao: l.titulo, notas: "" });
         await gravarArquivo(caminho, escreverAcontecimento(ev));
       }
-      await atualizarArvore(); toast(`${novos.length} acontecimento(s) criado(s)`); VISTAS.acontecimentos();
+      await atualizarArvore(); VISTAS.acontecimentos();
     } catch (e) { toast(e.message, true); }
   };
 };
@@ -1182,6 +1114,9 @@ async function abrirAcontecimento(caminho, aoFechar) {
   const cal = await calendario();
   const mundo = await fichasDoMundo();
   const ev = lerAcontecimento(await lerArquivo(caminho), caminho);
+  const cic = await ciclos();
+  ev.data = lerData(ev.quando, cal);
+  const cicloAtual = cic.deEvento(ev);
   const a = estado.arvore;
   const caps = {};
   for (const v of ev.vinculos) {
@@ -1195,6 +1130,8 @@ async function abrirAcontecimento(caminho, aoFechar) {
         <div class="campo"><label>Quando</label>${htmlSeletorData("ev-quando", ev.quando, cal)}
           <input id="ev-quando-txt" placeholder="ou como texto: (a definir), a confirmar…" value="${esc(lerData(ev.quando, cal) ? "" : vazio(ev.quando) ? "" : ev.quando)}"></div>
         <div class="campo"><label>Até <span class="sub">(se durar mais de um dia)</span></label>${htmlSeletorData("ev-ate", ev.ate, cal)}</div>
+        <div class="campo"><label>Ciclo</label><select id="ev-ciclo"><option value="">(pela data)</option>${cic.lista.map((x) => `<option ${ev.campos.get("Ciclo") && x === cicloAtual ? "selected" : ""}>${esc(x.nome)}</option>`).join("")}</select>
+          ${cicloAtual && !ev.campos.get("Ciclo") ? `<span class="sub">pela data: ${esc(cicloAtual.nome)}</span>` : ""}</div>
         <div class="campo"><label>Situação</label><select id="ev-sit">${SITUACOES.map((s) => `<option ${s === ev.situacao ? "selected" : ""}>${s}</option>`).join("")}</select></div>
       </div>
       <div class="campo"><label>Personagens</label><div class="chips-escolha" id="ev-pess">${mundo.personagens.map((p) =>
@@ -1223,6 +1160,7 @@ async function abrirAcontecimento(caminho, aoFechar) {
     ev.quando = valorSeletorData($("#ev-quando", c), cal) || $("#ev-quando-txt", c).value.trim() || "(a definir)";
     ev.ate = valorSeletorData($("#ev-ate", c), cal);
     ev.situacao = $("#ev-sit", c).value;
+    if ($("#ev-ciclo", c).value) ev.campos.set("Ciclo", $("#ev-ciclo", c).value); else ev.campos.remover("Ciclo");
     ev.personagens = $$("#ev-pess input:checked", c).map((i) => ({ caminho: i.value, nome: mundo.personagens.find((p) => p.caminho === i.value).titulo }));
     const l = mundo.lugares.find((x) => x.caminho === $("#ev-local", c).value);
     ev.local = l ? [{ nome: l.titulo, caminho: l.caminho }] : [];
@@ -1340,7 +1278,7 @@ async function vincularAcontecimento({ capNome, ta, evs, aoTerminar }) {
   };
   pintarInfos();
   $("#vi-ev", c).onchange = pintarInfos;
-  c.addEventListener("change", (e) => { if (e.target.matches(".chip input")) e.target.parentElement.classList.toggle("sel", e.target.checked); });
+  $$(".chips-escolha", c).forEach((g) => g.addEventListener("change", (e) => { if (e.target.matches(".chip input")) e.target.parentElement.classList.toggle("sel", e.target.checked); }));
   $$("input[name=vi-rev]", c).forEach((r) => (r.onchange = () => ($("#vi-quem-box", c).style.display = $("input[name=vi-rev]:checked", c).value === "leitor" ? "none" : "")));
   $("#vi-no", c).onclick = fecharModal;
   $("#vi-ok", c).onclick = async () => {
@@ -1369,11 +1307,13 @@ async function vincularAcontecimento({ capNome, ta, evs, aoTerminar }) {
 }
 
 /* ============================================================ Tela: Relações */
+const abasPersonagens = (qual) => `<div class="abas"><div class="aba ${qual === "fichas" ? "ativa" : ""}" onclick="ir('personagens')">Fichas</div><div class="aba ${qual === "relacoes" ? "ativa" : ""}" onclick="ir('relacoes')">Relações</div></div>`;
 VISTAS.relacoes = async (foco) => {
+  $$("#nav a").forEach((a) => a.classList.toggle("ativo", a.dataset.view === "personagens"));
   const { personagens } = await fichasDoMundo();
   const r = await relacoes();
   const atual = foco && personagens.some((p) => p.caminho === foco) ? foco : (personagens[0] || {}).caminho;
-  vista.innerHTML = cabecalho("Relações", "Quem é o quê para quem, e com que intensidade. Cada relação é vista por um lado; a mesma dupla pode ter blocos por período.") +
+  vista.innerHTML = cabecalho("Personagens", "Quem é o quê para quem, e com que intensidade. Cada relação é vista por um lado.") + abasPersonagens("relacoes") + listaTitulos("titulos-rel") +
     (personagens.length ? `<div class="rel-tela">
       <div class="rel-pessoas">${personagens.map((p) => `<button class="rel-pessoa ${p.caminho === atual ? "sel" : ""}" data-p="${esc(p.caminho)}">${miniRosto(p)}<span>${esc(p.titulo)}</span>
         <span class="sub">${r.rels.filter((x) => x.a.caminho === p.caminho).length || ""}</span></button>`).join("")}</div>
@@ -1383,7 +1323,7 @@ VISTAS.relacoes = async (foco) => {
   const eu = personagens.find((p) => p.caminho === atual);
   const lista = $("#rel-lista");
   const minhas = r.rels.filter((x) => x.a.caminho === atual);
-  lista.innerHTML = `<div class="cabecalho-rel"><h2>${esc(eu.titulo)} vê…</h2><button class="botao primario" id="rel-nova">+ Nova relação</button></div>` +
+  lista.innerHTML = `<div class="cabecalho-rel"><h2>Relações de ${esc(eu.titulo)}</h2><button class="botao primario" id="rel-nova">+ Nova relação</button></div>` +
     (minhas.length ? minhas.map((x) => {
       const outro = personagens.find((p) => p.caminho === x.b.caminho) || { titulo: x.b.nome };
       const volta = r.rels.find((y) => y.a.caminho === x.b.caminho && y.b.caminho === atual);
@@ -1393,8 +1333,7 @@ VISTAS.relacoes = async (foco) => {
           ${volta ? `<div class="sub">e ${esc(x.b.nome)} vê ${esc(eu.titulo)} como: <b>${esc(volta.titulo || "—")}</b>${volta.frase ? " · " + inline(volta.frase) : ""}</div>` : `<div class="sub">${esc(x.b.nome)} ainda não tem uma relação registrada com ${esc(eu.titulo)}.</div>`}</div>
           <button class="botao pequeno" data-tirar-rel style="margin-left:auto">Tirar</button></div>
         <div class="rel-campos">
-          <div class="campo"><label>Título</label><select data-r="titulo"><option value="">(a definir)</option>${TITULOS_REL.map(([g, ts]) => `<optgroup label="${g}">${ts.map((t) => `<option ${t === x.titulo ? "selected" : ""}>${t}</option>`).join("")}</optgroup>`).join("")}
-            ${x.titulo && !TITULOS_REL.some(([, ts]) => ts.includes(x.titulo)) ? `<option selected>${esc(x.titulo)}</option>` : ""}</select></div>
+          <div class="campo"><label>Para ${esc(eu.titulo)}, ${esc(x.b.nome)} é…</label><input data-r="titulo" list="titulos-rel" value="${esc(x.titulo)}" placeholder="pai, filha, namorado, amigo… ou escreva"></div>
           <div class="campo"><label>Papel <span class="sub">(ex.: “como um irmão”)</span></label><input data-r="papel" value="${esc(x.papel)}" placeholder="${x.titulo === "Parente de Consideração" ? "Irmão, Pai, Tio…" : "opcional"}"></div>
           <div class="campo"><label>Período</label><input data-r="periodo" value="${esc(x.periodo)}" placeholder="ex.: desde Tempestade de 1812"></div>
         </div>
@@ -1428,7 +1367,7 @@ VISTAS.relacoes = async (foco) => {
     const outros = personagens.filter((p) => p.caminho !== atual);
     const c = modal(`<h3>Nova relação de ${esc(eu.titulo)}</h3><div class="campo"><label>Com quem</label>
       <select id="nr-quem">${outros.map((p) => `<option value="${esc(p.caminho)}">${esc(p.titulo)}</option>`).join("")}</select></div>
-      <div class="campo"><label>Título</label><select id="nr-tit"><option value="">(a definir)</option>${TITULOS_REL.map(([g, ts]) => `<optgroup label="${g}">${ts.map((t) => `<option>${t}</option>`).join("")}</optgroup>`).join("")}</select></div>
+      <div class="campo"><label>O que é para ${esc(eu.titulo)}</label><input id="nr-tit" list="titulos-rel" placeholder="pai, filha, namorado, amigo… ou escreva">${listaTitulos("titulos-rel")}</div>
       <div class="modal-acoes"><button class="botao" id="nr-no">Cancelar</button><button class="botao primario" id="nr-ok">Criar</button></div>`);
     $("#nr-no", c).onclick = fecharModal;
     $("#nr-ok", c).onclick = async () => {
@@ -1493,43 +1432,6 @@ async function geografia() {
   };
 }
 
-/* Lugares: o mapa em árvore em cima das fichas */
-const _vistaLugares = VISTAS.lugares;
-VISTAS.lugares = async () => {
-  await _vistaLugares();
-  const geo = await geografia();
-  const lugares = estado.arvore.lugares || [];
-  const naArvore = new Set(geo.todos.map((x) => x.caminho));
-  const soltos = lugares.filter((l) => !naArvore.has(l.caminho));
-  const fotoDe = (c) => (lugares.find((l) => l.caminho === c) || {}).foto;
-  const htmlNo = (x) => `
-    <li class="geo-no" data-c="${esc(x.caminho)}">
-      <div class="geo-linha">
-        ${x.filhos.length ? `<button class="geo-abre" aria-label="abrir">▾</button>` : `<span class="geo-abre vazio"></span>`}
-        ${fotoDe(x.caminho) ? `<img class="geo-foto" src="${urlRepo(fotoDe(x.caminho))}" alt="">` : `<span class="geo-foto sem" style="background:${corDoNome(x.nome)}">${esc(x.nome[0] || "?")}</span>`}
-        <a href="#" class="geo-nome" ${x.caminho ? `data-abrir="${esc(x.caminho)}"` : ""}>${esc(x.nome)}</a>
-        ${x.tipo ? `<span class="etiqueta geo-tipo ${esc(semAcento(x.tipo))}">${esc(x.tipo)}</span>` : ""}${x.nota ? `<span class="sub">${esc(x.nota)}</span>` : ""}
-        <span class="geo-acoes"><button class="botao pequeno" data-add="${esc(x.caminho)}" title="Criar um lugar dentro deste">+ dentro</button>
-          ${x.caminho ? `<button class="botao pequeno" data-mover="${esc(x.caminho)}" title="Mudar de onde ele fica">mover</button>` : ""}</span>
-      </div>
-      ${x.filhos.length ? `<ul>${x.filhos.map(htmlNo).join("")}</ul>` : ""}
-    </li>`;
-  const cab = $(".cabecalho-vista", vista);
-  cab.insertAdjacentHTML("afterend", `
-    <div class="cartao geo-mapa">
-      <div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Mapa de Morcal</h3>
-        <span class="sub">Cada lugar herda os traços de toda a cadeia acima: o bairro tem a cara dele e também a da cidade, do país, do arquipélago e do mundo.</span>
-        <a href="#" data-abrir="${ARQ_GEOGRAFIA}" class="sub" style="margin-left:auto;white-space:nowrap">texto completo</a></div>
-      ${geo.arv.raiz.filhos.length ? `<ul class="geo-arvore">${geo.arv.raiz.filhos.map(htmlNo).join("")}</ul>` : `<div class="sub" style="margin-top:8px">A árvore ainda está vazia.</div>`}
-      ${geo.fora.raiz.filhos.length ? `<div class="rotulo" style="margin-top:10px">Fora da árvore</div><ul class="geo-arvore">${geo.fora.raiz.filhos.map(htmlNo).join("")}</ul>` : ""}
-      ${soltos.length ? `<div class="aviso" style="margin-top:12px">Sem lugar no mapa: ${soltos.map((l) => `<a href="#" data-mover="${esc(l.caminho)}">${esc(l.titulo)}</a>`).join(", ")}. Clique para dizer dentro de quê fica.</div>` : ""}
-    </div>
-    <h2 style="margin:24px 0 10px">Todas as fichas</h2>`);
-  $$(".geo-abre:not(.vazio)").forEach((b) => (b.onclick = () => { const li = b.closest("li"); li.classList.toggle("fechado"); b.textContent = li.classList.contains("fechado") ? "▸" : "▾"; }));
-  $$("[data-add]").forEach((b) => (b.onclick = () => novoLugarDentro(b.dataset.add)));
-  $$("[data-mover]").forEach((b) => (b.onclick = (e) => { e.preventDefault(); moverLugar(b.dataset.mover); }));
-};
-
 function opcoesDeLugar(geo, excluir) {
   const proibidos = new Set();
   if (excluir) { const x = geo.no(excluir); const marcar = (n) => { proibidos.add(n.caminho); n.filhos.forEach(marcar); }; if (x) marcar(x); }
@@ -1559,7 +1461,7 @@ async function novoLugarDentro(paiCaminho) {
       const no = { nome, caminho, tipo: $("#nl-tipo", c).value, nota: $("#nl-nota", c).value.trim(), filhos: [] };
       (p || g.arv.raiz).filhos.push(no);
       await g.gravar();
-      fecharModal(); await VISTAS.lugares(); abrirFicha(caminho, () => VISTAS.lugares());
+      fecharModal(); await rotaDoEndereco(); abrirFicha(caminho, () => rotaDoEndereco());
     } catch (e) { toast(e.message, true); }
   };
 }
@@ -1580,7 +1482,7 @@ async function moverLugar(caminho) {
     const v = $("#mv-pai", c).value;
     const destino = v === "__fora" ? geo.fora.raiz : v ? geo.no(v) : geo.arv.raiz;
     destino.filhos.push(no);
-    try { await geo.gravar(); fecharModal(); VISTAS.lugares(); } catch (e) { toast(e.message, true); }
+    try { await geo.gravar(); fecharModal(); rotaDoEndereco(); } catch (e) { toast(e.message, true); }
   };
 }
 

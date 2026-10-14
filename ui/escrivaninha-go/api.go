@@ -177,6 +177,9 @@ func listar(pasta string, exts map[string]bool, ocultarModelos bool) []item {
 			if f := fotoDe(p); f != "" {
 				it["foto"] = f
 			}
+			if extras := imagensExtras(p); len(extras) > 0 {
+				it["imagens"] = extras
+			}
 		}
 		itens = append(itens, it)
 	}
@@ -638,8 +641,9 @@ func novoRoteador(estatico fs.FS) http.Handler {
 				return
 			}
 			rel := relativo(p)
-			if !strings.HasPrefix(rel, "referencias/") && !strings.HasPrefix(rel, "entrada/") {
-				responderErro(w, erroPermissao{"só dá para apagar referências e entrada pela interface"})
+			fotoFicha := strings.HasPrefix(rel, "biblia/") && ehFoto(rel)
+			if !strings.HasPrefix(rel, "referencias/") && !strings.HasPrefix(rel, "entrada/") && !fotoFicha {
+				responderErro(w, erroPermissao{"pela interface só dá para apagar imagens das fichas, referências e entrada"})
 				return
 			}
 			if err := os.Remove(p); err != nil {
@@ -685,6 +689,30 @@ func novoRoteador(estatico fs.FS) http.Handler {
 // ---------------------------------------------------------------- fotos e contexto
 
 var extFoto = []string{".webp", ".png", ".jpg", ".jpeg", ".gif"}
+
+// imagensExtras lista as imagens a mais de uma ficha: <ficha>--<nome>.ext, na mesma pasta.
+func imagensExtras(ficha string) []string {
+	base := strings.TrimSuffix(ficha, filepath.Ext(ficha))
+	achadas, _ := filepath.Glob(base + "--*")
+	sort.Strings(achadas)
+	out := []string{}
+	for _, f := range achadas {
+		if ehFoto(f) {
+			out = append(out, relativo(f))
+		}
+	}
+	return out
+}
+
+func ehFoto(caminho string) bool {
+	ext := strings.ToLower(filepath.Ext(caminho))
+	for _, e := range extFoto {
+		if e == ext || ext == ".jpeg" {
+			return true
+		}
+	}
+	return false
+}
 
 // fotoDe acha a foto de referência de uma ficha: imagem com o mesmo nome, na mesma pasta.
 func fotoDe(ficha string) string {

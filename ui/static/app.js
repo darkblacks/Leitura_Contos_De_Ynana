@@ -175,15 +175,12 @@ $("#menu-movel").onclick = () => $("#lateral").classList.toggle("aberta");
 
 async function atualizarArvore() {
   estado.arvore = await api("/api/arvore");
-  const dec = await api("/api/decisoes");
   const a = estado.arvore;
   $("#n-capitulos").textContent = a.capitulos.length || "";
   $("#n-personagens").textContent = a.personagens.length || "";
   $("#n-lugares").textContent = a.lugares.length || "";
   $("#n-artefatos").textContent = (a.artefatos || []).length || "";
   $("#n-acontecimentos").textContent = (a.acontecimentos || []).length || "";
-  $("#n-referencias").textContent = (a.ref_imagens.length + a.ref_textos.length) || "";
-  $("#n-decisoes").textContent = dec.length || "";
   return a;
 }
 
@@ -229,56 +226,6 @@ function cabecalho(titulo, sub, acoes = "") {
   return `<div class="cabecalho-vista"><div><h1>${titulo}</h1>${sub ? `<p>${sub}</p>` : ""}</div><div class="acoes">${acoes}</div></div>`;
 }
 
-/* ------------------------------------------------------------ PAINEL */
-VISTAS.painel = async () => {
-  const [e] = await Promise.all([api("/api/estado"), atualizarArvore()]);
-  const passos = [
-    { ok: e.exemplos > 0, t: "Capítulos oficiais em Estilo › Exemplos", d: `${e.exemplos} exemplo(s). É o modelo de escrita.`, v: "estilo" },
-    { ok: e.referencias > 0, t: "Referências do universo (textos e imagens)", d: `${e.referencias} arquivo(s). O Claude usa para pré-construir a bíblia.`, v: "referencias" },
-    { ok: e.historia_vazios < 8, t: "História: premissa, abertura, final, regras", d: `${e.historia_vazios} campo(s) ainda vazios.`, v: "historia" },
-    { ok: e.personagens > 0, t: "Fichas dos personagens principais", d: `${e.personagens} ficha(s).`, v: "personagens" },
-    { ok: e.decisoes === 0, t: "Decisões de estilo resolvidas", d: `${e.decisoes} em aberto.`, v: "decisoes" },
-    { ok: e.escaleta_aprovada > 0, t: "Escaleta aprovada para o próximo capítulo", d: `${e.escaleta_aprovada} aprovada(s), ${e.escaleta_proposta} proposta(s).`, v: "escaleta" },
-  ];
-  const feitos = passos.filter((p) => p.ok).length;
-  const st = e.status || {};
-  vista.innerHTML = cabecalho("Bom te ver de volta.", "O diário da Ynana, num lugar só. Escreva aqui; quando quiser ajuda, peça ao Claude pelos comandos.",
-    `<button class="botao primario" id="novo-cap">✎ Nova entrada</button>`) + `
-    <div class="painel-grade">
-      <div class="cartao"><div class="rotulo">Capítulos</div><div class="estatistica">${e.capitulos}</div>
-        <div class="sub">${st.rascunho || 0} rascunho · ${st.revisado || 0} revisado · ${st.editado || 0} editado</div></div>
-      <div class="cartao"><div class="rotulo">Palavras escritas</div><div class="estatistica">${e.palavras.toLocaleString("pt-BR")}</div><div class="sub">em todos os capítulos</div></div>
-      <div class="cartao"><div class="rotulo">Elenco e mapa</div><div class="estatistica">${e.personagens}<span style="font-size:22px;color:var(--tinta-3)"> / ${e.lugares}</span></div><div class="sub">personagens / lugares</div></div>
-      <div class="cartao clicavel" data-v="decisoes"><div class="rotulo">Decisões abertas</div><div class="estatistica" style="color:${e.decisoes ? "var(--alerta)" : "var(--verde)"}">${e.decisoes}</div><div class="sub">clique para decidir</div></div>
-    </div>
-    <div class="duas-colunas">
-      <div class="cartao">
-        <h3>Pronto para escrever?</h3>
-        <div class="sub">${feitos} de ${passos.length} passos</div>
-        <div class="barra"><div style="width:${(feitos / passos.length) * 100}%"></div></div>
-        <ul class="checklist">${passos.map((p) => `<li><span class="check ${p.ok ? "ok" : ""}">${p.ok ? "✓" : ""}</span>
-          <div><a href="#" data-v="${p.v}">${p.t}</a><div class="dica">${p.d}</div></div></li>`).join("")}</ul>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:16px">
-        <div class="cartao">
-          <h3>Último capítulo</h3>
-          ${e.ultimo ? `<div class="clicavel" data-abrir="${esc(e.ultimo.caminho)}" style="cursor:pointer">
-              <div style="font-family:var(--serif);font-size:19px;margin:6px 0">${esc(e.ultimo.meta.titulo || e.ultimo.nome)}</div>
-              <span class="etiqueta ${esc(e.ultimo.meta.status)}">${esc(e.ultimo.meta.status || "sem status")}</span>
-              <span class="sub"> · ${e.ultimo.palavras} palavras · ${esc(e.ultimo.meta.quem_escreve || "quem escreve?")}</span></div>`
-            : `<p class="sub">Nenhum capítulo ainda. A primeira página está esperando.</p>`}
-        </div>
-        <div class="cartao">
-          <h3>Pendências da trama</h3>
-          ${e.pendencias.length ? `<ul class="checklist">${e.pendencias.map((p) => `<li><span class="check"></span><div>${inline(p)}</div></li>`).join("")}</ul>`
-            : `<p class="sub">Nada plantado ainda. Elas aparecem aqui quando o registro de continuidade ganhar promessas em aberto.</p>`}
-        </div>
-      </div>
-    </div>`;
-  $$("[data-v]", vista).forEach((el) => (el.onclick = (ev) => { ev.preventDefault(); ir(el.dataset.v); }));
-  $("#novo-cap").onclick = novoCapitulo;
-};
-
 /* ------------------------------------------------------------ CAPÍTULOS */
 async function novoCapitulo() {
   const t = await pedirTexto("Nova entrada do diário", "Título (pode deixar em branco)");
@@ -323,8 +270,17 @@ function separarCapitulo(texto) {
   }
   return { meta, ordem, corpo, offset };
 }
+/* Cabeçalho fixo dos Contos de Ynana (igual em todo capítulo, vem dos dados do capítulo):
+   TÍTULO - QUEM ESCREVE
+   subtítulo - local - data */
+const semLink = (t) => String(t || "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").trim();
+function cabecalhoDiario(meta) {
+  const l1 = [meta.titulo || "Sem título", semLink(meta.quem_escreve)].filter(Boolean).join(" - ");
+  const l2 = [meta.subtitulo, semLink(meta.onde), meta.quando].map((x) => String(x || "").trim()).filter(Boolean).join(" - ");
+  return `<header class="cab-diario"><div class="cab-l1">${esc(l1)}</div>${l2 ? `<div class="cab-l2">${esc(l2)}</div>` : ""}</header>`;
+}
 function juntarCapitulo(meta, ordem, corpo) {
-  const chaves = ["status", "capitulo", "titulo", "quando", "quem_escreve"];
+  const chaves = ["status", "capitulo", "titulo", "subtitulo", "onde", "quando", "quem_escreve"];
   ordem.forEach((k) => { if (!chaves.includes(k)) chaves.push(k); });
   return "---\n" + chaves.map((k) => `${k}: ${meta[k] ?? ""}`.trimEnd()).join("\n") + "\n---\n\n" + corpo;
 }
@@ -348,17 +304,21 @@ VISTAS.capitulo = async (caminho) => {
     <div class="escrivaninha">
       <div class="folha-moldura">
         <div class="folha">
-          <input class="titulo-capitulo" id="f-titulo" placeholder="Título da entrada" value="${esc(meta.titulo)}">
-          <input class="data-entrada" id="f-quando" placeholder="Quando? (dia, hora, lugar no tempo da história)" value="${esc(meta.quando)}">
+          <div class="cab-diario editavel">
+            <div class="cab-l1"><input id="f-titulo" placeholder="NOME DO CAPÍTULO" value="${esc(meta.titulo)}"> <span>-</span>
+              <input id="f-quem" list="lista-quem" placeholder="QUEM ESCREVE" value="${esc(semLink(meta.quem_escreve))}"></div>
+            <div class="cab-l2"><input id="f-subtitulo" placeholder="subtítulo" value="${esc(meta.subtitulo)}"> <span>-</span>
+              <input id="f-onde" list="lista-onde" placeholder="local" value="${esc(semLink(meta.onde))}"> <span>-</span>
+              <input id="f-quando" placeholder="data (ex.: 12º dia de Tempestade de 1812)" value="${esc(meta.quando)}"></div>
+            <datalist id="lista-quem">${nomes.map((n) => `<option value="${esc(n)}">`).join("")}</datalist>
+            <datalist id="lista-onde">${(a.lugares || []).map((l) => `<option value="${esc(l.titulo)}">`).join("")}</datalist>
+          </div>
           <textarea class="corpo" id="f-corpo" placeholder="Querido diário…" spellcheck="true"></textarea>
           <div class="previa-corpo md" id="f-previa" style="display:none"></div>
         </div>
       </div>
       <div class="lateral-capitulo">
         <div class="cartao">
-          <div class="campo"><label>Quem escreve</label>
-            <input id="f-quem" list="lista-quem" value="${esc(meta.quem_escreve)}" placeholder="Ynana">
-            <datalist id="lista-quem">${nomes.map((n) => `<option value="${esc(n)}">`).join("")}</datalist></div>
           <div class="campo"><label>Status</label>
             <div class="status-escolha">${["rascunho", "revisado", "editado"].map((s) =>
               `<button data-s="${s}" class="${s} ${s === statusOriginal ? "sel" : ""}">${s}</button>`).join("")}</div></div>
@@ -368,19 +328,12 @@ VISTAS.capitulo = async (caminho) => {
           <div style="margin-top:8px"><button class="botao pequeno" id="marcar-editado">Marcar como editado</button></div>
           <div class="sub" style="margin-top:6px">Depois rode <code>/sincronizar ${esc(meta.capitulo || "")}</code> no Claude.</div></div>
         <div id="extras-capitulo"></div>
-        <div class="cartao reescrita">
-          <h3 style="font-size:19px;margin:0 0 2px">Reescrever com o Claude</h3>
-          <div class="sub" style="margin-bottom:10px">Ficam salvas neste capítulo. O que estiver em <b>Manter</b> ele não mexe, nesta nem nas próximas reescritas.</div>
-          <div class="caixinha contexto"><label>✦ Novo contexto / informações novas</label><textarea data-nota="contexto" rows="2" placeholder="Ex.: o Malcon já sabe do diário; é noite de chuva."></textarea></div>
-          <div class="caixinha fazer"><label>✓ O que fazer</label><textarea data-nota="fazer" rows="2" placeholder="Ex.: mais tensão na conversa da porta; mostrar o Rufus hesitando."></textarea></div>
-          <div class="caixinha nao"><label>✕ O que NÃO fazer</label><textarea data-nota="nao" rows="2" placeholder="Ex.: não explicar o que a Ynana sente; nada de flashback."></textarea></div>
-          <div class="caixinha manter"><label>♥ O que gostei: manter</label><textarea data-nota="manter" rows="2" placeholder="Ex.: a cena do chá; a última frase; o jeito do pai falar."></textarea></div>
-          <div class="escopo">
-            <label><input type="radio" name="escopo" value="tudo" checked> Capítulo inteiro</label>
-            <label title="Selecione um trecho no texto antes"><input type="radio" name="escopo" value="trecho"> Só o trecho selecionado</label>
+        <div class="cartao">
+          <h3 style="font-size:19px;margin:0 0 8px">Não gostou?</h3>
+          <div class="botoes-reescrita">
+            <button class="botao" id="do-zero" title="Guarda uma cópia e o Claude escreve de novo, do zero">↺ Reescrever do zero</button>
+            <button class="botao primario" id="ajustar" title="Diga o que mudar e o que manter">✎ Ajustar</button>
           </div>
-          <button class="botao primario" id="reescrever" style="width:100%;justify-content:center">✎ Reescrever com essas notas</button>
-          <div class="sub" id="notas-salvas" style="margin-top:6px;text-align:center"></div>
         </div>
         <div class="cartao">
           <div style="display:flex;align-items:center;gap:8px"><h3 style="font-size:19px;margin:0">Tiques</h3>
@@ -404,6 +357,8 @@ VISTAS.capitulo = async (caminho) => {
 
   const montar = () => {
     meta.titulo = $("#f-titulo").value.trim();
+    meta.subtitulo = $("#f-subtitulo").value.trim();
+    meta.onde = $("#f-onde").value.trim();
     meta.quando = $("#f-quando").value.trim();
     meta.quem_escreve = $("#f-quem").value.trim();
     meta.status = statusAtual;
@@ -424,7 +379,7 @@ VISTAS.capitulo = async (caminho) => {
   };
   estado.salvarAgora = salvar;
   ta.addEventListener("input", () => { crescer(); metricas(); mudou(); });
-  ["#f-titulo", "#f-quando", "#f-quem"].forEach((s) => $(s).addEventListener("input", mudou));
+  ["#f-titulo", "#f-subtitulo", "#f-onde", "#f-quando", "#f-quem"].forEach((s) => $(s).addEventListener("input", mudou));
   const setStatus = (s) => {
     statusAtual = s;
     $$(".status-escolha button").forEach((b) => b.classList.toggle("sel", b.dataset.s === s));
@@ -455,55 +410,9 @@ VISTAS.capitulo = async (caminho) => {
     const topo = ta.getBoundingClientRect().top - vista.getBoundingClientRect().top + vista.scrollTop;
     vista.scrollTo({ top: topo + (alvo - 1) * lh * 1.4 - 160, behavior: "smooth" });
   };
-  // ---- notas do autor para a reescrita (continuidade/notas-do-autor/cap-NN.md)
   const nCap = +(meta.capitulo || (caminho.match(/cap-(\d+)/) || [])[1] || 0);
-  const arqNotas = `continuidade/notas-do-autor/cap-${String(nCap).padStart(2, "0")}.md`;
-  const SECOES = [["contexto", "Novo contexto e informações"], ["fazer", "O que fazer"], ["nao", "O que NÃO fazer"], ["manter", "O que manter (gostei, não mexer)"]];
-  const caixas = Object.fromEntries($$("[data-nota]").map((t) => [t.dataset.nota, t]));
-  const ajustar = (t) => { t.style.height = "auto"; t.style.height = Math.min(220, t.scrollHeight + 2) + "px"; };
-  try {
-    const txtNotas = await lerArquivo(arqNotas);
-    for (const [chave, titulo] of SECOES) {
-      const m = txtNotas.match(new RegExp("## " + titulo.replace(/[()]/g, "\\$&") + "\\n([\\s\\S]*?)(?=\\n## |$)"));
-      if (m) caixas[chave].value = m[1].trim();
-    }
-  } catch {}
-  Object.values(caixas).forEach(ajustar);
-  const salvarNotas = async () => {
-    const corpoNotas = `# Notas do autor · capítulo ${nCap}\n\n> Escritas pela Escrivaninha. O Claude lê antes de reescrever este capítulo; o que está em "manter" não muda.\n\n` +
-      SECOES.map(([k, t]) => `## ${t}\n\n${caixas[k].value.trim()}\n`).join("\n");
-    try { await gravarArquivo(arqNotas, corpoNotas); $("#notas-salvas").textContent = "notas salvas ✓"; } catch (e) { toast(e.message, true); }
-  };
-  const salvarNotasDepois = debounce(salvarNotas, 1200);
-  Object.values(caixas).forEach((t) => t.addEventListener("input", () => { ajustar(t); $("#notas-salvas").textContent = "…"; salvarNotasDepois(); }));
-  $("#reescrever").onclick = async () => {
-    const v = (k) => caixas[k].value.trim();
-    if (!v("contexto") && !v("fazer") && !v("nao")) { toast("Escreva pelo menos o novo contexto, o que fazer ou o que não fazer.", true); return; }
-    const st = await api("/api/claude/status").catch(() => ({ instalado: false }));
-    if (!st.instalado) { toast("A reescrita com o Claude funciona no Escrivaninha.exe, com o Claude Code instalado.", true); return; }
-    if (st.rodando) { toast("O Claude ainda está trabalhando em outro pedido. Espere terminar.", true); return; }
-    const soTrecho = ($("input[name=escopo]:checked") || {}).value === "trecho";
-    const trecho = soTrecho ? ta.value.slice(ta.selectionStart, ta.selectionEnd).trim() : "";
-    if (soTrecho && trecho.length < 8) { toast("Selecione no texto o trecho que quer reescrever.", true); return; }
-    await salvar(); await salvarNotas();
-    const linhas = [
-      soTrecho ? `Reescreva só este trecho do capítulo ${nCap} (${caminho}), sem mexer no resto:\n«${trecho.length > 1500 ? trecho.slice(0, 1500) + "…" : trecho}»`
-               : `Reescreva o capítulo ${nCap} (${caminho}) seguindo as minhas notas. Mude só o que for preciso para cumpri-las.`,
-      v("contexto") ? `Novo contexto e informações:\n${v("contexto")}` : "",
-      v("fazer") ? `O que fazer:\n${v("fazer")}` : "",
-      v("nao") ? `O que NÃO fazer:\n${v("nao")}` : "",
-      v("manter") ? `O que manter exatamente como está (gostei, não mexer):\n${v("manter")}` : "",
-      `As notas também estão em ${arqNotas}.` + (statusAtual === "editado" ? " O capítulo está como editado: eu, o autor, estou pedindo esta reescrita explicitamente." : ""),
-      soTrecho ? "" : "Mantenha o mínimo de 4.600 palavras. Depois rode a checagem de tiques e os revisores e me diga em poucas linhas o que mudou.",
-    ];
-    try {
-      await api("/api/claude/enviar", { mensagem: linhas.filter(Boolean).join("\n\n") });
-      capituloPreferido = caminho;
-      estado.sujo = false;
-      ir("conversa");
-    } catch (e) { toast(e.message, true); }
-  };
-
+  $("#ajustar").onclick = async () => { await salvar(); abrirAjuste({ caminho, n: nCap, status: statusAtual, trecho: ta.value.slice(ta.selectionStart, ta.selectionEnd).trim() }); };
+  $("#do-zero").onclick = async () => { await salvar(); reescreverDoZero({ caminho, n: nCap, meta, status: statusAtual }); };
   // acontecimentos vinculados, linha do tempo e idades (mundo.js)
   if (window.extrasCapitulo) extrasCapitulo({ caminho, nCap, ta, quando: () => $("#f-quando").value }).catch(() => {});
   $("#checar").onclick = async () => {
@@ -620,92 +529,13 @@ async function abrirFicha(caminho, aoFechar) {
   ligarSoltar($("#fm-foto", c), $("#fm-arq", c), (arqs) => enviarFoto(arqs[0]));
 }
 
-/* ------------------------------------------------------------ ARQUIVOS COM ABAS */
-function vistaAbas(titulo, sub, abas) {
-  return async (abaInicial) => {
-    vista.innerHTML = cabecalho(titulo, sub) + `<div class="abas">${abas.map((a, i) => `<div class="aba" data-i="${i}">${a.nome}</div>`).join("")}</div><div id="conteudo-aba"></div>`;
-    const abrir = async (i) => {
-      if (estado.sujo && estado.salvarAgora) await estado.salvarAgora();
-      $$(".aba").forEach((x) => x.classList.toggle("ativa", +x.dataset.i === i));
-      const alvo = $("#conteudo-aba");
-      alvo.innerHTML = "";
-      const a = abas[i];
-      if (a.render) await a.render(alvo);
-      else await montarEditor(alvo, a.caminho, { previa: a.previa !== false });
-    };
-    $$(".aba").forEach((x) => (x.onclick = () => abrir(+x.dataset.i)));
-    await abrir(Math.max(0, abas.findIndex((a) => a.nome === abaInicial)));
-  };
-}
-VISTAS.historia = vistaAbas("História", "Premissa, o desfecho que abre tudo, o final, os arcos e as regras do mundo.",
-  [{ nome: "História", caminho: "biblia/historia.md" }]);
-VISTAS.escaleta = vistaAbas("Escaleta", "Os beats de cada capítulo. Peça ao Claude <code>/escaleta 1-3</code> para propor; aprove mudando o status para <b>aprovada</b>.",
-  [{ nome: "Escaleta", caminho: "escaleta/escaleta.md" }]);
-VISTAS.continuidade = vistaAbas("Continuidade", "Fatos vigentes e resumos. O Claude mantém isso a cada capítulo; você pode corrigir à mão.",
-  [{ nome: "Registro de fatos", caminho: "continuidade/registro.md" }, { nome: "Resumos", caminho: "continuidade/resumos.md" }]);
-VISTAS.estilo = vistaAbas("Estilo", "Como você escreve. Os capítulos oficiais (exemplos) valem mais que qualquer regra.",
-  [{ nome: "Estilo", caminho: "estilo/estilo.md" },
-   { nome: "Exemplos · capítulos oficiais", render: (el) => listaDeTextos(el, "exemplos", "exemplo", "estilo/exemplos") },
-   { nome: "Guardrails", caminho: "estilo/guardrails.md" },
-   { nome: "Parâmetros do script", caminho: "ferramentas/tiques.json", previa: false }]);
 VISTAS.ficha = async (caminho) => { await VISTAS[caminho.includes("/lugares/") ? "lugares" : caminho.includes("/artefatos/") ? "artefatos" : "personagens"](); abrirFicha(caminho); };
 VISTAS.arquivo = async (caminho) => {
   vista.innerHTML = `<div id="ed"></div>`;
   await montarEditor($("#ed"), caminho);
 };
 
-async function listaDeTextos(el, chave, tipoNovo, pastaEnvio) {
-  const a = await atualizarArvore();
-  const lista = a[chave];
-  el.innerHTML = `
-    <div class="soltar" id="soltar-txt"><h3>Solte aqui os capítulos oficiais</h3>
-      Arquivos .md ou .txt, ou <a href="#" id="novo-txt">crie um em branco e cole o texto</a>.
-      <input type="file" id="arq-txt" accept=".md,.txt" multiple hidden></div>
-    ${lista.length ? `<div class="grade">${lista.map((f) => `
-      <div class="cartao clicavel" data-abrir="${esc(f.caminho)}"><h3>${esc(f.titulo)}</h3><div class="sub">${f.palavras} palavras · ${esc(f.caminho.split("/").pop())}</div></div>`).join("")}</div>`
-      : `<div class="vazio"><h3>Nenhum exemplo ainda</h3>Sem exemplos, o Claude não sabe imitar a sua forma de escrever.</div>`}`;
-  ligarSoltar($("#soltar-txt", el), $("#arq-txt", el), async (arquivos) => {
-    for (const f of arquivos) await enviar(f, "exemplos");
-    VISTAS.estilo("Exemplos · capítulos oficiais");
-  });
-  $("#novo-txt", el).onclick = async (e) => {
-    e.preventDefault();
-    const n = await pedirTexto("Novo exemplo", "Nome (ex.: ynana-01, capítulo 3 oficial)");
-    if (!n) return;
-    try { const { caminho } = await api("/api/novo", { tipo: tipoNovo, nome: n }); ir("arquivo", caminho); } catch (er) { toast(er.message, true); }
-  };
-}
-
-/* ------------------------------------------------------------ DECISÕES */
-VISTAS.decisoes = async () => {
-  const lista = await api("/api/decisoes");
-  await atualizarArvore();
-  vista.innerHTML = cabecalho("Decisões", "Cada escolha aqui é gravada direto no arquivo. Use uma opção pronta ou escreva a sua.") +
-    (lista.length ? lista.map((d, i) => `
-      <div class="decisao" data-i="${i}">
-        <div class="onde">${esc(d.caminho)} · ${esc(d.secao)} · <a href="#" data-abrir="${esc(d.caminho)}">abrir arquivo</a></div>
-        <div class="pergunta">${inline(d.pergunta)}</div>
-        ${d.proposta ? `<div class="proposta"><b>Proposta do Claude:</b> ${inline(d.proposta)}
-          <button class="botao pequeno" data-aceitar>Aceitar proposta</button></div>` : ""}
-        <div class="opcoes">${d.opcoes.map((o) => `<button class="opcao">${esc(o)}</button>`).join("")}
-          <input placeholder="ou escreva a sua resposta e tecle Enter"></div>
-      </div>`).join("")
-      : `<div class="vazio"><h3>Tudo decidido</h3>Nenhum [DECIDIR] aberto nos arquivos.</div>`);
-  $$(".decisao").forEach((el) => {
-    const d = lista[+el.dataset.i];
-    const decidir = async (resp) => {
-      if (!resp) return;
-      try { await api("/api/decidir", { caminho: d.caminho, linha: d.linha, resposta: resp }); toast("Decidido: " + resp); VISTAS.decisoes(); }
-      catch (e) { toast(e.message, true); }
-    };
-    $$(".opcao", el).forEach((b) => (b.onclick = () => decidir(b.textContent)));
-    const ac = $("[data-aceitar]", el);
-    if (ac) ac.onclick = () => decidir(d.proposta);
-    $("input", el).onkeydown = (e) => { if (e.key === "Enter") decidir(e.target.value.trim()); };
-  });
-};
-
-/* ------------------------------------------------------------ REFERÊNCIAS */
+/* ------------------------------------------------------------ envio de arquivos */
 function lerBase64(arquivo) {
   return new Promise((res, rej) => {
     const r = new FileReader();
@@ -728,74 +558,6 @@ function ligarSoltar(zona, input, aoReceber) {
   ["dragleave", "drop"].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.remove("sobre"); }));
   zona.addEventListener("drop", (e) => aoReceber([...e.dataTransfer.files]));
 }
-VISTAS.referencias = async () => {
-  const a = await atualizarArvore();
-  vista.innerHTML = cabecalho("Referências do universo",
-    "Imagens de como o mundo é, textos do que já foi definido, anotações soltas. O Claude lê tudo isso no <code>/importar</code> para pré-construir a bíblia.",
-    `<button class="botao" id="nova-nota">+ Nova anotação</button>`) + `
-    <div class="soltar" id="soltar"><h3>Solte imagens e textos aqui</h3>
-      Imagens (png, jpg, webp) vão para <code>referencias/imagens</code>; textos (.md, .txt) para <code>referencias/textos</code>. Ou clique para escolher.
-      <input type="file" id="arq" multiple accept=".png,.jpg,.jpeg,.webp,.gif,.svg,.md,.txt" hidden></div>
-    <h2 style="font-family:var(--serif-titulo);font-weight:600">Imagens</h2>
-    ${a.ref_imagens.length ? `<div class="galeria">${a.ref_imagens.map((f) => `
-      <div class="miniatura" data-src="/repo/${esc(f.caminho)}"><img loading="lazy" src="/repo/${esc(f.caminho)}" alt="${esc(f.nome)}">
-        <div class="legenda">${esc(f.nome)}</div><button class="x" data-apagar="${esc(f.caminho)}" title="Apagar">×</button></div>`).join("")}</div>`
-      : `<p class="sub">Nenhuma imagem ainda. Personagens, mapas, paisagens, objetos: tudo ajuda a fixar a aparência.</p>`}
-    <h2 style="font-family:var(--serif-titulo);font-weight:600;margin-top:28px">Textos</h2>
-    ${a.ref_textos.length ? `<div class="grade">${a.ref_textos.map((f) => `
-      <div class="cartao clicavel" data-abrir="${esc(f.caminho)}"><h3>${esc(f.titulo)}</h3><div class="sub">${f.palavras} palavras</div>
-        <div style="margin-top:8px"><button class="botao pequeno perigo" data-apagar="${esc(f.caminho)}">apagar</button></div></div>`).join("")}</div>`
-      : `<p class="sub">Nenhum texto ainda. Cole sinopses, lore, descrições de personagens, regras do mundo.</p>`}`;
-  ligarSoltar($("#soltar"), $("#arq"), async (arquivos) => {
-    for (const f of arquivos) await enviar(f, /\.(md|txt)$/i.test(f.name) ? "textos" : "imagens");
-    VISTAS.referencias();
-  });
-  $$(".miniatura").forEach((m) => (m.onclick = (e) => {
-    if (e.target.dataset.apagar) return;
-    modal(`<img src="${m.dataset.src}">`, "imagem");
-  }));
-  $$("[data-apagar]").forEach((b) => (b.onclick = async (e) => {
-    e.stopPropagation();
-    if (!confirm("Apagar " + b.dataset.apagar + "?")) return;
-    try { await api("/api/apagar", { caminho: b.dataset.apagar }); VISTAS.referencias(); } catch (er) { toast(er.message, true); }
-  }));
-  $("#nova-nota").onclick = async () => {
-    const n = await pedirTexto("Nova anotação", "Título (ex.: Regras da magia, Mapa do reino)");
-    if (!n) return;
-    try { const { caminho } = await api("/api/novo", { tipo: "ref_texto", nome: n }); ir("arquivo", caminho); } catch (er) { toast(er.message, true); }
-  };
-};
-
-/* ------------------------------------------------------------ COMANDOS */
-const COMANDOS = [
-  { c: "/importar", d: "Lê Referências e entrada/, e pré-constrói história, fichas, lugares e escaleta. Pergunta quando achar contradição." },
-  { c: "/ficha", a: "nome", d: "Cria ou completa a ficha de um personagem ou lugar." },
-  { c: "/escaleta", a: "1-3", d: "Propõe os beats dos capítulos. Você aprova antes de escrever." },
-  { c: "/escrever", a: "1", d: "Escreve, revisa (continuidade + estilo) e registra o capítulo." },
-  { c: "/sincronizar", a: "1", d: "Depois que você edita um capítulo: atualiza registro, resumos e fichas a partir da sua versão." },
-  { c: "/revisar", a: "1", d: "Só a lista de problemas do capítulo, sem reescrever." },
-  { c: "/estado", d: "Onde a história está: último capítulo, pendências, próximos beats, decisões abertas." },
-];
-VISTAS.comandos = async () => {
-  vista.innerHTML = cabecalho("Comandos do Claude", "A escrivaninha guarda e organiza; o Claude escreve e revisa. Copie o comando e cole no Claude Code aberto nesta pasta.") +
-    COMANDOS.map((k, i) => `<div class="comando"><div><code>${k.c}</code>${k.a ? `<input data-i="${i}" value="${k.a}">` : ""}</div>
-      <p>${k.d}</p><button class="botao pequeno" data-copiar="${i}">Copiar</button></div>`).join("") + `
-    <h2 style="font-family:var(--serif-titulo);font-weight:600;margin-top:30px">Pré-construir o universo</h2>
-    <p class="sub">Depois de soltar o material em Referências e os capítulos oficiais em Estilo, cole isto no Claude:</p>
-    <div class="bloco-prompt" id="prompt-pre">/importar
-Leia também tudo em referencias/ (textos e imagens) e os capítulos oficiais em estilo/exemplos/.
-Pré-construa a bíblia: historia.md, uma ficha por personagem-chave e por lugar, e proponha as respostas dos [DECIDIR] do estilo a partir dos exemplos.
-Nas imagens, descreva só o que dá para ver (aparência, roupas, cores, arquitetura, clima) e cite o arquivo de origem.</div>
-    <div style="margin-top:10px"><button class="botao primario" id="copiar-pre">Copiar prompt</button></div>`;
-  const copiar = (t) => navigator.clipboard.writeText(t).then(() => toast("Copiado: " + t.split("\n")[0]), () => toast("Não deu para copiar; selecione o texto", true));
-  $$("[data-copiar]").forEach((b) => (b.onclick = () => {
-    const k = COMANDOS[+b.dataset.copiar];
-    const inp = $(`input[data-i="${b.dataset.copiar}"]`);
-    copiar(k.c + (inp && inp.value.trim() ? " " + inp.value.trim() : ""));
-  }));
-  $("#copiar-pre").onclick = () => copiar($("#prompt-pre").textContent);
-};
-
 /* ------------------------------------------------------------ busca global */
 const campoBusca = $("#busca"), resultados = $("#busca-resultados");
 campoBusca.addEventListener("input", debounce(async () => {
@@ -972,6 +734,10 @@ VISTAS.conversa = async () => {
       <section class="painel-cap">
         <div class="painel-cap-topo">
           <select id="sel-cap"></select>
+          <div class="botoes-reescrita" id="botoes-cap">
+            <button class="botao pequeno" id="cap-zero" title="Guarda o texto atual e o Claude escreve de novo, do zero">↺ Do zero</button>
+            <button class="botao pequeno primario" id="cap-ajustar" title="Diga o que mudar e o que manter">✎ Ajustar</button>
+          </div>
           <div class="meta-palavras" id="meta"></div>
         </div>
         <div class="abas abas-cap">
@@ -1025,13 +791,15 @@ VISTAS.conversa = async () => {
   };
 
   // ------------------------------------------------ folha (texto do capítulo)
-  const mostrarFolha = (titulo, corpo, vivo) => {
+  const mostrarFolha = (meta, corpo, vivo) => {
+    if (typeof meta === "string") meta = { titulo: meta };
     medir(corpo);
+    $("#botoes-cap").hidden = !corpo || vivo;
     const caixa = $("#aba-folha");
     const perto = caixa.scrollHeight - caixa.scrollTop - caixa.clientHeight < 140;
     caixa.innerHTML = corpo
-      ? `<div class="folha"><h2>${esc(titulo)}</h2><div class="previa-corpo md ${vivo ? "cursor-escrita" : ""}" id="texto-folha">${markdown(corpo)}</div></div>`
-      : `<div class="vazio folha-vazia"><h3>${esc(titulo || "Capítulo ainda não escrito")}</h3>Clique em <b>✎ Capítulo</b> para montar o pedido, ou escreva no chat. Você vê o texto surgindo aqui.</div>`;
+      ? `<div class="folha">${cabecalhoDiario(meta)}<div class="previa-corpo md ${vivo ? "cursor-escrita" : ""}" id="texto-folha">${markdown(corpo)}</div></div>`
+      : `<div class="folha">${meta.titulo ? cabecalhoDiario(meta) : ""}<div class="vazio folha-vazia"><h3>${meta.titulo ? "Ainda sem texto" : "Capítulo ainda não escrito"}</h3>Clique em <b>✎ Capítulo</b> para dizer o nome, quem escreve, onde, quando e o que acontece. Você vê o texto surgindo aqui.</div></div>`;
     if (vivo && perto) caixa.scrollTop = caixa.scrollHeight;
   };
   const carregarCapitulo = async (valor) => {
@@ -1039,14 +807,14 @@ VISTAS.conversa = async () => {
     if (valor.startsWith("novo:")) {
       const n = +valor.slice(5);
       capAtual = { n, caminho: `capitulos/cap-${String(n).padStart(2, "0")}.md`, novo: true };
-      await carregarContexto(n);
-      mostrarFolha(ctxAtual && ctxAtual.titulo ? `Capítulo ${n} · ${ctxAtual.titulo}` : `Capítulo ${n}`, "", false);
+      await carregarContexto(n, {});
+      mostrarFolha({}, "", false);
     } else {
       const t = await lerArquivo(valor).catch(() => "");
       const { meta, corpo } = separarCapitulo(t);
-      capAtual = { n: numeroDe(valor), caminho: valor, titulo: meta.titulo, status: meta.status };
-      await carregarContexto(capAtual.n);
-      mostrarFolha(meta.titulo || valor, corpo, false);
+      capAtual = { n: numeroDe(valor), caminho: valor, titulo: meta.titulo, status: meta.status, meta };
+      await carregarContexto(capAtual.n, meta);
+      mostrarFolha(meta, corpo, false);
     }
     $("#sel-cap").value = valor;
     desenharProximo(); desenharAtalhos();
@@ -1058,25 +826,9 @@ VISTAS.conversa = async () => {
   const rosto = (p, classe) => `<button class="rosto ${classe || ""}" data-ficha="${esc(p.caminho)}" title="${esc(p.nome)}">
       ${p.foto ? `<img src="${urlRepo(p.foto)}" alt="">` : `<span style="background:${corDoNome(p.nome)}">${esc(p.nome[0])}</span>`}
       <small>${esc(p.nome)}</small></button>`;
-  const carregarContexto = async (n) => {
-    ctxAtual = await api("/api/contexto?n=" + n).catch(() => null);
-    const caixa = $("#aba-contexto");
-    if (!ctxAtual) { caixa.innerHTML = ""; return; }
-    const c = ctxAtual, quem = c.quem_escreve || [], pres = (c.presentes || []).filter((p) => !quem.some((q) => q.caminho === p.caminho));
-    caixa.innerHTML = `
-      <div class="ctx-bloco">
-        <div class="ctx-linha"><span><b>Capítulo ${c.capitulo}</b>${c.titulo ? ` · ${esc(c.titulo)}` : ""}${c.quando ? `<br><span class="sub">${esc(c.quando)}</span>` : ""}</span>
-          ${c.status_escaleta ? `<span class="pilula ${c.status_escaleta === "aprovada" ? "ok" : ""}">escaleta ${esc(c.status_escaleta)}</span>` : `<span class="pilula">sem escaleta</span>`}</div>
-        ${quem.length || pres.length ? `<div class="ctx-rostos">${quem.map((p) => rosto(p, "escreve")).join("")}${quem.length && pres.length ? `<i class="sep"></i>` : ""}${pres.map((p) => rosto(p)).join("")}</div>` : ""}
-        ${(c.lugares || []).length ? `<div class="ctx-lugares">${c.lugares.map((l) => `<button class="chip" data-ficha="${esc(l.caminho)}">⌂ ${esc(l.nome)}</button>`).join("")}</div>` : ""}
-      </div>
-      ${c.anterior ? `<div class="ctx-bloco"><h4>Onde paramos · capítulo ${c.anterior.numero}${c.anterior.titulo ? " · " + esc(c.anterior.titulo) : ""}</h4>
-        ${c.anterior.resumo ? `<div class="md">${markdown(c.anterior.resumo)}</div>` : `<p class="sub">Sem resumo ainda. O Claude lê o capítulo anterior inteiro antes de escrever.</p>`}
-        <a href="#" data-cap="${esc(c.anterior.caminho)}">ler o capítulo ${c.anterior.numero}</a></div>` : ""}
-      <div class="ctx-bloco"><h4>O que acontece (escaleta)</h4>
-        ${c.beats ? `<div class="md beats">${markdown(c.beats.replace(/^- (status|quando|quem escreve|entradas|lugares|presentes):.*$/gm, "").trim())}</div>` : `<p class="sub">Sem beats para este capítulo. Conte no pedido o que deve acontecer.</p>`}</div>`;
-    $$("[data-ficha]", caixa).forEach((b) => (b.onclick = () => abrirFicha(b.dataset.ficha)));
-    $$("[data-cap]", caixa).forEach((b) => (b.onclick = (e) => { e.preventDefault(); carregarCapitulo(b.dataset.cap); abrirAba("folha"); }));
+  const carregarContexto = async (n, meta) => {
+    ctxAtual = { n };
+    await desenharContextoCapitulo($("#aba-contexto"), n, meta || {}).catch(() => {});
   };
 
   // ------------------------------------------------ revisão (tiques)
@@ -1130,7 +882,12 @@ VISTAS.conversa = async () => {
     const d = document.createElement("div");
     d.className = "msg " + papel + (papel === "claude" ? " md" : "");
     if (papel === "claude") d.innerHTML = markdown(texto || "") + botoesArquivos(arquivos);
-    else d.textContent = texto;
+    else if (papel === "autor" && (texto || "").length > 260) {
+      // pedido longo (montado pela Escrivaninha): mostra só a primeira linha; o resto abre ao clicar
+      const [primeira, ...resto] = texto.split("\n");
+      const curta = primeira.length > 90 ? primeira.slice(0, 90) + "…" : primeira;
+      d.innerHTML = `<details class="msg-longa"><summary>${esc(curta)}</summary><div>${esc(texto).replace(/\n/g, "<br>")}</div></details>`;
+    } else d.textContent = texto;
     msgs.appendChild(d); rolar();
     return d;
   };
@@ -1143,9 +900,10 @@ VISTAS.conversa = async () => {
     const opcoes = [];
     if (capAtual && !capAtual.novo) {
       const pal = palavras(($("#texto-folha") || {}).textContent || "");
-      if (pal && pal < META_PALAVRAS) opcoes.push(["Continuar até 4.600 palavras", `O capítulo ${n} está com ${pal} palavras. Aprofunde as cenas dos beats até passar de 4.600, sem enchimento e sem fato novo.`]);
-      opcoes.push(["Revisar o capítulo " + n, `/revisar ${n}`]);
-      opcoes.push(["Escrever o capítulo " + (n + 1), () => abrirPedido()]);
+      if (pal && pal < META_PALAVRAS) opcoes.push(["Continuar até 4.600 palavras", `O capítulo ${n} está com ${pal} palavras. Aprofunde as cenas do que eu pedi até passar de 4.600, sem enchimento e sem fato novo.`]);
+      opcoes.push(["✎ Ajustar", () => abrirAjuste({ caminho: capAtual.caminho, n, status: capAtual.status, aoEnviar: enviar })]);
+      opcoes.push(["↺ Do zero", () => reescreverDoZero({ caminho: capAtual.caminho, n, meta: capAtual.meta || {}, status: capAtual.status, aoEnviar: enviarECarregar })]);
+      opcoes.push(["Escrever o capítulo " + (n + 1), () => abrirPedido(n + 1)]);
     }
     opcoes.push(["Onde a história está?", "/estado"]);
     const d = document.createElement("div");
@@ -1187,68 +945,30 @@ VISTAS.conversa = async () => {
     if (!capAtual || !capAtual.novo) { box.innerHTML = ""; return; }
     box.innerHTML = `<div class="cartao-proximo">
         <div><div class="rotulo">Próximo capítulo</div>
-          <b>${capAtual.n}${ctxAtual && ctxAtual.titulo ? " · " + esc(ctxAtual.titulo) : ""}</b>
-          ${ctxAtual && ctxAtual.status_escaleta ? `<span class="sub"> · escaleta ${esc(ctxAtual.status_escaleta)}</span>` : ""}</div>
+          <b>Capítulo ${capAtual.n}</b> <span class="sub">· você diz o nome e o que acontece</span></div>
         <button class="botao primario" id="comecar">✎ Montar pedido</button></div>`;
     $("#comecar").onclick = () => abrirPedido();
   };
   const desenharAtalhos = () => {
     const n = capAtual ? capAtual.n : proximoN();
-    $("#atalhos").innerHTML = capAtual && !capAtual.novo ? `
-      <button data-p="/revisar ${n}">⚖ Revisar o ${n}</button>
-      <button data-p="/escaleta ${proximoN()}-${proximoN() + 2}">☰ Propor escaleta ${proximoN()} a ${proximoN() + 2}</button>
-      <button data-p="/estado">◈ Onde a história está?</button>` : `
-      <button data-p="/escaleta ${n}-${n + 2}">☰ Propor escaleta ${n} a ${n + 2}</button>
-      <button data-p="/estado">◈ Onde a história está?</button>`;
+    $("#atalhos").innerHTML = (capAtual && !capAtual.novo ? `<button data-p="/revisar ${n}">⚖ Revisar o ${n}</button>` : "") + `<button data-p="/estado">◈ Onde a história está?</button>`;
     $$("#atalhos button").forEach((b) => (b.onclick = () => enviar(b.dataset.p)));
   };
 
   // ------------------------------------------------ pedido de capítulo (guiado)
-  const abrirPedido = async () => {
-    const n = capAtual && capAtual.novo ? capAtual.n : proximoN();
-    const ctx = await api("/api/contexto?n=" + n).catch(() => ({}));
-    arv = await atualizarArvore();
-    const pessoas = arv.personagens, lugares = arv.lugares;
-    const quemPadrao = ((ctx.quem_escreve || [])[0] || {}).caminho || ((pessoas.find((p) => /ynana/i.test(p.titulo)) || {}).caminho);
-    const presPadrao = new Set((ctx.presentes || []).map((p) => p.caminho));
-    const lugPadrao = new Set((ctx.lugares || []).map((p) => p.caminho));
-    const opRosto = (p, nomeCampo, marcado, tipo) => `<label class="opcao-rosto"><input type="${tipo}" name="${nomeCampo}" value="${esc(p.caminho)}" ${marcado ? "checked" : ""}>
-        ${p.foto ? `<img src="${urlRepo(p.foto)}" alt="">` : `<span style="background:${corDoNome(p.titulo)}">${esc(p.titulo[0])}</span>`}<small>${esc(p.titulo)}</small></label>`;
-    const c = modal(`
-      <div class="pedido">
-        <h3>Capítulo ${n}${ctx.titulo ? " · " + esc(ctx.titulo) : ""}</h3>
-        <div class="campo"><label>Quem escreve no diário</label><div class="grade-rostos">${pessoas.map((p) => opRosto(p, "quem", p.caminho === quemPadrao, "radio")).join("")}</div></div>
-        <div class="campo"><label>Quem aparece</label><div class="grade-rostos">${pessoas.map((p) => opRosto(p, "pres", presPadrao.has(p.caminho), "checkbox")).join("")}</div></div>
-        <div class="campo"><label>Onde</label><div class="grade-chips">${lugares.map((l) => `<label class="chip-check"><input type="checkbox" name="lug" value="${esc(l.caminho)}" ${lugPadrao.has(l.caminho) ? "checked" : ""}><span>${esc(l.titulo)}</span></label>`).join("")}</div></div>
-        <div class="duas">
-          <div class="campo"><label>Quando</label><input id="p-quando" value="${esc(ctx.quando || "")}" placeholder="1812, Tempestade (junho)…"></div>
-          <div class="campo"><label>Tamanho mínimo (palavras)</label><input id="p-tam" type="number" min="${META_PALAVRAS}" step="100" value="${META_PALAVRAS}"></div>
-        </div>
-        <div class="campo"><label>O que acontece</label><textarea id="p-acontece" rows="4" placeholder="Conte do seu jeito. Se deixar em branco, sigo a escaleta${ctx.beats ? "" : " (este capítulo ainda não tem escaleta)"}."></textarea></div>
-        ${ctx.beats ? `<details class="beats-ref"><summary>Ver a escaleta deste capítulo</summary><div class="md">${markdown(ctx.beats.replace(/^- (status|quando|quem escreve|entradas|lugares|presentes):.*$/gm, "").trim())}</div></details>` : ""}
-        <div class="campo"><label>Tom, clima, cuidados (opcional)</label><textarea id="p-tom" rows="2" placeholder="Ex.: mais silêncio que fala; terminar antes do jantar; o Rufus quase não fala."></textarea></div>
-        <div class="modal-acoes"><button class="botao" id="p-cancelar">Cancelar</button><button class="botao primario" id="p-escrever">✎ Escrever o capítulo ${n}</button></div>
-      </div>`, "largo pedido-modal");
-    $("#p-cancelar", c).onclick = fecharModal;
-    $("#p-escrever", c).onclick = () => {
-      const nome = (cam) => { const f = [...pessoas, ...lugares].find((x) => x.caminho === cam); return f ? f.titulo : cam; };
-      const quem = ($("input[name=quem]:checked", c) || {}).value;
-      const pres = $$("input[name=pres]:checked", c).map((i) => nome(i.value));
-      const lug = $$("input[name=lug]:checked", c).map((i) => nome(i.value));
-      const acontece = $("#p-acontece", c).value.trim(), tom = $("#p-tom", c).value.trim();
-      const tam = Math.max(META_PALAVRAS, +$("#p-tam", c).value || META_PALAVRAS);
-      const linhas = [`Escreva o capítulo ${n}${ctx.titulo ? ` (${ctx.titulo})` : ""}.`,
-        quem ? `Quem escreve no diário: ${nome(quem)}.` : "",
-        $("#p-quando", c).value.trim() ? `Quando: ${$("#p-quando", c).value.trim()}.` : "",
-        pres.length ? `Quem aparece: ${pres.join(", ")}.` : "",
-        lug.length ? `Onde: ${lug.join(", ")}.` : "",
-        acontece ? `O que acontece (do autor; vale mais que a escaleta):\n${acontece}` : "Siga os beats da escaleta deste capítulo.",
-        tom ? `Tom e cuidados: ${tom}` : "",
-        `Mínimo de ${tam.toLocaleString("pt-BR")} palavras. Reúna sozinho o capítulo anterior, as fichas, as fotos e as referências antes de escrever.`];
-      fecharModal();
-      enviar(linhas.filter(Boolean).join("\n"));
-    };
+  const enviarECarregar = async (msg, cam) => {
+    await enviar(msg);
+    arv = await atualizarArvore(); preencherSelect();
+    if (cam) await carregarCapitulo(cam);
   };
+  const abrirPedido = async (nPedido) => {
+    const n = nPedido || (capAtual && capAtual.novo ? capAtual.n : proximoN());
+    const doc = await lerNotas(n);
+    abrirPedidoCapitulo({ n, pre: lerPedido(doc), modo: "novo", aoEnviar: enviarECarregar });
+  };
+  $("#cap-ajustar").onclick = () => capAtual && !capAtual.novo && abrirAjuste({ caminho: capAtual.caminho, n: capAtual.n, status: capAtual.status, aoEnviar: enviar,
+    trecho: (document.getSelection() || "").toString().trim() });
+  $("#cap-zero").onclick = () => capAtual && !capAtual.novo && reescreverDoZero({ caminho: capAtual.caminho, n: capAtual.n, meta: capAtual.meta || {}, status: capAtual.status, aoEnviar: enviarECarregar });
   $("#abrir-pedido").onclick = () => abrirPedido();
 
   // ------------------------------------------------ fluxo de resposta
@@ -1277,7 +997,7 @@ VISTAS.conversa = async () => {
           marcarEtapa("escrita");
           abrirAba("folha");
           const { meta, corpo } = separarCapitulo(texto);
-          mostrarFolha(meta.titulo || "Escrevendo…", corpo || semCabecalho(texto), true);
+          mostrarFolha(meta.titulo ? meta : { titulo: "Escrevendo…" }, corpo || semCabecalho(texto), true);
         }
       } else if (e.tipo === "fim" || e.tipo === "erro") {
         fonteEventos.close(); fonteEventos = null; ocupado(false);
@@ -1318,7 +1038,7 @@ VISTAS.conversa = async () => {
   // ------------------------------------------------ início
   preencherSelect();
   const hist = await api("/api/claude/historico").catch(() => []);
-  if (!hist.length) addMsg("claude", "Oi! Vamos escrever. Clique em **✎ Capítulo** para montar o pedido (quem escreve, quem aparece, o que acontece), ou só me conte a ideia aqui. Eu reúno o capítulo anterior, as fichas e as fotos sozinho, e cada capítulo sai com **no mínimo 4.600 palavras**, revisado.\n\nDica: selecione um trecho da folha à direita para pedir que eu reescreva, expanda ou ponha mais diálogo.");
+  if (!hist.length) addMsg("claude", "Oi! Vamos escrever. Clique em **✎ Capítulo** e diga o nome, quem escreve, onde, quando, quais acontecimentos entram e o que acontece. Eu reúno o resto sozinho e cada capítulo sai com **no mínimo 4.600 palavras**.\n\nNão gostou? Use **✎ Ajustar** (mudo só o que você pedir) ou **↺ Do zero** (guardo o texto e escrevo de novo). Digite **/** para ver os comandos.");
   hist.forEach((m) => addMsg(m.papel, m.texto, m.arquivos || []));
   const ultimoCap = arv.capitulos.length ? arv.capitulos[arv.capitulos.length - 1] : null;
   const ultimoPronto = ultimoCap && ["revisado", "editado"].includes(ultimoCap.meta.status);
@@ -1326,5 +1046,7 @@ VISTAS.conversa = async () => {
   await carregarCapitulo(preferido || (!ultimoCap || ultimoPronto ? `novo:${proximoN()}` : ultimoCap.caminho));
   if (hist.length) respostasRapidas();
   if (st.rodando) ouvir();
+  ligarBarraComandos(entrada);
+  if (textoParaChat) { entrada.value = textoParaChat; textoParaChat = null; }
   entrada.focus();
 };

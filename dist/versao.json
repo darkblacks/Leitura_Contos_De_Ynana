@@ -1,9 +1,14 @@
 {
-  "versao": "1.9.0",
-  "sha256": "255d90897a02bf8d1321ab2c13eab3044fda1a0150a58a616ac5abc5fd144fd6",
+  "versao": "2.0.0",
+  "sha256": "1f0d8e5b35181a5571890ee759c83a614785239d04d08eeb8e618c9520b36101",
   "notas": [
-    "Geografia de Morcal: mundo, 4 continentes, 7 arquipélagos, Sylvarene e suas 5 cidades, bairros",
-    "Mapa em árvore na tela Lugares; cada lugar mostra a cadeia e os traços que herda",
-    "Arquivos da história que você nunca editou agora recebem as novidades na atualização"
+    "Menu mais enxuto: saíram Painel, Escaleta, História, Referências, Continuidade e Decisões",
+    "Capítulo sem roteiro pronto: você diz nome, quem escreve, onde, quando e os acontecimentos (a data tem que bater)",
+    "Não gostou? Ajustar (muda só o que pedir) ou Reescrever do zero (o texto antigo fica guardado)",
+    "Cabeçalho fixo do diário: TÍTULO - QUEM ESCREVE / subtítulo - local - data",
+    "Lugares com fotos, navegando de dentro para dentro; o Claude descreve lugares, aparências e artefatos pela imagem",
+    "Calendário simples (meses humanos com outros nomes) e Eventos: feriados e festivais",
+    "Acontecimentos em ciclos; Relações dentro de Personagens, com família e amor",
+    "Estilo por escritor, com herança e os seus exemplos; comandos usáveis no chat com /"
   ]
 }

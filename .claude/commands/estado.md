@@ -4,13 +4,9 @@ description: Mostra em poucas linhas onde a história está
 
 Mostre o estado da história em poucas linhas, sem alterar arquivos.
 
-Leia só: a lista de arquivos em `capitulos/` com o `status` de cada um (as primeiras linhas), `continuidade/resumos.md` (último resumo), a seção de pendências de `continuidade/registro.md` e `escaleta/escaleta.md` (títulos e status dos capítulos).
+Leia só: a lista de `capitulos/` com o cabeçalho de cada um (status, título, quando), o último resumo em `continuidade/resumos.md`, `biblia/ciclos.md` e os títulos e datas de `biblia/acontecimentos/`.
 
-Responda neste formato:
-
-- **Último capítulo:** NN, título, status, uma linha do que aconteceu.
-- **Capítulos:** contagem por status (rascunho / revisado / editado).
-- **Pendências abertas:** as mais importantes, uma linha cada, com o capítulo onde foram plantadas.
-- **Próximos beats:** os próximos 1 a 3 capítulos da escaleta, uma linha cada, com status (proposta / aprovada).
-- **Decisões abertas:** quantos `[DECIDIR]` existem e em quais arquivos (busque `[DECIDIR]` em `estilo/` e `biblia/`), listando os que bloqueiam o próximo capítulo.
-- **Falta para seguir:** só se houver bloqueio (escaleta não aprovada, ficha vazia de quem entra no próximo capítulo, estilo incompleto).
+- **Último capítulo:** NN, título, quando, status, uma linha do que aconteceu.
+- **Capítulos:** contagem por status.
+- **Ciclo atual:** em qual ciclo a história está, pela data do último capítulo.
+- **Próximos acontecimentos:** os 1 a 3 próximos pela data que ainda não apareceram em nenhum capítulo.

@@ -116,6 +116,10 @@ def listar(pasta, exts=EXT_TEXTO, ocultar_modelos=False):
             foto = foto_de(p)
             if foto:
                 item["foto"] = foto
+            extras = sorted(f.relative_to(RAIZ).as_posix() for f in p.parent.glob(p.stem + "--*")
+                            if f.suffix.lower() in EXT_FOTO)
+            if extras:
+                item["imagens"] = extras
         itens.append(item)
     return itens
 
@@ -530,8 +534,10 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json({"foto": salvar_foto(d["ficha"], d["nome"], d["dados"], d.get("variante", ""))})
             if url.path == "/api/apagar":
                 p = caminho_seguro(d["caminho"])
-                if not (p.relative_to(RAIZ).as_posix().startswith(("referencias/", "entrada/"))):
-                    raise PermissionError("só dá para apagar referências e entrada pela interface")
+                rel = p.relative_to(RAIZ).as_posix()
+                foto_ficha = rel.startswith("biblia/") and p.suffix.lower() in EXT_FOTO
+                if not (rel.startswith(("referencias/", "entrada/")) or foto_ficha):
+                    raise PermissionError("pela interface só dá para apagar imagens das fichas, referências e entrada")
                 p.unlink()
                 return self._json({"ok": True})
             return self._json({"erro": "rota desconhecida"}, 404)

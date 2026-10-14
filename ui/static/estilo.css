@@ -341,3 +341,9 @@ a { color: var(--acento); }
 .chip { border: 1px solid var(--linha-forte); background: var(--papel-2); border-radius: 20px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
 .chip:hover { border-color: var(--acento); color: var(--acento); }
 @media (max-width: 760px) { .ficha-modal { grid-template-columns: 1fr; } .ficha-foto { border-right: 0; border-bottom: 1px solid var(--linha); } .retrato.grande { max-width: 260px; } }
+
+/* ---------- aviso de atualização e versão */
+.aviso-update { display: flex; align-items: center; gap: 10px; background: color-mix(in srgb, var(--ouro) 16%, var(--papel)); border: 1px solid color-mix(in srgb, var(--ouro) 45%, transparent); border-radius: 10px; padding: 5px 6px 5px 12px; font-size: 13px; }
+.aviso-update[hidden] { display: none; }
+.lateral-rodape { display: flex; align-items: center; gap: 10px; }
+.versao { font-size: 11px; color: var(--lateral-tinta-2); margin-left: auto; }

@@ -72,6 +72,9 @@ func main() {
 			modo = "nenhum"
 		case "--navegador":
 			modo = "navegador"
+		case "--reiniciado":
+			// veio de uma atualização: a janela já está aberta e recarrega sozinha
+			modo = "reiniciado"
 		case "--porta":
 			if i+1 < len(args) {
 				fmt.Sscanf(args[i+1], "%d", &portaFixa)
@@ -100,11 +103,12 @@ func main() {
 		logar("%d arquivo(s) da história copiados para %s", novos, pasta)
 	}
 
-	ouvinte, endereco, jaAberta := escolherPorta(portaFixa, pasta)
+	go limparRestos()
+	ouvinte, endereco, jaAberta := escolherPorta(portaFixa, pasta, modo == "reiniciado")
 	if jaAberta {
 		// Outra Escrivaninha desta mesma pasta já está rodando: só mostra a janela dela.
 		logar("Escrivaninha já aberta em %s", endereco)
-		if modo != "nenhum" {
+		if modo == "janela" || modo == "navegador" {
 			abrirJanela(endereco)
 		}
 		return
@@ -114,9 +118,10 @@ func main() {
 	}
 
 	raiz = pasta
+	fmt.Sscanf(endereco[strings.LastIndex(endereco, ":")+1:], "%d", &portaEmUso)
 	estatico, _ := fs.Sub(projeto, "embutido/projeto/ui/static")
 	srv := &http.Server{Handler: novoRoteador(estatico)}
-	logar("Contos de Ynana · Escrivaninha")
+	logar("Contos de Ynana · Escrivaninha %s", versao)
 	logar("Pasta da história: %s", pasta)
 	logar("Aberta em:         %s", endereco)
 
@@ -132,6 +137,8 @@ func main() {
 		select {}
 	case "navegador":
 		abrirNavegador(endereco)
+	case "reiniciado":
+		// nada a abrir
 	default:
 		abrirJanela(endereco)
 	}
@@ -145,10 +152,19 @@ func main() {
 
 // escolherPorta acha uma porta livre. Se uma porta já tiver uma Escrivaninha da
 // mesma pasta, devolve jaAberta=true. Portas ocupadas por outros programas são puladas.
-func escolherPorta(fixa int, pasta string) (net.Listener, string, bool) {
+func escolherPorta(fixa int, pasta string, esperarLiberar bool) (net.Listener, string, bool) {
 	ini, fim := portaInicial, portaFinal
 	if fixa > 0 {
 		ini, fim = fixa, fixa
+	}
+	if esperarLiberar && fixa > 0 {
+		// depois de uma atualização, a versão antiga ainda está saindo da porta
+		for i := 0; i < 40; i++ {
+			if o, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", fixa)); err == nil {
+				return o, fmt.Sprintf("http://127.0.0.1:%d", fixa), false
+			}
+			time.Sleep(250 * time.Millisecond)
+		}
 	}
 	for p := ini; p <= fim; p++ {
 		endereco := fmt.Sprintf("http://127.0.0.1:%d", p)

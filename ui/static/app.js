@@ -769,6 +769,39 @@ setInterval(vivo, 10000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) vivo(); });
 window.addEventListener("pagehide", () => { try { navigator.sendBeacon("/api/tchau"); } catch {} });
 
+/* ------------------------------------------------------------ atualização do app
+   O exe confere a branch main do GitHub; se houver versão nova, mostra o aviso. */
+async function verificarAtualizacao() {
+  const st = await api("/api/atualizacao").catch(() => null);
+  if (!st) return;
+  $("#versao").textContent = st.atual ? "v" + st.atual : "";
+  const aviso = $("#aviso-update");
+  if (!st.disponivel) { aviso.hidden = true; return; }
+  aviso.hidden = false;
+  aviso.innerHTML = `<span>✦ Versão ${esc(st.ultima)} disponível</span><button class="botao pequeno primario" id="btn-atualizar">Atualizar agora</button>`;
+  aviso.title = (st.notas || []).join("\n");
+  $("#btn-atualizar").onclick = async () => {
+    const c = modal(`<h3>Atualizando para a versão ${esc(st.ultima)}</h3>
+      ${(st.notas || []).length ? `<ul>${st.notas.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+      <p class="sub" id="upd-estado">Baixando… a janela recarrega sozinha. Seus textos não são tocados.</p>`);
+    if (estado.sujo && estado.salvarAgora) await estado.salvarAgora();
+    try { await api("/api/atualizar", {}); }
+    catch (e) { $("#upd-estado", c).textContent = e.message; $("#upd-estado", c).style.color = "var(--alerta)"; return; }
+    $("#upd-estado", c).textContent = "Reiniciando na versão nova…";
+    const inicio = Date.now();
+    const esperar = async () => {
+      try {
+        const r = await fetch("/api/ping", { cache: "no-store" });
+        const d = await r.json();
+        if (d.versao === st.ultima) { location.reload(); return; }
+      } catch {}
+      if (Date.now() - inicio > 60000) { $("#upd-estado", c).textContent = "Demorou demais. Feche a janela e abra pelo atalho Contos de Ynana."; return; }
+      setTimeout(esperar, 1000);
+    };
+    setTimeout(esperar, 1500);
+  };
+}
+
 /* ------------------------------------------------------------ início */
 function rotaDoEndereco() {
   const partes = location.hash.slice(1).split("/");
@@ -779,6 +812,7 @@ window.addEventListener("hashchange", rotaDoEndereco);
 (async () => {
   try { await atualizarArvore(); } catch (e) { vista.innerHTML = `<div class="vazio"><h3>A Escrivaninha não respondeu</h3>Feche esta janela e abra de novo pelo atalho Contos de Ynana.</div>`; return; }
   rotaDoEndereco();
+  verificarAtualizacao();
 })();
 
 /* ------------------------------------------------------------ ESCREVER COM O CLAUDE

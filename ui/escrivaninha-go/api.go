@@ -491,13 +491,14 @@ func origemOK(r *http.Request) bool {
 func novoRoteador(estatico fs.FS) http.Handler {
 	mux := http.NewServeMux()
 	rotasClaude(mux)
+	rotasAtualizacao(mux)
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		if r.Method == http.MethodGet {
 			switch r.URL.Path {
 			case "/api/ping":
-				responder(w, 200, map[string]string{"app": assinatura, "pasta": raiz})
+				responder(w, 200, map[string]string{"app": assinatura, "pasta": raiz, "versao": versao})
 			case "/api/arvore":
 				responder(w, 200, arvore())
 			case "/api/estado":

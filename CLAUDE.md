@@ -97,6 +97,11 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 - O que o autor muda pela interface é texto dele: vale a regra 1. Capítulo editado lá vem marcado `editado`; depois o autor roda `/sincronizar N`.
 - Decisões resolvidas pela interface viram `**Decidido:** pergunta → **resposta**` no arquivo. Trate como regra aprovada.
 
+## Atualizações do app (Escrivaninha.exe)
+
+- O desenvolvimento acontece numa branch de trabalho. **A branch `main` é o canal de atualização**: o app do autor lê `dist/versao.json` da `main` no GitHub e, se a versão for maior que a dele, mostra "Atualizar agora". Ele baixa `dist/Escrivaninha.exe`, confere o `sha256`, troca o próprio executável e reinicia sozinho. Só arquivos do sistema mudam; a história nunca.
+- Para publicar: aumente `ui/escrivaninha-go/VERSAO`, rode `ui/escrivaninha-go/publicar.sh "o que mudou" …`, faça commit na branch de trabalho e leve para a `main` (o autor pediu esse fluxo). Nunca publique na `main` um exe que não passou nos testes.
+
 ## Conversa pela Escrivaninha
 
 Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `claude -p` nesta pasta):

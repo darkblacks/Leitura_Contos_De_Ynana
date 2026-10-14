@@ -12,8 +12,9 @@ cd "$AQUI"
 if gofmt -l . | grep -v embutido; then echo "rode gofmt -w nos arquivos acima"; exit 1; fi
 go vet ./...
 mkdir -p "$RAIZ/dist"
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -H=windowsgui" -o "$RAIZ/dist/Escrivaninha.exe" .
-echo "pronto: $RAIZ/dist/Escrivaninha.exe ($(du -h "$RAIZ/dist/Escrivaninha.exe" | cut -f1))"
+VERSAO="$(tr -d " \n" < "$AQUI/VERSAO")"
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "-s -w -H=windowsgui -X main.versao=$VERSAO" -o "$RAIZ/dist/Escrivaninha.exe" .
+echo "pronto: v$VERSAO $RAIZ/dist/Escrivaninha.exe ($(du -h "$RAIZ/dist/Escrivaninha.exe" | cut -f1))"
 if [ -n "$LINUX_TESTE" ]; then
-  go build -o "$LINUX_TESTE" . && echo "teste linux: $LINUX_TESTE"
+  go build -ldflags "-X main.versao=$VERSAO ${LDFLAGS_TESTE:-}" -o "$LINUX_TESTE" . && echo "teste linux: $LINUX_TESTE"
 fi

@@ -449,6 +449,8 @@ class Manipulador(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(url.query).items()}
         try:
+            if url.path == "/api/atualizacao":
+                return self._json({"atual": "python", "disponivel": False})
             if url.path == "/api/claude/status":
                 return self._json({"instalado": False, "rodando": False, "motivo": "A conversa com o Claude funciona no Escrivaninha.exe."})
             if url.path == "/api/claude/historico":

@@ -1,0 +1,9 @@
+{
+  "versao": "1.5.0",
+  "sha256": "a1e3c861713fc48d20c8ec67904441d3e8c06494b685b942f72cc239b7dce71d",
+  "notas": [
+    "Atualização automática: o app avisa quando há versão nova e se atualiza sozinho",
+    "Fichas com foto em modal, seção de Artefatos",
+    "Chat mostra quem escreve e quem aparece no capítulo atual"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "_comentario": "Listas e parâmetros de ferramentas/checa_tiques.py. Expressões são regex Python, sem diferenciar maiúsculas. Atualize quando o autor acrescentar guardrails.",
+
+  "paragrafos_por_bloco": null,
+  "_paragrafos_por_bloco": "Número exato de parágrafos por bloco, se o estilo exigir (ex.: 3). Blocos são separados por linha com '* * *'. null desliga a checagem.",
+
+  "travessao_so_em_dialogo": true,
+  "max_comparacoes_por_paragrafo": 1,
+  "max_sussurros_por_capitulo": 3,
+  "palavras_frase_curta": 3,
+
+  "palavras_assinatura": [
+    "tapeçaria", "tapeçarias", "sinfonia", "sinfonias", "dança d[eao]s?", "ecoou", "ecoava", "ecoaram",
+    "um misto de", "uma mistura de", "no fundo", "intrincad[oa]s?", "vibrantes?", "crucial", "cruciais",
+    "palpável", "inegável", "inegavelmente", "teia de", "mosaico de", "caleidoscópio"
+  ],
+
+  "sussurros": ["sussurr\\w*", "murmur\\w*"],
+
+  "conectivos": [
+    "além disso", "no entanto", "afinal", "de fato", "vale ressaltar", "vale lembrar", "cabe ressaltar",
+    "ademais", "outrossim", "contudo", "todavia", "em suma", "nesse sentido", "por outro lado",
+    "dessa forma", "desse modo", "sendo assim", "em última análise"
+  ],
+
+  "grandiosa": [
+    "um testemunho de", "marcari[ao] para sempre", "para sempre marcad[oa]", "o peso do mundo",
+    "algo mudou dentro d", "algo se quebrou dentro d", "nada seria como antes", "nada mais seria o mesmo",
+    "nunca mais seria [oa] mesm[oa]", "uma nova era", "o início de uma nova", "era só o começo",
+    "o destino (havia|tinha) ", "mudaria tudo", "mudou tudo"
+  ],
+
+  "emocao_nomeada": [
+    "sentiu (uma|um) (onda|pontada|nó|aperto|lampejo|misto|turbilhão)",
+    "(uma|um) (onda|pontada|turbilhão|lampejo) de \\w+",
+    "sentiu(-se)? (raiva|medo|tristeza|alegria|culpa|vergonha|alívio|ciúme|inveja|pavor|ansiedade|angústia)",
+    "foi tomad[oa] por", "invadid[oa] por (uma|um)"
+  ],
+
+  "cliches_fisicos": [
+    "ar que (nem )?(sabia|percebeu) que (estava )?prend",
+    "cora[çc][ãa]o (martel|disparou|disparava|batia forte|saltou|acelerou)",
+    "arrepio (na|pela|percorreu a) espinha", "calafrio (na|pela|percorreu a) espinha",
+    "mandíbula (travad|tensionad|cerrad)", "maxilar (travad|tensionad|cerrad)",
+    "sorriso que não (chegava|chega|alcançava|alcança) (aos|até os) olhos",
+    "olhos (escureceram|escurecendo|escureciam)", "engoliu em seco", "sangue gelou",
+    "estômago (revirou|embrulhou)", "nó na garganta"
+  ],
+
+  "terapeutico": [
+    "processar (isso|tudo|o que)", "meus limites", "seus limites", "t[óo]xic[oa]", "gatilho",
+    "validar (o que|seus|meus)", "espaço seguro", "lugar de fala", "autocuidado", "trauma"
+  ],
+
+  "gancho_artificial": [
+    "mal sabia", "mal sabiam", "e então tudo mudou", "mas isso estava prestes a mudar",
+    "se (ele|ela|eles|elas) soubesse(m)?", "o que (ele|ela) não sabia", "pouco sabia"
+  ],
+
+  "gerundio_comentario": [
+    ",\\s*(mostrando|demonstrando|evidenciando|simbolizando|revelando|refletindo|ressaltando|destacando|sinalizando) (que|o|a|os|as|sua|seu)"
+  ],
+
+  "folheto": [
+    "deslumbrante", "de tirar o fôlego", "rica em história", "rico em história", "encantador[a]?",
+    "paisagem (exuberante|deslumbrante)", "imponente"
+  ]
+}

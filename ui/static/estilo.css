@@ -814,3 +814,17 @@ a { color: var(--acento); }
   .assento.pequeno .assento-cargo { font-size: 9px; }
   .assento.pequeno .assento-nome { font-size: 11px; }
 }
+
+/* Ouvir em voz alta */
+.barra-leitor { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 60; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; max-width: calc(100vw - 32px); padding: 8px 12px; background: var(--lateral); color: var(--lateral-tinta); border-radius: 30px; box-shadow: var(--sombra); font-size: 13px; }
+.barra-leitor select { background: transparent; color: var(--lateral-tinta); border: 1px solid #ffffff30; border-radius: 14px; padding: 3px 8px; font: inherit; max-width: 210px; }
+.barra-leitor select option { color: #222; }
+.lt-bt { background: none; border: none; color: var(--lateral-tinta); font-size: 16px; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; }
+.lt-bt:hover { background: #ffffff1a; }
+.lt-play { background: var(--ouro); color: #1c1510; }
+.lt-play:hover { background: var(--ouro); filter: brightness(1.1); }
+.lt-pos { color: var(--lateral-tinta-2); min-width: 46px; text-align: center; }
+.lt-dica { flex-basis: 100%; text-align: center; font-size: 11px; color: var(--lateral-tinta-2); }
+.lt-dica:empty { display: none; }
+.lendo-alvo p, .lendo-alvo li, .lendo-alvo h1, .lendo-alvo h2, .lendo-alvo h3, .lendo-alvo blockquote, .lendo-alvo .cab-diario { cursor: pointer; }
+.lendo-agora { background: var(--acento-suave); box-shadow: -10px 0 0 var(--acento-suave), 10px 0 0 var(--acento-suave); border-radius: 4px; transition: background .2s; }

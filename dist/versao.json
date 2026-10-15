@@ -1,9 +1,9 @@
 {
-  "versao": "2.5.0",
-  "sha256": "c529ea371ba3a717727f9040eeeed409a52163d0c86a6874de2ec66855830f61",
+  "versao": "2.6.0",
+  "sha256": "fb12be78b8895f60964de7eab46babbc71c845dc3b32c7d372ebb477f0917d9b",
   "notas": [
-    "Personagens › Parlamento de Sylvarene: Senhor Supremo, General, Távola Redonda (7 cadeiras), Barão e Ministro da Milícia de cada cidade",
-    "Uma versão das cadeiras por ano: copie o ano anterior e troque só quem mudou",
-    "Cargo público nos filtros e na ficha do personagem"
+    "🔊 Ouvir: lê o capítulo em voz alta com as vozes naturais do Edge (grátis)",
+    "Marca o parágrafo que está sendo lido; clique num parágrafo para ler dali",
+    "Escolha de voz e velocidade"
   ]
 }

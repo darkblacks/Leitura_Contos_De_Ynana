@@ -297,6 +297,7 @@ VISTAS.capitulo = async (caminho) => {
       <a href="#" id="voltar">← Capítulos</a>
       <span class="caminho">${esc(caminho)}</span>
       <div class="direita">
+        <button class="botao pequeno" data-ouvir="#f-previa" title="Ler o capítulo em voz alta">🔊 Ouvir</button>
         <button class="botao pequeno" id="alternar">Leitura</button>
         <button class="botao pequeno primario" id="salvar">Salvar</button>
       </div>
@@ -729,6 +730,7 @@ VISTAS.conversa = async () => {
         <div class="painel-cap-topo">
           <select id="sel-cap"></select>
           <div class="botoes-reescrita" id="botoes-cap">
+            <button class="botao pequeno" data-ouvir="#aba-folha .folha" title="Ler o capítulo em voz alta">🔊 Ouvir</button>
             <button class="botao pequeno gostei" id="cap-gostei" title="Registra o capítulo nos Acontecimentos, com a função na história">♥ Gostei</button>
             <button class="botao pequeno" id="cap-zero" title="Guarda o texto atual e o Claude escreve de novo, do zero">↺ Do zero</button>
             <button class="botao pequeno primario" id="cap-ajustar" title="Diga o que mudar e o que manter">✎ Ajustar</button>

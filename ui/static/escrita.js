@@ -327,7 +327,7 @@ async function abrirFichaVisual(caminho, aoFechar) {
     <div class="ficha-modal ficha-visual">
       <div class="ficha-foto galeria-ficha">
         <div class="foto-principal">${fotos[0] ? `<img src="${urlRepo(fotos[0])}" alt="" id="fv-grande">` : `<div class="retrato grande sem-foto" style="background:${corDoNome(f.titulo)}"><span>${esc(f.titulo[0])}</span></div>`}</div>
-        <div class="miniaturas">${fotos.map((x, i) => `<div class="mini" data-i="${i}"><img src="${urlRepo(x)}" alt="">${i ? `<button class="tirar-foto" data-tirar-foto="${esc(x)}" title="tirar esta imagem">✕</button>` : ""}</div>`).join("")}
+        <div class="miniaturas">${fotos.map((x, i) => `<div class="mini" data-i="${i}"><img src="${urlRepo(x)}" alt=""><button class="tirar-foto" data-tirar-foto="${esc(x)}" data-principal="${i === 0 && x === f.foto ? 1 : ""}" title="tirar esta imagem">✕</button></div>`).join("")}
           <label class="mini mais" title="Adicionar imagens">+<input type="file" id="fv-arq" accept=".png,.jpg,.jpeg,.webp,.gif" multiple hidden></label></div>
         <div class="sub">Arraste imagens para cá. A primeira é a principal.</div>
         <button class="botao primario" id="fv-descrever" ${fotos.length ? "" : "disabled"} title="O Claude olha as imagens e escreve a descrição">✨ Descrever pela imagem</button>
@@ -353,8 +353,18 @@ async function abrirFichaVisual(caminho, aoFechar) {
   $("#fp-bruto", c).onclick = () => _abrirFichaGenerica(caminho, aoFechar);
   $$(".mini[data-i]", c).forEach((m) => (m.onclick = (e) => { if (e.target.closest("[data-tirar-foto]")) return; const g = $("#fv-grande", c); if (g) g.src = urlRepo(fotos[+m.dataset.i]); }));
   $$("[data-tirar-foto]", c).forEach((b) => (b.onclick = async () => {
-    if (!confirm("Tirar esta imagem da ficha?")) return;
-    try { await api("/api/apagar", { caminho: b.dataset.tirarFoto }); recarregar(); } catch (e) { toast(e.message, true); }
+    if (!confirm("Tirar esta imagem da ficha? Ela é apagada.")) return;
+    try {
+      await api("/api/apagar", { caminho: b.dataset.tirarFoto });
+      // tirou a principal: a próxima imagem passa a ser a principal
+      const proxima = b.dataset.principal && (f.imagens || [])[0];
+      if (proxima) {
+        const blob = await (await fetch(urlRepo(proxima), { cache: "no-store" })).blob();
+        await api("/api/foto", { ficha: caminho, nome: proxima.split("/").pop(), dados: await lerBase64(blob) });
+        await api("/api/apagar", { caminho: proxima });
+      }
+      toast("Imagem tirada"); recarregar();
+    } catch (e) { toast(e.message, true); }
   }));
   const enviarFotos = async (arqs) => {
     try {

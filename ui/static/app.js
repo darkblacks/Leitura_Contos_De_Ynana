@@ -454,11 +454,11 @@ function vistaFichas(tipo) {
             <div class="sub">${f.foto ? "" : "sem foto · "}${f.vazios ? `${f.vazios} campo(s) vazio(s)` : "completa"}</div></div>
         </div>`).join("")}</div>`
         : `<div class="vazio"><h3>Nenhuma ficha ainda</h3>Crie aqui, ou peça ao Claude no chat.</div>`);
-    $$("[data-ficha]", vista).forEach((el) => (el.onclick = () => abrirFicha(el.dataset.ficha, () => vistaFichas(tipo)())));
+    $$("[data-ficha]", vista).forEach((el) => (el.onclick = () => abrirFicha(el.dataset.ficha, () => VISTAS[cfg.lista]())));
     $("#nova").onclick = async () => {
       const n = await pedirTexto("Nova ficha: " + cfg.titulo.toLowerCase().replace(/s$/, ""), "Nome");
       if (!n) return;
-      try { const { caminho } = await api("/api/novo", { tipo, nome: n }); await vistaFichas(tipo)(); abrirFicha(caminho, () => vistaFichas(tipo)()); }
+      try { const { caminho } = await api("/api/novo", { tipo, nome: n }); await VISTAS[cfg.lista](); abrirFicha(caminho, () => VISTAS[cfg.lista]()); }
       catch (e) { toast(e.message, true); }
     };
   };

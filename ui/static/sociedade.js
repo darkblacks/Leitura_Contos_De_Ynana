@@ -320,7 +320,7 @@ async function abrirEmpresa(caminho) {
     <div class="empresa-modal">
       <div class="empresa-logo">
         <div class="logo grande">${e.foto ? `<img src="${urlRepo(e.foto)}" alt="">` : `<span style="background:${corDoNome(e.titulo)}">${esc(e.titulo[0])}</span>`}</div>
-        <button class="botao pequeno" id="emp-logo-bt">${e.foto ? "Trocar logo" : "Pôr logo"}</button><input type="file" id="emp-logo" accept=".png,.jpg,.jpeg,.webp,.gif" hidden>
+        <button class="botao pequeno" id="emp-logo-bt">${e.foto ? "Trocar logo" : "Pôr logo"}</button>${e.foto ? `<button class="botao pequeno" id="emp-logo-tirar">Tirar logo</button>` : ""}<input type="file" id="emp-logo" accept=".png,.jpg,.jpeg,.webp,.gif" hidden>
       </div>
       <div class="empresa-campos">
         <h2 class="ficha-nome" style="text-align:left">${esc(e.titulo)}</h2>
@@ -343,6 +343,10 @@ async function abrirEmpresa(caminho) {
   $("#emp-mais", c).onclick = () => $("#emp-pessoas", c).insertAdjacentHTML("beforeend", linhaPessoa({ nome: "", papel: "" }));
   $("#emp-pessoas", c).addEventListener("click", (ev) => { if (ev.target.matches("[data-tirar-p]")) ev.target.closest(".linha-pessoa").remove(); });
   $("#emp-logo-bt", c).onclick = () => $("#emp-logo", c).click();
+  if ($("#emp-logo-tirar", c)) $("#emp-logo-tirar", c).onclick = async () => {
+    if (!confirm("Tirar a logo desta empresa?")) return;
+    try { await api("/api/apagar", { caminho: e.foto }); toast("Logo tirada"); abrirEmpresa(caminho); } catch (er) { toast(er.message, true); }
+  };
   $("#emp-logo", c).onchange = async (ev) => {
     const arq = ev.target.files[0]; if (!arq) return;
     try { await api("/api/foto", { ficha: caminho, nome: arq.name, dados: await lerBase64(arq) }); toast("Logo salva"); abrirEmpresa(caminho); } catch (er) { toast(er.message, true); }

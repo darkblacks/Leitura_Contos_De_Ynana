@@ -615,8 +615,8 @@ a { color: var(--acento); }
 .mini { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; cursor: pointer; border: 1px solid var(--linha); background: var(--papel); }
 .mini img { width: 100%; height: 100%; object-fit: cover; }
 .mini.mais { display: grid; place-items: center; font-size: 26px; color: var(--tinta-3); border-style: dashed; }
-.tirar-foto { position: absolute; top: 3px; right: 3px; border: 0; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; background: #000a; color: #fff; cursor: pointer; display: none; }
-.mini:hover .tirar-foto { display: block; }
+.tirar-foto { position: absolute; top: 3px; right: 3px; border: 0; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; background: #000a; color: #fff; cursor: pointer; display: block; opacity: .75; }
+.mini:hover .tirar-foto { opacity: 1; background: var(--acento); }
 .nota-ficha { margin: 0 0 10px; }
 
 /* ---------- lugares (navegar para dentro) */
@@ -828,3 +828,4 @@ a { color: var(--acento); }
 .lt-dica:empty { display: none; }
 .lendo-alvo p, .lendo-alvo li, .lendo-alvo h1, .lendo-alvo h2, .lendo-alvo h3, .lendo-alvo blockquote, .lendo-alvo .cab-diario { cursor: pointer; }
 .lendo-agora { background: var(--acento-suave); box-shadow: -10px 0 0 var(--acento-suave), 10px 0 0 var(--acento-suave); border-radius: 4px; transition: background .2s; }
+.botoes-foto { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }

@@ -720,7 +720,7 @@ async function abrirFichaPersonagem(caminho, aoFechar, abertas = null) {
         ${retrato(f, "retrato grande")}
         <h2 class="ficha-nome">${esc(f.titulo)}</h2>
         ${nomeCompleto && !vazio(nomeCompleto) && nomeCompleto !== f.titulo ? `<div class="sub">${esc(nomeCompleto)}</div>` : ""}
-        <button class="botao pequeno" id="fm-trocar">${f.foto ? "Trocar foto" : "Adicionar foto"}</button>
+        <div class="botoes-foto"><button class="botao pequeno" id="fm-trocar">${f.foto ? "Trocar foto" : "Adicionar foto"}</button>${f.foto ? `<button class="botao pequeno" id="fm-tirar-foto" title="Apagar a foto desta ficha">Tirar foto</button>` : ""}</div>
         <input type="file" id="fm-arq" accept=".png,.jpg,.jpeg,.webp,.gif" hidden>
         <nav class="ficha-indice">${secoesVisiveis.map((s) => `<a data-ir="${esc(s.chave)}">${esc(s.titulo)}</a>`).join("")}</nav>
       </div>
@@ -796,6 +796,10 @@ Escreva em linguagem natural, um traço por linha (corpo, rosto, cabelo, olhos, 
   };
   $("#fm-trocar", c).onclick = () => $("#fm-arq", c).click();
   $("#fm-arq", c).onchange = (e) => enviarFoto(e.target.files[0]);
+  if ($("#fm-tirar-foto", c)) $("#fm-tirar-foto", c).onclick = async () => {
+    if (!confirm("Tirar a foto desta ficha? Ela é apagada.")) return;
+    try { await api("/api/apagar", { caminho: f.foto }); await atualizarArvore(); toast("Foto tirada"); abrirFicha(caminho, aoFechar); } catch (e) { toast(e.message, true); }
+  };
 
   /* ---------- edição por seção (inline) */
   $$("[data-editar]", c).forEach((b) => (b.onclick = (e) => {

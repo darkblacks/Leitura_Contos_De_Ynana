@@ -1,9 +1,9 @@
 {
-  "versao": "2.6.0",
-  "sha256": "fb12be78b8895f60964de7eab46babbc71c845dc3b32c7d372ebb477f0917d9b",
+  "versao": "2.6.1",
+  "sha256": "d2e15b18375fe51714c942a4db0fedead68daa776318b80c54f36d620d925f0a",
   "notas": [
-    "🔊 Ouvir: lê o capítulo em voz alta com as vozes naturais do Edge (grátis)",
-    "Marca o parágrafo que está sendo lido; clique num parágrafo para ler dali",
-    "Escolha de voz e velocidade"
+    "Personagens: as abas e os filtros não somem mais ao fechar uma ficha",
+    "Lugares e artefatos: dá para tirar qualquer imagem, inclusive a principal (o ✕ fica sempre visível)",
+    "Personagens: botão Tirar foto; Empresas: Tirar logo"
   ]
 }

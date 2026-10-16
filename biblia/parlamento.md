@@ -5,7 +5,7 @@
 
 ## 1812
 
-### Cargos principais
+### Cargos federais
 - Senhor Supremo: (vago)
 - General de Sylvarene: (vago)
 
@@ -16,7 +16,6 @@
 - Cadeira 4: (vago)
 - Cadeira 5: (vago)
 - Cadeira 6: (vago)
-- Cadeira 7: (vago)
 
 ### [Grimward](lugares/grimward.md)
 - Barão: (vago)

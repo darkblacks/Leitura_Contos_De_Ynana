@@ -1,9 +1,9 @@
 {
-  "versao": "2.6.1",
-  "sha256": "d2e15b18375fe51714c942a4db0fedead68daa776318b80c54f36d620d925f0a",
+  "versao": "2.7.0",
+  "sha256": "8ee738c4cb8ccd55d0b11b5735ad70beceeaeae7a3f3d1b5c06d0e0e821cae4b",
   "notas": [
-    "Personagens: as abas e os filtros não somem mais ao fechar uma ficha",
-    "Lugares e artefatos: dá para tirar qualquer imagem, inclusive a principal (o ✕ fica sempre visível)",
-    "Personagens: botão Tirar foto; Empresas: Tirar logo"
+    "Parlamento: Federal (Senhor Supremo, General, Távola Redonda com 6 cadeiras fixas) e Municipal (Barão e Ministro da Milícia em cada cidade)",
+    "Acrescente ou tire cargos federais e municipais; dá para pôr um cargo em todas as cidades de uma vez",
+    "Ficha nova de personagem já vem com o nome preenchido"
   ]
 }

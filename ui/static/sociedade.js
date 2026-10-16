@@ -384,12 +384,16 @@ abrirFicha = async function (caminho, aoFechar) {
   $$(".tags-pers [data-rota]").forEach((a) => (a.onclick = (e) => { e.preventDefault(); fecharModal(); ir(a.dataset.rota, a.dataset.alvo || undefined); }));
 };
 
-/* ------------------------------------------------------------ Parlamento de Sylvarene: cadeiras, com uma versão por ano */
+/* ------------------------------------------------------------ Parlamento de Sylvarene: cadeiras, com uma versão por ano
+   Federal: Senhor Supremo, General de Sylvarene e os 6 da Távola Redonda (sempre 6).
+   Municipal: em cada cidade, Barão e Ministro da Milícia. Cargos federais e municipais podem ser acrescentados ou tirados. */
 const ARQ_PARLAMENTO = "biblia/parlamento.md";
 const CIDADES_SYLVARENE = ["Grimward", "Vyrwyll", "Kalun", "Faunbridge", "Albahara"];
+const CADEIRAS_TAVOLA = 6;
 const vagoOuNome = (oc) => (/^\(?\s*vag[oa]\s*\)?$/i.test(oc.trim()) || !oc.trim() ? { nome: "", caminho: "" } : linkOuNome(oc, ARQ_PARLAMENTO));
 const anoNum = (a) => parseInt(String(a).match(/\d+/) || [0], 10);
-const tipoGrupo = (g) => (/principa/.test(semAcento(g.nome)) ? "principal" : /tavola|tabula|tavula/.test(semAcento(g.nome)) ? "tavola" : "cidade");
+const tipoGrupo = (g) => (/principa|federa/.test(semAcento(g.nome)) ? "federal" : /tavola|tabula|tavula/.test(semAcento(g.nome)) ? "tavola" : "municipio");
+const cadeiraVaga = (cargo) => ({ cargo, nome: "", caminho: "" });
 
 function lerParlamento(t) {
   const p = { cabeca: [], versoes: [] };
@@ -405,6 +409,20 @@ function lerParlamento(t) {
   if (!p.cabeca.some((l) => l.trim())) p.cabeca = ["# Parlamento de Sylvarene", "", "> Cada `## ano` é uma versão das cadeiras: vale desse ano até a próxima versão."];
   return p;
 }
+/* Toda versão tem o grupo federal e a Távola com 6 cadeiras (falta: entra vaga; sobra: o autor escolhe qual tirar). */
+function arrumarVersao(v) {
+  let fed = v.grupos.find((g) => tipoGrupo(g) === "federal");
+  if (!fed) { fed = { nome: "Cargos federais", caminho: "", cadeiras: [cadeiraVaga("Senhor Supremo"), cadeiraVaga("General de Sylvarene")] }; v.grupos.unshift(fed); }
+  if (/principa/.test(semAcento(fed.nome))) fed.nome = "Cargos federais";
+  let tav = v.grupos.find((g) => tipoGrupo(g) === "tavola");
+  if (!tav) { tav = { nome: "Távola Redonda", caminho: "", cadeiras: [] }; v.grupos.splice(v.grupos.indexOf(fed) + 1, 0, tav); }
+  while (tav.cadeiras.length < CADEIRAS_TAVOLA) {
+    let n = tav.cadeiras.length + 1;
+    while (tav.cadeiras.some((c) => c.cargo === `Cadeira ${n}`)) n++;
+    tav.cadeiras.push(cadeiraVaga(`Cadeira ${n}`));
+  }
+  return v;
+}
 function escreverParlamento(p) {
   const ref = (x) => (x.caminho ? mdLink(x.nome, x.caminho, ARQ_PARLAMENTO) : x.nome || "(vago)");
   const partes = [p.cabeca.join("\n").trim()];
@@ -416,29 +434,23 @@ function escreverParlamento(p) {
 }
 function versaoPadrao(ano, lugares) {
   const lug = (n) => (lugares || []).find((l) => semAcento(l.titulo) === semAcento(n));
-  const c = (cargo) => ({ cargo, nome: "", caminho: "" });
-  return { ano, nota: [], grupos: [
-    { nome: "Cargos principais", caminho: "", cadeiras: [c("Senhor Supremo"), c("General de Sylvarene")] },
-    { nome: "Távola Redonda", caminho: "", cadeiras: [1, 2, 3, 4, 5, 6, 7].map((i) => c(`Cadeira ${i}`)) },
-    ...CIDADES_SYLVARENE.map((n) => ({ nome: n, caminho: (lug(n) || {}).caminho || "", cadeiras: [c("Barão"), c("Ministro da Milícia")] })),
-  ] };
+  return arrumarVersao({ ano, nota: [], grupos: CIDADES_SYLVARENE.map((n) => ({ nome: n, caminho: (lug(n) || {}).caminho || "", cadeiras: [cadeiraVaga("Barão"), cadeiraVaga("Ministro da Milícia")] })) });
 }
 /* Nome do cargo como se fala: "Barão de Kalun", "Cadeira 3 da Távola Redonda", "Senhor Supremo". */
 function rotuloCargo(g, c) {
   const t = tipoGrupo(g);
-  return t === "principal" ? c.cargo : t === "tavola" ? `${c.cargo} da ${g.nome}` : `${c.cargo} de ${g.nome}`;
+  return t === "federal" ? c.cargo : t === "tavola" ? `${c.cargo} da ${g.nome}` : `${c.cargo} de ${g.nome}`;
 }
 /* Por personagem: cada cargo com o ano em que entrou e o ano da versão em que saiu. */
 function cargosPorPessoa(p) {
   const res = {}, k = (x) => x.caminho || x.nome;
-  p.versoes.forEach((v, i) => {
+  p.versoes.forEach((v) => {
     const agora = new Set();
     for (const g of v.grupos) for (const c of g.cadeiras) {
       if (!c.nome) continue;
       const rot = rotuloCargo(g, c), lista = (res[k(c)] = res[k(c)] || []);
       agora.add(k(c) + "|" + rot);
-      const aberto = lista.find((x) => x.rotulo === rot && x.ate === null);
-      if (!aberto) lista.push({ rotulo: rot, de: v.ano, ate: null });
+      if (!lista.find((x) => x.rotulo === rot && x.ate === null)) lista.push({ rotulo: rot, de: v.ano, ate: null });
     }
     for (const [quem, lista] of Object.entries(res)) for (const x of lista) if (x.ate === null && !agora.has(quem + "|" + x.rotulo) && anoNum(x.de) < anoNum(v.ano)) x.ate = v.ano;
   });
@@ -449,8 +461,7 @@ const textoCargo = (x) => `${x.rotulo} · ${x.ate ? `${x.de}–${x.ate}` : `desd
 VISTAS.parlamento = async (anoPedido) => {
   marcarNavPersonagens();
   const a = await atualizarArvore();
-  const texto = await lerSeExiste(ARQ_PARLAMENTO);
-  const p = lerParlamento(texto);
+  const p = lerParlamento(await lerSeExiste(ARQ_PARLAMENTO));
   const gravar = async (ano, msg) => { await gravarArquivo(ARQ_PARLAMENTO, escreverParlamento(p)); if (msg) toast(msg); VISTAS.parlamento(ano); };
   if (!p.versoes.length) {
     vista.innerHTML = cabecalho("Personagens", "Parlamento de Sylvarene.") + abasPersonagens("parlamento") +
@@ -458,30 +469,25 @@ VISTAS.parlamento = async (anoPedido) => {
     $("#parl-criar").onclick = async () => { p.versoes.push(versaoPadrao("1812", a.lugares)); await gravar("1812", "Cadeiras criadas"); };
     return;
   }
-  const v = p.versoes.find((x) => x.ano === anoPedido) || p.versoes[p.versoes.length - 1];
+  const v = arrumarVersao(p.versoes.find((x) => x.ano === anoPedido) || p.versoes[p.versoes.length - 1]);
   const iv = p.versoes.indexOf(v), anterior = p.versoes[iv - 1], proxima = p.versoes[iv + 1];
   const pessoa = (c) => c.caminho && a.personagens.find((x) => x.caminho === c.caminho);
   const mudou = (g, c, j) => {
     if (!anterior) return false;
-    const ga = anterior.grupos.find((x) => semAcento(x.nome) === semAcento(g.nome));
-    const ca = ga && ga.cadeiras[j];
+    const ga = anterior.grupos.find((x) => semAcento(x.nome) === semAcento(g.nome) || (tipoGrupo(x) === "federal" && tipoGrupo(g) === "federal"));
+    const ca = ga && (ga.cadeiras.find((x) => x.cargo === c.cargo) || (tipoGrupo(g) === "tavola" && ga.cadeiras[j]));
     return !ca || (ca.caminho || ca.nome) !== (c.caminho || c.nome);
   };
   const assento = (g, c, gi, j, classe = "") => {
-    const ps = pessoa(c);
+    const ps = pessoa(c), m = mudou(g, c, j);
     const rosto = !c.nome ? `<span class="assento-vago">vago</span>` : ps && ps.foto ? `<img src="${urlRepo(ps.foto)}" alt="">` : `<span class="assento-ini" style="background:${corDoNome(c.nome)}">${esc(c.nome[0])}</span>`;
-    return `<button class="assento ${classe} ${c.nome ? "" : "vazio-assento"} ${mudou(g, c, j) ? "mudou" : ""}" data-g="${gi}" data-c="${j}" title="${esc(rotuloCargo(g, c))}">
-      <span class="assento-rosto">${rosto}</span><span class="assento-cargo">${esc(c.cargo)}</span><span class="assento-nome">${esc(c.nome || "—")}</span>${mudou(g, c, j) ? `<span class="assento-novo">mudou</span>` : ""}</button>`;
+    return `<button class="assento ${classe} ${c.nome ? "" : "vazio-assento"} ${m ? "mudou" : ""}" data-g="${gi}" data-c="${j}" title="${esc(rotuloCargo(g, c))}">
+      <span class="assento-rosto">${rosto}</span><span class="assento-cargo">${esc(c.cargo)}</span><span class="assento-nome">${esc(c.nome || "—")}</span>${m ? `<span class="assento-novo">mudou</span>` : ""}</button>`;
   };
   const grupos = v.grupos.map((g, gi) => ({ g, gi, tipo: tipoGrupo(g) }));
-  const principais = grupos.filter((x) => x.tipo === "principal"), tavolas = grupos.filter((x) => x.tipo === "tavola"), cidades = grupos.filter((x) => x.tipo === "cidade");
-  const tavolaHtml = ({ g, gi }) => {
-    const n = g.cadeiras.length || 1;
-    return `<div class="tavola-bloco"><div class="tavola">
-      <div class="tavola-mesa" ${g.caminho ? `data-lugar="${esc(g.caminho)}"` : ""}><b>${esc(g.nome)}</b><span>${n} cadeiras</span></div>
-      ${g.cadeiras.map((c, j) => { const ang = (-90 + (360 / n) * j) * Math.PI / 180; return `<div class="tavola-lugar" style="left:${50 + 41 * Math.cos(ang)}%;top:${50 + 41 * Math.sin(ang)}%">${assento(g, c, gi, j, "pequeno")}</div>`; }).join("")}
-    </div></div>`;
-  };
+  const fed = grupos.find((x) => x.tipo === "federal"), tav = grupos.find((x) => x.tipo === "tavola"), municipios = grupos.filter((x) => x.tipo === "municipio");
+  const sobra = tav.g.cadeiras.length - CADEIRAS_TAVOLA;
+  const n = tav.g.cadeiras.length;
   vista.innerHTML = cabecalho("Personagens", "Parlamento de Sylvarene: quem ocupa cada cadeira. Quando algo muda na história, crie uma versão nova para aquele ano.",
     `<button class="botao primario" id="parl-nova">+ Nova versão</button>`) + abasPersonagens("parlamento") + `
     <div class="parl-versoes">
@@ -492,20 +498,29 @@ VISTAS.parlamento = async (anoPedido) => {
     <div class="parl-nota">${v.nota.length ? `<b>O que mudou:</b> ${esc(v.nota.join(" "))}` : `<span class="sub">${anterior ? "Sem nota do que mudou." : "Primeira versão das cadeiras."}</span>`}
       <a href="#" id="parl-nota-ed">editar</a>${p.versoes.length > 1 ? ` · <a href="#" id="parl-apagar">apagar esta versão</a>` : ""}</div>
     <div class="parlamento">
-      ${principais.map(({ g, gi }) => `<div class="parl-principais">${g.cadeiras.map((c, j) => assento(g, c, gi, j, j === 0 ? "trono" : "grande")).join("")}</div>`).join("")}
-      ${tavolas.map(tavolaHtml).join("")}
-      ${cidades.length ? `<div class="parl-cidades">${cidades.map(({ g, gi }) => `
+      <div class="parl-esfera"><h2>Federal</h2><span class="sub">cargos de toda Sylvarene</span><button class="botao pequeno" data-mais="${fed.gi}">+ cargo federal</button></div>
+      <div class="parl-principais">${fed.g.cadeiras.map((c, j) => assento(fed.g, c, fed.gi, j, /supremo/i.test(c.cargo) ? "trono" : "grande")).join("") || `<span class="sub">Nenhum cargo federal além da Távola.</span>`}</div>
+      ${sobra > 0 ? `<div class="aviso parl-aviso">A Távola Redonda tem ${CADEIRAS_TAVOLA} cadeiras e esta versão tem ${n}. Clique na cadeira que sobra e use <b>Tirar cadeira</b>.</div>` : ""}
+      <div class="tavola-bloco"><div class="tavola">
+        <div class="tavola-mesa"><b>${esc(tav.g.nome)}</b><span>${CADEIRAS_TAVOLA} cadeiras</span></div>
+        ${tav.g.cadeiras.map((c, j) => { const ang = (-90 + (360 / n) * j) * Math.PI / 180; return `<div class="tavola-lugar" style="left:${50 + 41 * Math.cos(ang)}%;top:${50 + 41 * Math.sin(ang)}%">${assento(tav.g, c, tav.gi, j, "pequeno")}</div>`; }).join("")}
+      </div></div>
+      <div class="parl-esfera"><h2>Municipal</h2><span class="sub">cargos de cada cidade</span>${municipios.length ? `<button class="botao pequeno" data-mais-todos>+ cargo em todas as cidades</button>` : ""}</div>
+      <div class="parl-cidades">${municipios.map(({ g, gi }) => `
         <div class="cartao parl-cidade"><h3 ${g.caminho ? `data-lugar="${esc(g.caminho)}"` : ""}>${esc(g.nome)}</h3>
-          <div class="parl-cidade-assentos">${g.cadeiras.map((c, j) => assento(g, c, gi, j)).join("")}</div></div>`).join("")}</div>` : ""}
+          <div class="parl-cidade-assentos">${g.cadeiras.map((c, j) => assento(g, c, gi, j)).join("") || `<span class="sub">Sem cargos.</span>`}</div>
+          <button class="botao pequeno parl-mais" data-mais="${gi}">+ cargo</button></div>`).join("")}</div>
     </div>`;
   $$("[data-ano]").forEach((b) => (b.onclick = () => ir("parlamento", b.dataset.ano)));
   $$("[data-lugar]").forEach((el) => (el.onclick = () => abrirFicha(el.dataset.lugar)));
   $$(".assento").forEach((b) => (b.onclick = () => editarAssento(v.grupos[+b.dataset.g], +b.dataset.c)));
+  $$("[data-mais]").forEach((b) => (b.onclick = () => novoCargo(v.grupos[+b.dataset.mais])));
+  if ($("[data-mais-todos]")) $("[data-mais-todos]").onclick = () => novoCargo(null);
   $("#parl-nota-ed").onclick = async (e) => {
     e.preventDefault();
-    const n = await pedirTexto(`O que mudou em ${v.ano}`, "Uma frase (pode ficar em branco)", v.nota.join(" "));
-    if (n === null) return;
-    v.nota = n ? [n] : []; await gravar(v.ano, "Nota salva");
+    const t = await pedirTexto(`O que mudou em ${v.ano}`, "Uma frase (pode ficar em branco)", v.nota.join(" "));
+    if (t === null) return;
+    v.nota = t ? [t] : []; await gravar(v.ano, "Nota salva");
   };
   if ($("#parl-apagar")) $("#parl-apagar").onclick = async (e) => {
     e.preventDefault();
@@ -529,21 +544,47 @@ VISTAS.parlamento = async (anoPedido) => {
       p.versoes.push(nova); fecharModal(); await gravar(ano, `Versão de ${ano} criada`);
     };
   };
+  const acharPessoa = (quem) => quem && (a.personagens.find((x) => x.titulo === quem) || acharFichaPorNome(quem, a.personagens));
+  const ocupante = (quem) => { const ps = acharPessoa(quem); return ps ? { nome: ps.titulo, caminho: ps.caminho } : { nome: quem, caminho: "" }; };
+  const listaPessoas = `<datalist id="lista-pers-parl">${a.personagens.map((x) => `<option value="${esc(x.titulo)}">`).join("")}</datalist>`;
+  /* Novo cargo federal (g federal), numa cidade (g município) ou em todas as cidades (g = null). */
+  function novoCargo(g) {
+    const onde = !g ? "em todas as cidades" : tipoGrupo(g) === "federal" ? "federal" : `em ${g.nome}`;
+    const c = modal(`<h3>Novo cargo ${esc(onde)} <span class="sub">· ${esc(v.ano)}</span></h3>
+      <div class="campo"><label>Nome do cargo</label><input id="nc-cargo" placeholder="${g && tipoGrupo(g) === "federal" ? "ex.: Tesoureiro de Sylvarene" : "ex.: Juiz, Capitão do Porto"}"></div>
+      ${g ? `<div class="campo"><label>Quem ocupa</label><input id="nc-quem" list="lista-pers-parl" placeholder="personagem, um nome, ou vazio para vago">${listaPessoas}</div>` : `<div class="sub">O cargo entra vago em cada cidade; depois é só clicar para dizer quem ocupa.</div>`}
+      <div class="sub">Entra só na versão de ${esc(v.ano)}${proxima ? ` (a de ${esc(proxima.ano)} fica como está)` : ""}. Versões novas copiam esta.</div>
+      <div class="modal-acoes"><button class="botao" id="nc-no">Cancelar</button><button class="botao primario" id="nc-ok">Acrescentar</button></div>`);
+    $("#nc-cargo", c).focus();
+    $("#nc-no", c).onclick = fecharModal;
+    $("#nc-ok", c).onclick = async () => {
+      const cargo = $("#nc-cargo", c).value.trim();
+      if (!cargo) return toast("Dê um nome ao cargo", true);
+      const alvos = g ? [g] : v.grupos.filter((x) => tipoGrupo(x) === "municipio");
+      if (alvos.some((x) => x.cadeiras.some((y) => semAcento(y.cargo) === semAcento(cargo)))) return toast(`Já existe o cargo ${cargo}${g ? "" : " em alguma cidade"}`, true);
+      const quem = g ? $("#nc-quem", c).value.trim() : "";
+      for (const x of alvos) x.cadeiras.push({ cargo, ...(quem ? ocupante(quem) : { nome: "", caminho: "" }) });
+      fecharModal(); await gravar(v.ano, "Cargo acrescentado");
+    };
+  }
   function editarAssento(g, j) {
-    const cad = g.cadeiras[j];
+    const cad = g.cadeiras[j], tipo = tipoGrupo(g);
+    const podeTirar = tipo !== "tavola" || g.cadeiras.length > CADEIRAS_TAVOLA;
     const c = modal(`<h3>${esc(rotuloCargo(g, cad))} <span class="sub">· ${esc(v.ano)}</span></h3>
       <div class="campo"><label>Nome do cargo</label><input id="as-cargo" value="${esc(cad.cargo)}"></div>
-      <div class="campo"><label>Quem ocupa</label><input id="as-quem" list="lista-pers-parl" value="${esc(cad.nome)}" placeholder="personagem, um nome, ou vazio para vago">
-        <datalist id="lista-pers-parl">${a.personagens.map((x) => `<option value="${esc(x.titulo)}">`).join("")}</datalist></div>
-      <div class="sub">Muda só a versão de ${esc(v.ano)}. ${proxima ? `A de ${esc(proxima.ano)} fica como está.` : ""}</div>
-      <div class="modal-acoes">${cad.caminho ? `<button class="botao" id="as-ficha">Abrir ficha</button>` : ""}<button class="botao" id="as-vago">Deixar vago</button><button class="botao" id="as-no">Cancelar</button><button class="botao primario" id="as-ok">Salvar</button></div>`);
+      <div class="campo"><label>Quem ocupa</label><input id="as-quem" list="lista-pers-parl" value="${esc(cad.nome)}" placeholder="personagem, um nome, ou vazio para vago">${listaPessoas}</div>
+      <div class="sub">Muda só a versão de ${esc(v.ano)}. ${proxima ? `A de ${esc(proxima.ano)} fica como está.` : ""}${tipo === "tavola" && !podeTirar ? ` A Távola tem sempre ${CADEIRAS_TAVOLA} cadeiras.` : ""}</div>
+      <div class="modal-acoes">${podeTirar ? `<button class="botao perigo" id="as-tirar" style="margin-right:auto">${tipo === "tavola" ? "Tirar cadeira" : "Tirar cargo"}</button>` : ""}${cad.caminho ? `<button class="botao" id="as-ficha">Abrir ficha</button>` : ""}<button class="botao" id="as-vago">Deixar vago</button><button class="botao" id="as-no">Cancelar</button><button class="botao primario" id="as-ok">Salvar</button></div>`);
     $("#as-quem", c).focus();
     $("#as-no", c).onclick = fecharModal;
     if ($("#as-ficha", c)) $("#as-ficha", c).onclick = () => abrirFicha(cad.caminho);
+    if ($("#as-tirar", c)) $("#as-tirar", c).onclick = async () => {
+      if (!confirm(`Tirar o cargo "${rotuloCargo(g, cad)}" da versão de ${v.ano}?`)) return;
+      g.cadeiras.splice(j, 1); fecharModal(); await gravar(v.ano, "Cargo tirado");
+    };
     const salvar = async (quem) => {
-      const ps = quem && (a.personagens.find((x) => x.titulo === quem) || acharFichaPorNome(quem, a.personagens));
       cad.cargo = $("#as-cargo", c).value.trim() || cad.cargo;
-      Object.assign(cad, ps ? { nome: ps.titulo, caminho: ps.caminho } : { nome: quem, caminho: "" });
+      Object.assign(cad, quem ? ocupante(quem) : { nome: "", caminho: "" });
       fecharModal(); await gravar(v.ano, "Cadeira salva");
     };
     $("#as-vago", c).onclick = () => salvar("");

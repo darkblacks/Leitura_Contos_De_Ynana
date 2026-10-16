@@ -806,7 +806,7 @@ a { color: var(--acento); }
 .parl-cidade h3 { margin: 0 0 10px; text-align: center; }
 .parl-cidade h3[data-lugar] { cursor: pointer; }
 .parl-cidade h3[data-lugar]:hover { color: var(--acento); }
-.parl-cidade-assentos { display: flex; justify-content: center; gap: 10px; }
+.parl-cidade-assentos { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 @media (max-width: 640px) {
   .tavola { width: 100%; }
   .assento.pequeno { width: 70px; }
@@ -829,3 +829,9 @@ a { color: var(--acento); }
 .lendo-alvo p, .lendo-alvo li, .lendo-alvo h1, .lendo-alvo h2, .lendo-alvo h3, .lendo-alvo blockquote, .lendo-alvo .cab-diario { cursor: pointer; }
 .lendo-agora { background: var(--acento-suave); box-shadow: -10px 0 0 var(--acento-suave), 10px 0 0 var(--acento-suave); border-radius: 4px; transition: background .2s; }
 .botoes-foto { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.parl-esfera { width: 100%; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--linha); padding-bottom: 6px; margin-top: 6px; }
+.parl-esfera h2 { margin: 0; font-family: var(--serif-titulo); font-size: 22px; }
+.parl-esfera .botao { margin-left: auto; }
+.parl-aviso { width: 100%; }
+.parl-mais { display: block; margin: 10px auto 0; }
+.parl-principais .sub { align-self: center; }

@@ -281,6 +281,10 @@ def criar(tipo, nome):
         modelo = ler(RAIZ / "biblia" / pasta / "_modelo.md")
         modelo = re.sub(r"^# .*$", f"# {nome}", modelo, count=1, flags=re.M)
         modelo = re.sub(r"^> Modelo de ficha.*\n\n?", "", modelo, count=1, flags=re.M)
+        if tipo == "personagem":
+            # o nome dado já entra como nome completo (o autor muda depois se for outro)
+            modelo = re.sub(r"^- Nome completo:[ \t]*$", lambda m: f"- Nome completo: {nome}", modelo, count=1, flags=re.M)
+            modelo = modelo.replace("### (Nome)", f"### {nome}")
         p.write_text(modelo, encoding="utf-8")
     elif tipo in ("exemplo", "ref_texto"):
         if not nome:

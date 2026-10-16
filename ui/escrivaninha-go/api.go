@@ -388,6 +388,11 @@ func criar(tipo, nome string) (string, error) {
 		modelo := ler(filepath.Join(raiz, "biblia", pasta, "_modelo.md"))
 		modelo = substituirPrimeiro(regexp.MustCompile(`(?m)^# .*$`), modelo, "# "+nome)
 		modelo = substituirPrimeiro(regexp.MustCompile(`(?m)^> Modelo de ficha.*\n\n?`), modelo, "")
+		if tipo == "personagem" {
+			// o nome dado já entra como nome completo (o autor muda depois se for outro)
+			modelo = substituirPrimeiro(regexp.MustCompile(`(?m)^- Nome completo:[ \t]*$`), modelo, "- Nome completo: "+nome)
+			modelo = strings.ReplaceAll(modelo, "### (Nome)", "### "+nome)
+		}
 		if err := os.WriteFile(p, []byte(modelo), 0o644); err != nil {
 			return "", err
 		}

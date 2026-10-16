@@ -55,7 +55,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `biblia/personagens/<nome>.md` | Uma ficha por personagem (modelo em `_modelo.md`) |
 | `biblia/familias/<nome>.md` | Uma ficha por família: casta, empresa, descrição e **Membros** (cada um com pai, mãe e cônjuge: daí sai a árvore genealógica) |
 | `biblia/empresas/<nome>.md` | Uma ficha por empresa: ramo, sede, família, casta, descrição e **Pessoas** (com o papel de cada uma); a logo é a imagem com o mesmo nome |
-| `biblia/parlamento.md` | **Parlamento de Sylvarene**: as cadeiras (Senhor Supremo, General de Sylvarene, as 7 da Távola Redonda, Barão e Ministro da Milícia de cada cidade), uma versão por ano (`## 1812`); cada versão vale até a próxima |
+| `biblia/parlamento.md` | **Parlamento de Sylvarene**: as cadeiras: **federais** (Senhor Supremo, General de Sylvarene, as 6 da Távola Redonda — sempre 6 — e outros que o autor criar) e **municipais** (em cada cidade, Barão, Ministro da Milícia e outros que o autor criar), uma versão por ano (`## 1812`); cada versão vale até a próxima |
 | `biblia/relacoes.md` | Relações entre personagens (`A → B`: o que B é para A — pai, filha, namorado, amigo, rival…; período; frase; indicadores de 1 a 5) |
 | `biblia/geografia.md` | **Geografia de Morcal**: a árvore de lugares (mundo › continente ou arquipélago › país › cidade › bairro › local) |
 | `biblia/lugares/<nome>.md` | Uma ficha por lugar, de qualquer nível, com os traços próprios |

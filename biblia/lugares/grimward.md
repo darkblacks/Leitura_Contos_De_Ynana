@@ -1,6 +1,6 @@
 # Grimward
 
-> Cidade dentro de [Sylvarene](sylvarene.md). A posição na cadeia fica em [Geografia de Morcal](../geografia.md). Fontes: `[autor]` = descrição do autor; `[criado]` = criado pelo Claude a pedido do autor (pode mudar à vontade).
+> Cidade dentro de [Sylvarene](sylvarene.md). A posição na cadeia fica em [Geografia de Morcal](../geografia.md).
 
 ## Retrato
 

@@ -1,23 +1,27 @@
 # Rufus
 
-> Fontes: `[roteiro]` roteiro novo do Arco 1; `[antiga]` versão antiga.
-
-## Nome / apelidos
+## Identidade
 
 - Nome completo: (a definir)
-- Apelidos: (a definir)
+- Nascimento: (a definir)
+- Origem: (a definir)
+
+## Apelidos
+
+(a definir)
 
 ## Aparência
 
+### Rufus — aparência
+- Período: (a definir)
+- Tipo: (a definir)
+- Espécie: (a definir)
+- Imagem: (a definir)
 - Idade: mais velho; "velho marujo" `[antiga]`
 - Corpo: ombros largos `[antiga]`
 - Usa óculos (embaçam com o vapor do chá) `[antiga]`
 - Voz: risada rouca `[antiga]`
 - [DECIDIR] Rufus é humano ou híbrido?
-
-## Ambição
-
-(a definir)
 
 ## Personalidade
 
@@ -28,38 +32,54 @@
 ## Motivação
 
 - Manter a casa viva e a Ynana inteira `[roteiro]`.
+- Objetivo: (a definir)
+- Medos e conflitos: (a definir)
+- Observações: (a definir)
 
-## Desmotivação
+## Sociedade
 
-- Perder outra família ("não posso perder outra família") `[roteiro]`.
+- Região / sociedade: (a definir)
+- Casta: (a definir)
+- Bolha principal: (a definir)
+- Outras bolhas: (a definir)
+- Ocupação: (a definir)
 
-## Persona
+## Segredos e conhecimento
 
-- Marujo simples, "não sou homem de mansões" `[antiga]`; por dentro, é quem segura a Trademerx.
+- Segredos: perdeu uma família antes (a definir: qual, como) `[roteiro]`.
+- Sabe: (a definir)
+- Desconhece: (a definir)
+- Suspeita: (a definir)
 
-## Voz
+## Voz no diário
+
+### Persona
+
+### Voz
 
 - Vocabulário: simples, de convés.
+- Ritmo de fala: (a definir)
 - Expressões próprias: "garota", "menina" `[antiga]`; "de novo amanhã" (reconhece sem elogiar) `[roteiro]`.
-- Exemplos de fala: "— A maior? Ainda estou vivo, então nunca foi tão grande assim, hein?" `[antiga]` / "— Chá e biscoitos resolvem quase tudo, sabia?" `[antiga]`
 - O que nunca diria: um elogio direto `[roteiro]`.
+- Exemplo de fala: (a definir)
 
-## Como escreve no diário
+### Como escreve no diário
 
-- Escreve no diário? [DECIDIR] Rufus escreve alguma entrada? O roteiro tem momentos que a Ynana não pode narrar (março de 1813, quando ele vai buscá-la). Na versão antiga ele lê o diário em voz alta para ela.
+- Escreve no diário: (a definir)
+- Desde quando / como o diário chegou às mãos dele: (a definir)
+- Para quem acha que escreve: (a definir)
+- Tom: (a definir)
+- O que conta e o que esconde até do diário: (a definir)
+- Manias de escrita: (a definir)
 
-## Opiniões
+## Observações narrativas
 
-- Sobre o Sr. Merx: "irmão", família escolhida `[roteiro]`.
-- Sobre [Ynana](ynana.md): protege; cobra um mínimo ("você aparece 1x por semana / você assina X") `[roteiro]`.
-- Sobre [Malcon](malcon.md): vigia mais depois da recusa, sem anunciar `[roteiro]`.
-
-## Segredos / o que sabe e o que não sabe
-
-- Segredo: perdeu uma família antes (a definir: qual, como) `[roteiro]`.
+(a definir)
 
 ## Estado atual
 
 - Onde está: (antes do cap-01)
 - Cargo: marujo; vira vice da Trademerx em junho de 1812 `[roteiro]`
 - Última atualização: (nenhum capítulo escrito)
+- Ferimentos / condição física: (a definir)
+- Posses: (a definir)

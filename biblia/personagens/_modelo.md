@@ -1,34 +1,25 @@
 # (Nome)
 
-> Modelo de ficha. Copie para `biblia/personagens/<nome>.md`. Campo desconhecido: `(a definir)`. Escreva em linguagem natural: nada de atributos de RPG.
+> Modelo de ficha (esta linha não vai para a ficha). Campo desconhecido: `(a definir)`. Linguagem natural, nada de atributos de RPG. Nascimento no calendário de Albahara (ex.: 10º dia de Tempestade de 1796, ou "por volta de 1796"). Apelidos: um por linha, `- "apelido" · usado por: [Nome](nome.md)` ou um grupo (imprensa, população). Aparência: uma versão `###` por idade ou fase; Tipo é Humano, Meio-Híbrido ou Híbrido Completo; a imagem principal é `<nome>.webp` e a de cada versão `<nome>--<versao>.webp`; depois dos campos, os traços em linguagem natural, um por linha. Personalidade: se muda com a fase, um subtítulo `###` por fase. Sociedade: casta e bolha de `biblia/sociedade.md`. Segredos e conhecimento: de preferência ligados a um acontecimento ou capítulo. Como escreve no diário: só para quem escreve. Estado atual: com o capítulo de origem. Família, amores, amizades e inimizades ficam em `biblia/relacoes.md`.
 
 ## Identidade
 
 - Nome completo:
-- Nascimento: (data no calendário de Albahara, ex.: 10º dia de Tempestade de 1796; se for estimada, escreva "por volta de 1796")
+- Nascimento:
 - Origem:
 
 ## Apelidos
 
-Um por linha: o apelido e quem usa (personagens com link, ou grupos como imprensa, população).
-
-- "(apelido)" · usado por: [Pessoa](pessoa.md)
-
 ## Aparência
 
-Uma versão por idade ou fase. A imagem fica ao lado da ficha (`<nome>--<versao>.webp`); a principal é `<nome>.webp`.
-
-### (Nome) — (idade) anos
-- Período: (ex.: 1812, antes do naufrágio)
-- Idade: 
-- Tipo: (Humano / Meio-Híbrido / Híbrido Completo)
+### (Nome) — aparência
+- Período:
+- Idade:
+- Tipo:
 - Espécie:
 - Imagem:
-- (traços em linguagem natural: corpo, rosto, cabelo, olhos, marcas, roupa)
 
 ## Personalidade
-
-Em linguagem natural. Se muda com a fase, use um subtítulo por fase (`### Depois do naufrágio`).
 
 ## Motivação
 
@@ -38,8 +29,6 @@ Em linguagem natural. Se muda com a fase, use um subtítulo por fase (`### Depoi
 
 ## Sociedade
 
-Escolha na estrutura de `biblia/sociedade.md`. Família, profissão e riqueza são coisas diferentes.
-
 - Região / sociedade:
 - Casta:
 - Bolha principal:
@@ -47,8 +36,6 @@ Escolha na estrutura de `biblia/sociedade.md`. Família, profissão e riqueza s�
 - Ocupação:
 
 ## Segredos e conhecimento
-
-O que a pessoa sabe, desconhece ou suspeita, de preferência ligado a um acontecimento (`biblia/acontecimentos/`) ou capítulo.
 
 - Segredos:
 - Sabe:
@@ -58,8 +45,6 @@ O que a pessoa sabe, desconhece ou suspeita, de preferência ligado a um acontec
 ## Voz no diário
 
 ### Persona
-
-Como se apresenta aos outros, e onde isso difere de quem é.
 
 ### Voz
 
@@ -71,9 +56,7 @@ Como se apresenta aos outros, e onde isso difere de quem é.
 
 ### Como escreve no diário
 
-Só para quem escreve no diário. A forma da entrada é a mesma para todos (ver `estilo/estilo.md`); aqui fica o que muda o tom.
-
-- Escreve no diário? (sim / não)
+- Escreve no diário:
 - Desde quando / como o diário chegou às mãos dele:
 - Para quem acha que escreve:
 - Tom:
@@ -84,9 +67,7 @@ Só para quem escreve no diário. A forma da entrada é a mesma para todos (ver 
 
 ## Estado atual
 
-Atualizado a partir de `continuidade/registro.md`. Sempre com o capítulo de origem.
-
 - Onde está:
 - Ferimentos / condição física:
 - Posses:
-- Última atualização: (cap-NN)
+- Última atualização:

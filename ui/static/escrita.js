@@ -31,14 +31,14 @@ async function pedirEEsperar(mensagem, caixa, aoTerminar) {
   try { await api("/api/claude/enviar", { mensagem }); } catch (e) { toast(e.message, true); return; }
   const aviso = document.createElement("div");
   aviso.className = "trabalhando";
-  aviso.innerHTML = `<span class="girando"></span> O Claude está olhando as imagens e escrevendo… <span class="sub">pode levar um minuto</span>`;
+  aviso.innerHTML = `<span class="girando"></span> O Claude está trabalhando na ficha… <span class="sub">pode levar um minuto</span>`;
   (caixa || document.body).prepend(aviso);
   const inicio = Date.now();
   const checar = async () => {
     const st = await api("/api/claude/status").catch(() => ({}));
     if (st.rodando && Date.now() - inicio < 10 * 60000) { setTimeout(checar, 2000); return; }
     aviso.remove();
-    toast("Pronto: a descrição foi escrita");
+    toast("Pronto: o Claude terminou");
     aoTerminar && aoTerminar();
   };
   setTimeout(checar, 2500);
@@ -548,6 +548,7 @@ const COMANDOS = [
   { c: "/ficha", a: "nome", d: "Cria ou completa a ficha de um personagem, lugar ou artefato, perguntando o que falta." },
   { c: "/canonizar", a: "1", d: "Gostou do capítulo: registra nos Acontecimentos o que aconteceu, a função na história e onde estava cada personagem." },
   { c: "/descrever", a: "nome", d: "Olha as imagens de um lugar, personagem ou artefato e escreve a descrição na ficha." },
+  { c: "/preencher", a: "personagem e ideia", d: "Você diz em poucas palavras o que imagina; o Claude preenche a ficha (pode inventar), sem mexer na voz, família, empresa e cargo." },
   { c: "/estado", d: "Onde a história está: último capítulo, ciclo atual, o que falta." },
 ];
 VISTAS.comandos = async () => {

@@ -1,7 +1,5 @@
 # Synzoe
 
-> Fontes: `[roteiro]` roteiro novo; `[antiga]` versão antiga; `[img]` retrato da Ynana (`biblia/personagens/ynana.webp`).
-
 ## Aparência
 
 - Pedra vermelha redonda, em engaste de ouro, numa corrente fina de ouro `[img]`.

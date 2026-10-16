@@ -1,6 +1,6 @@
 # O diário
 
-> O caderno onde os Contos de Ynana são escritos. Fontes: `[antiga]` versão antiga.
+> O caderno onde os Contos de Ynana são escritos.
 
 ## Aparência
 

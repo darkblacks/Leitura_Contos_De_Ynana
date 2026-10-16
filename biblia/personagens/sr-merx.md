@@ -1,15 +1,25 @@
 # Sr. Merx
 
 > Pai da Ynana, dono da Trademerx e capitão do Zéfiro. Morre no naufrágio (jun 1812), corpo não encontrado.
-> Fontes: `[roteiro]` roteiro novo; `[antiga]` versão antiga.
 
-## Nome / apelidos
+## Identidade
 
-- Nome: [DECIDIR] (ver `biblia/historia.md`)
-- Chama a filha de "pequena estrategista" `[antiga]`
+- Nome completo: [DECIDIR] (ver `biblia/historia.md`)
+- Nascimento: (a definir)
+- Origem: (a definir)
+
+## Apelidos
+
+(a definir)
 
 ## Aparência
 
+### Sr. Merx — aparência
+- Período: (a definir)
+- Idade: (a definir)
+- Tipo: (a definir)
+- Espécie: (a definir)
+- Imagem: (a definir)
 - (a definir). Carrega um pequeno telescópio preso ao cinto `[antiga]`.
 
 ## Personalidade
@@ -18,15 +28,56 @@
 - Desconfia de Malcon; proíbe cargas de Dreya/Varesh sem fiscalização severa `[roteiro]`.
 - Negociador: "o importante não é ser visto como o mais forte, mas ser o mais inteligente" (atribuído a ele por Malcolm) `[antiga]`.
 
-## Voz
+## Motivação
 
-- Exemplos (antiga): "— Este colar representa sua força e nossa história, Ynana. Nunca esqueça quem você é." / "— Proteja-se, Ynana. Você é mais forte do que pensa."
+- Objetivo: (a definir)
+- Medos e conflitos: (a definir)
+- Observações: (a definir)
 
-## Opiniões
+## Sociedade
 
-- Sobre [Rufus](rufus.md): "irmão"; confia nele a vice `[roteiro]`.
-- Sobre [Malcon](malcon.md): demitiu; desconfia `[roteiro]`.
+- Região / sociedade: (a definir)
+- Casta: (a definir)
+- Bolha principal: (a definir)
+- Outras bolhas: (a definir)
+- Ocupação: (a definir)
+
+## Segredos e conhecimento
+
+- Segredos: (a definir)
+- Sabe: (a definir)
+- Desconhece: (a definir)
+- Suspeita: (a definir)
+
+## Voz no diário
+
+### Persona
+
+### Voz
+
+- Vocabulário: (a definir)
+- Ritmo de fala: (a definir)
+- Expressões próprias: (a definir)
+- O que nunca diria: (a definir)
+- Exemplo de fala: (a definir)
+
+### Como escreve no diário
+
+- Escreve no diário: (a definir)
+- Desde quando / como o diário chegou às mãos dele: (a definir)
+- Para quem acha que escreve: (a definir)
+- Tom: (a definir)
+- O que conta e o que esconde até do diário: (a definir)
+- Manias de escrita: (a definir)
+
+## Observações narrativas
+
+(a definir)
 
 ## Estado atual
 
 - Morto no naufrágio do Zéfiro, jun 1812, sem corpo `[roteiro]`.
+- Onde está: (a definir)
+- Ferimentos / condição física: (a definir)
+- Posses: (a definir)
+- Última atualização: (a definir)

@@ -1,92 +1,77 @@
 # Seraphine Dreya
 
-> Fonte: `[autor]`.
-
 ## Identidade
 
 - Nome completo: Seraphine Dreya `[autor]`
-- Nascimento: (data no calendário de Albahara, ex.: 10º dia de Tempestade de 1796; se for estimada, escreva "por volta de 1796")
-- Origem:
+- Nascimento: (a definir)
+- Origem: (a definir)
 
 ## Apelidos
 
-Um por linha: o apelido e quem usa (personagens com link, ou grupos como imprensa, população).
-
-- "(apelido)" · usado por: [Pessoa](pessoa.md)
+(a definir)
 
 ## Aparência
 
-Uma versão por idade ou fase. A imagem fica ao lado da ficha (`<nome>--<versao>.webp`); a principal é `<nome>.webp`.
-
 ### Seraphine Dreya — aparência
-- Período: (ex.: 1812, antes do naufrágio)
-- Idade: 
-- Tipo: (Humano / Meio-Híbrido / Híbrido Completo)
-- Espécie:
-- Imagem:
-- (traços em linguagem natural: corpo, rosto, cabelo, olhos, marcas, roupa)
+- Período: (a definir)
+- Idade: (a definir)
+- Tipo: (a definir)
+- Espécie: (a definir)
+- Imagem: (a definir)
 
 ## Personalidade
 
-Em linguagem natural. Se muda com a fase, use um subtítulo por fase (`### Depois do naufrágio`).
+(a definir)
 
 ## Motivação
 
-- Objetivo:
-- Medos e conflitos:
-- Observações:
+- Objetivo: (a definir)
+- Medos e conflitos: (a definir)
+- Observações: (a definir)
 
 ## Sociedade
 
-Escolha na estrutura de `biblia/sociedade.md`. Família, profissão e riqueza são coisas diferentes.
-
-- Região / sociedade:
+- Região / sociedade: (a definir)
 - Casta: Alta Elite `[autor]`
-- Bolha principal:
-- Outras bolhas:
-- Ocupação:
+- Bolha principal: (a definir)
+- Outras bolhas: (a definir)
+- Ocupação: (a definir)
 
 ## Segredos e conhecimento
 
-O que a pessoa sabe, desconhece ou suspeita, de preferência ligado a um acontecimento (`biblia/acontecimentos/`) ou capítulo.
-
-- Segredos:
-- Sabe:
-- Desconhece:
-- Suspeita:
+- Segredos: (a definir)
+- Sabe: (a definir)
+- Desconhece: (a definir)
+- Suspeita: (a definir)
 
 ## Voz no diário
 
 ### Persona
 
-Como se apresenta aos outros, e onde isso difere de quem é.
-
 ### Voz
 
-- Vocabulário:
-- Ritmo de fala:
-- Expressões próprias:
-- O que nunca diria:
-- Exemplo de fala:
+- Vocabulário: (a definir)
+- Ritmo de fala: (a definir)
+- Expressões próprias: (a definir)
+- O que nunca diria: (a definir)
+- Exemplo de fala: (a definir)
 
 ### Como escreve no diário
 
-Só para quem escreve no diário. A forma da entrada é a mesma para todos (ver `estilo/estilo.md`); aqui fica o que muda o tom.
-
-- Escreve no diário? (sim / não)
-- Desde quando / como o diário chegou às mãos dele:
-- Para quem acha que escreve:
-- Tom:
-- O que conta e o que esconde até do diário:
-- Manias de escrita:
+- Desde quando / como o diário chegou às mãos dele: (a definir)
+- Para quem acha que escreve: (a definir)
+- Tom: (a definir)
+- O que conta e o que esconde até do diário: (a definir)
+- Manias de escrita: (a definir)
+- Escreve no diário: (a definir)
 
 ## Observações narrativas
 
+(a definir)
+
 ## Estado atual
 
-Atualizado a partir de `continuidade/registro.md`. Sempre com o capítulo de origem.
-
-- Onde está:
-- Ferimentos / condição física:
-- Posses:
-- Última atualização: (cap-NN)
+- Onde está: (a definir)
+- Ferimentos / condição física: (a definir)
+- Posses: (a definir)
+- Última atualização: (a definir)

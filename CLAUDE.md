@@ -65,7 +65,6 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `biblia/ciclos.md` | Os ciclos (fases) da história, com período e resumo |
 | `biblia/calendario.md` | Calendário de Albahara: o calendário humano com outros nomes de mês, e os **feriados e festivais** (repetem todo ano) |
 | `biblia/sociedade.md` | Sociedade de Sylvarene: castas e bolhas |
-| `biblia/_versoes-antigas/` | Cópias de segurança de fichas convertidas. Não são fonte |
 | `ferramentas/checa_tiques.py`, `tiques.json` | Varredura mecânica dos guardrails |
 | `conversas/` | Histórico do chat da Escrivaninha e a sessão em uso |
 | `referencias/`, `estilo/exemplos/`, `escaleta/`, `biblia/historia.md`, `entrada/` | Material antigo de consulta (nunca apagado) |
@@ -79,13 +78,15 @@ Seções, em linguagem natural (nada de atributos de RPG): Identidade · Apelido
 ## Formato padrão das fichas
 
 Toda ficha de personagem, lugar e artefato segue o mesmo formato, para ler e editar sem confusão:
-- `# Nome` no topo; depois, se houver, uma linha `>` com as fontes (`[autor]`, `[roteiro]`, `[antiga]`, `[img]`).
-- As seções `##` do `_modelo.md` da pasta, **na ordem do modelo** e com o mesmo nome. Seção que não existe no modelo vai para o fim.
+- `# Nome` no topo; depois, se houver, uma linha `>` curta (ex.: onde o lugar fica).
+- **Só o que está no modelo.** Não existe ficha antiga nem versão antiga: seção que não existe no modelo não entra na ficha.
+- As seções `##` do `_modelo.md` da pasta, **na ordem do modelo** e com o mesmo nome.
 - Dados em campos `- Campo: valor`, com os nomes de campo do modelo. Lista de vários itens: subitens recuados com dois espaços.
 - O que não se sabe: `(a definir)`. Seção sem nada: só `(a definir)`.
 - Sem texto de instrução nem exemplo do modelo dentro da ficha (as instruções ficam no `_modelo.md`).
 - Ao escrever numa ficha, mantenha esse formato: preencha o campo que já existe em vez de criar outro parecido.
-- A Escrivaninha tem o botão **Padronizar** (Personagens, Lugares, Artefatos), que põe as fichas nesse formato sem apagar nada e guarda a versão anterior em `biblia/_versoes-antigas/`.
+- A Escrivaninha tem o botão **Padronizar** (Personagens, Lugares, Artefatos): deixa só as seções e campos do modelo, com o que o autor escreveu nos campos; o resto sai, sem cópia.
+- **✨ Preencher com o Claude** (ficha de personagem, ou `/preencher`): o autor diz em poucas palavras o que imagina e o Claude preenche, olhando a imagem e o contexto. Aqui pode inventar (marca `[criado]`), seguindo `.claude/commands/preencher.md`: não mexe em Voz no diário, família, empresa e cargo; na Sociedade só completa o vazio.
 
 ## O que é local e o que precisa de internet
 
@@ -181,6 +182,6 @@ Quando a mensagem chega pelo chat da Escrivaninha (`Escrivaninha.exe` roda `clau
 
 ## Comandos e revisores
 
-- Comandos em `.claude/commands/` (também usáveis no chat da Escrivaninha, digitando `/`): `/escrever`, `/revisar`, `/sincronizar`, `/canonizar`, `/ficha`, `/descrever`, `/estado`.
+- Comandos em `.claude/commands/` (também usáveis no chat da Escrivaninha, digitando `/`): `/escrever`, `/revisar`, `/sincronizar`, `/canonizar`, `/ficha`, `/descrever`, `/preencher`, `/estado`.
 - **Tiques**: o script agrupa os achados por classe (Comparação e contraste, Ritmo e repetição, Vocabulário artificial, Exagero e efeito, Emoção e corpo, Formato). O jeito de escrever do autor não é tique: onomatopeia entre asteriscos (`*Chua*`) e fala entre aspas com travessão (`"— …" Disse…`). Repetição comparativa ("amarelei às vezes, mas eu sempre amarelo"; "… ou quando …") é tique (guardrail 22), e palavra repetida demais em poucos parágrafos também. O script aponta a **frase** onde o tique está. Tiques que o autor marcou como **manter** ficam na seção "Tiques mantidos" das notas do capítulo: não corrija esses, nem aponte de novo na revisão.
 - Subagentes em `.claude/agents/`: `revisor-continuidade` e `revisor-estilo`. Eles só listam problemas, nunca reescrevem.

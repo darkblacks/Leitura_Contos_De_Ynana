@@ -487,7 +487,10 @@ function vistaFichas(tipo) {
     $("#nova").onclick = async () => {
       const n = await pedirTexto("Nova ficha: " + cfg.titulo.toLowerCase().replace(/s$/, ""), "Nome");
       if (!n) return;
-      try { const { caminho } = await api("/api/novo", { tipo, nome: n }); await VISTAS[cfg.lista](); abrirFicha(caminho, () => VISTAS[cfg.lista]()); }
+      try {
+        const { caminho } = await api("/api/novo", { tipo, nome: n });
+        if (typeof padronizarFichas === "function") await padronizarFichas(tipo, [caminho]).catch(() => {}); // já nasce no formato padrão
+        await VISTAS[cfg.lista](); abrirFicha(caminho, () => VISTAS[cfg.lista]()); }
       catch (e) { toast(e.message, true); }
     };
   };

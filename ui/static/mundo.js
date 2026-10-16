@@ -7,7 +7,6 @@
 const ARQ_CALENDARIO = "biblia/calendario.md";
 const ARQ_RELACOES = "biblia/relacoes.md";
 const ARQ_SOCIEDADE = "biblia/sociedade.md";
-const PASTA_ANTIGAS = "biblia/_versoes-antigas";
 
 const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 const lerSeExiste = (c) => lerArquivo(c).catch(() => null);
@@ -96,15 +95,6 @@ function acharFichaPorNome(nome, lista) {
   if (!n) return null;
   return lista.find((f) => semAcento(f.titulo) === n) || lista.find((f) => semAcento(f.nome) === n.replace(/\s+/g, "-"))
     || lista.find((f) => semAcento(f.titulo).split(/\s+/)[0] === n);
-}
-
-/* Cópia de segurança antes de qualquer conversão: biblia/_versoes-antigas/<pasta>/<arquivo> */
-async function guardarCopia(caminho, texto) {
-  const rel = caminho.replace(/^biblia\//, "");
-  let alvo = `${PASTA_ANTIGAS}/${rel}`;
-  if (await lerSeExiste(alvo) !== null) alvo = alvo.replace(/\.md$/, `-${new Date().toISOString().slice(0, 10)}-${Date.now() % 100000}.md`);
-  await gravarArquivo(alvo, texto);
-  return alvo;
 }
 
 /* ============================================================ Calendário de Albahara
@@ -446,152 +436,12 @@ async function sociedade() {
   return { castas, grupos };
 }
 
-/* ============================================================ Ficha de personagem: conversão */
+/* ============================================================ Ficha de personagem: seções (a ordem do modelo) */
 const SECOES_FICHA = [
   ["Identidade", "Identidade e apelidos"], ["Apelidos", null], ["Aparência", "Aparência por idade"], ["Personalidade", "Personalidade"],
   ["Motivação", "Motivação"], ["Sociedade", "Sociedade"], ["Segredos e conhecimento", "Segredos e conhecimento"],
   ["Voz no diário", "Voz no diário"], ["Observações narrativas", "Observações narrativas"], ["Estado atual", "Estado atual"],
 ];
-const ehFichaAntiga = (t) => /^##\s+(Nome \/ apelidos|Ambição|Desmotivação|Persona|Opiniões)\s*$|^##\s+Segredos \//m.test(t);
-
-/* Reorganiza a ficha antiga nas seções novas. Nada é apagado: o que não tem lugar vai
-   para Observações narrativas; opiniões sobre pessoas com ficha viram relações. */
-function converterFicha(texto, caminho, personagens) {
-  const velho = secoesMd(texto);
-  const novo = { cabeca: velho.cabeca, secoes: [] };
-  const linhasDe = (s) => (s ? s.corpo.split("\n") : []);
-  // nome exato (ou começo, para "Nome / apelidos" e "Segredos / o que sabe…"), e cada seção só uma vez
-  const pegar = (...n) => {
-    const livres = velho.secoes.filter((x) => !x.usada);
-    const s = livres.find((x) => n.some((k) => semAcento(x.titulo) === semAcento(k)))
-      || livres.find((x) => n.some((k) => k.includes("/") && semAcento(x.titulo).startsWith(semAcento(k))));
-    if (s) s.usada = true;
-    return s;
-  };
-  const semModelo = (ls) => ls.filter((l) => l.trim() !== "(a definir)");
-  const extrasObs = [];
-  const relacoesNovas = [];
-  const nomeFicha = (velho.cabeca.match(/^# (.*)$/m) || [])[1] || "";
-
-  // Identidade e apelidos
-  const nomeSec = pegar("Nome / apelidos", "Nome", "Nome / apelido");
-  const ident = lerCampos("- Nome completo:\n- Nascimento: (a definir)\n- Origem: (a definir)");
-  const apelidos = [];
-  const sobra = [];
-  for (const l of linhasDe(nomeSec)) {
-    const m = l.match(/^[-*]\s+([^:]+):\s*(.*)$/);
-    const k = m ? semAcento(m[1]) : "";
-    if (m && (k === "nome completo" || k === "nome")) { ident.set("Nome completo", m[2]); continue; }
-    if (m && k.startsWith("apelido")) {
-      if (/^\(a definir\)$/.test(m[2].trim())) continue;
-      for (const pedaco of m[2].split(/;\s*/)) {
-        const tags = (pedaco.match(/`\[[^\]]+\]`/g) || []).join(" ");
-        const quem = (pedaco.match(/\(([^)]+)\)/) || [])[1] || "";
-        const nomes = [...pedaco.matchAll(/["“]([^"”]+)["”]/g)].map((x) => x[1]);
-        const quemMd = quem.split(/\s*,\s*/).map((q) => {
-          const f = acharFichaPorNome(q, personagens);
-          return f && f.caminho !== caminho ? mdLink(f.titulo, f.caminho, caminho) : q;
-        }).join(", ");
-        if (!nomes.length) { sobra.push(`- ${pedaco.trim()}`); continue; }
-        nomes.forEach((n) => apelidos.push(`- "${n}"${quem ? ` · usado por: ${quemMd}` : ""}${tags ? " " + tags : ""}`));
-      }
-      continue;
-    }
-    if (l.trim()) sobra.push(l);
-  }
-  novo.secoes.push({ titulo: "Identidade", corpo: [ident.texto(), ...sobra].join("\n") });
-  novo.secoes.push({ titulo: "Apelidos", corpo: apelidos.join("\n") || "(a definir)" });
-
-  // Aparência: o que existe vira a primeira versão (sem inventar idade nem período)
-  const apSec = pegar("Aparência");
-  const ap = lerCampos(semModelo(linhasDe(apSec)).filter((l) => !/^Traços fixos que não podem/.test(l)).join("\n"));
-  const versao = lerCampos("- Período: (a definir)");
-  for (const k of ["Idade", "Tipo", "Espécie"]) if (ap.tem(k)) versao.set(k, ap.get(k));
-  const resto = ap.itens.filter((it) => !(it.chave && ["idade", "tipo", "especie"].includes(semAcento(it.chave))));
-  const fotoBase = caminho.split("/").pop().replace(/\.md$/, "");
-  const corpoVersao = [versao.texto(), `- Imagem: (a foto principal da ficha)`,
-    ...resto.map((it) => (it.bruto !== undefined ? it.bruto : [`- ${it.chave}: ${it.valor}`.trimEnd(), ...it.sub.map((s) => "  " + s)].join("\n")))].join("\n").trim();
-  novo.secoes.push({ titulo: "Aparência", corpo: `### ${nomeFicha || fotoBase} — aparência registrada\n${corpoVersao}` });
-
-  // Personalidade
-  const pers = pegar("Personalidade");
-  novo.secoes.push({ titulo: "Personalidade", corpo: semModelo(linhasDe(pers)).join("\n").trim() || "(a definir)" });
-
-  // Motivação: Ambição e Motivação → Objetivo; Desmotivação → Medos e conflitos
-  const amb = semModelo(linhasDe(pegar("Ambição"))).filter((l) => l.trim() && !/^O que quer conquistar a longo prazo/.test(l));
-  const mot = semModelo(linhasDe(pegar("Motivação"))).filter((l) => l.trim() && !/^O que move a pessoa agora/.test(l));
-  const des = semModelo(linhasDe(pegar("Desmotivação"))).filter((l) => l.trim() && !/^O que a faz travar/.test(l));
-  const tira = (l) => l.replace(/^[-*]\s+/, "");
-  const motiv = lerCampos("- Objetivo:\n- Medos e conflitos:\n- Observações:");
-  motiv.set("Objetivo", [...amb.map((l) => "Ambição: " + tira(l)), ...mot.map(tira)].join("\n") || "(a definir)");
-  motiv.set("Medos e conflitos", des.map(tira).join("\n") || "(a definir)");
-  novo.secoes.push({ titulo: "Motivação", corpo: motiv.texto() });
-
-  novo.secoes.push({ titulo: "Sociedade", corpo: "- Região / sociedade: (a definir)\n- Casta: (a definir)\n- Bolha principal: (a definir)\n- Outras bolhas:\n- Ocupação: (a definir)" });
-
-  // Opiniões: sobre pessoas com ficha → relações; o resto → observações
-  const opin = pegar("Opiniões");
-  const obsOpinioes = [];
-  for (const l of linhasDe(opin)) {
-    if (!l.trim() || /^Uma linha cada/.test(l)) continue;
-    const m = l.match(/^[-*]\s+Sobre\s+(.+?):\s*(.*)$/);
-    if (m && m[2].trim()) {
-      const link = linksDe(m[1], caminho)[0];
-      const f = link ? personagens.find((p) => p.caminho === link.caminho) : acharFichaPorNome(m[1], personagens);
-      if (f && f.caminho !== caminho) { relacoesNovas.push({ b: { nome: f.titulo, caminho: f.caminho }, frase: m[2].trim() }); continue; }
-    }
-    if (m && !m[2].trim()) continue; // linha de modelo vazia
-    obsOpinioes.push(l);
-  }
-
-  // Segredos e conhecimento
-  const seg = pegar("Segredos / o que sabe", "Segredos", "Segredos e conhecimento");
-  const conh = lerCampos("- Segredos:\n- Sabe:\n- Desconhece:\n- Suspeita:");
-  const soltas = [];
-  for (const l of linhasDe(seg)) {
-    const m = l.match(/^[-*]\s+([^:]+):\s*(.*)$/);
-    const k = m ? semAcento(m[1]) : "";
-    const alvo = k.startsWith("segredo") ? "Segredos" : k === "sabe" ? "Sabe" : k === "nao sabe" || k === "desconhece" ? "Desconhece" : k.startsWith("suspeit") ? "Suspeita" : "";
-    if (alvo) { if (m[2].trim()) conh.set(alvo, [conh.get(alvo), m[2].trim()].filter(Boolean).join("\n")); continue; }
-    if (l.trim()) soltas.push(l);
-  }
-  novo.secoes.push({ titulo: "Segredos e conhecimento", corpo: [conh.texto(), ...soltas].join("\n").trim() });
-
-  // Voz no diário: Persona, Voz e Como escreve no diário, sem mudar uma vírgula
-  const voz = [["Persona", pegar("Persona")], ["Voz", pegar("Voz")], ["Como escreve no diário", pegar("Como escreve no diário")]]
-    .filter(([, s]) => s).map(([t, s]) => `### ${t}\n\n${s.corpo}`);
-  novo.secoes.push({ titulo: "Voz no diário", corpo: voz.join("\n\n") || "### Persona\n\n(a definir)\n\n### Voz\n\n(a definir)" });
-
-  // Observações narrativas: opiniões que não são sobre pessoas + seções sem lugar
-  const est = pegar("Estado atual");
-  for (const s of velho.secoes) if (!s.usada) extrasObs.push(`### ${s.titulo}\n\n${s.corpo}`);
-  if (obsOpinioes.length) extrasObs.unshift(`### Opiniões\n\n${obsOpinioes.join("\n")}`);
-  novo.secoes.push({ titulo: "Observações narrativas", corpo: extrasObs.join("\n\n") || "" });
-  novo.secoes.push({ titulo: "Estado atual", corpo: est ? est.corpo : "- Onde está: (a definir)" });
-  return { texto: juntarMd(novo), relacoes: relacoesNovas };
-}
-
-async function converterFichas(caminhos) {
-  const { personagens } = await fichasDoMundo();
-  const rel = await relacoes();
-  let n = 0;
-  for (const c of caminhos) {
-    const t = await lerArquivo(c);
-    if (!ehFichaAntiga(t)) continue;
-    const { texto, relacoes: novas } = converterFicha(t, c, personagens);
-    await guardarCopia(c, t);
-    const eu = personagens.find((p) => p.caminho === c) || { titulo: (t.match(/^# (.*)$/m) || [])[1] || c, caminho: c };
-    for (const r of novas) {
-      const ja = rel.rels.some((x) => x.a.caminho === c && x.b.caminho === r.b.caminho && norm(x.frase) === norm(r.frase));
-      if (!ja) rel.rels.push({ a: { nome: eu.titulo, caminho: c }, b: r.b, titulo: "", papel: "", periodo: "", frase: r.frase, fonte: "ficha antiga (Opiniões)", ind: {} });
-    }
-    await gravarArquivo(c, texto);
-    n++;
-  }
-  if (n) await gravarArquivo(ARQ_RELACOES, escreverRelacoes(rel));
-  return n;
-}
-
 /* ============================================================ Ficha de personagem: tela */
 function slugJs(s) { return semAcento(s).replace(/[^a-z0-9.]+/g, "-").replace(/^-|-$/g, "") || "sem-nome"; }
 
@@ -638,8 +488,6 @@ async function abrirFichaPersonagem(caminho, aoFechar, abertas = null) {
   const f = a.personagens.find((x) => x.caminho === caminho) || { caminho, titulo: caminho.split("/").pop().replace(".md", "") };
   let texto = await lerArquivo(caminho);
   const cal = await calendario(true);
-  const antiga = ehFichaAntiga(texto);
-  const copia = await lerSeExiste(`${PASTA_ANTIGAS}/${caminho.replace(/^biblia\//, "")}`);
   let doc = secoesMd(texto);
   const rels = await relacoes();
   const evs = await todosAcontecimentos();
@@ -711,8 +559,6 @@ async function abrirFichaPersonagem(caminho, aoFechar, abertas = null) {
   S("Voz no diário", "Voz no diário", blocoMd(corpoDe("Voz no diário")), "persona, voz e como escreve");
   S("Observações narrativas", "Observações narrativas", blocoMd(corpoDe("Observações narrativas")));
   S("Estado atual", "Estado atual", blocoMd(corpoDe("Estado atual")));
-  const conhecidas = ["identidade", "apelidos", "aparencia", "personalidade", "motivacao", "sociedade", "segredos e conhecimento", "voz no diario", "observacoes narrativas", "estado atual"];
-  for (const s of doc.secoes) if (!conhecidas.includes(semAcento(s.titulo))) S("extra:" + s.titulo, s.titulo, blocoMd(s.corpo));
 
   const c = modal(`
     <div class="ficha-modal ficha-pessoa">
@@ -722,17 +568,14 @@ async function abrirFichaPersonagem(caminho, aoFechar, abertas = null) {
         ${nomeCompleto && !vazio(nomeCompleto) && nomeCompleto !== f.titulo ? `<div class="sub">${esc(nomeCompleto)}</div>` : ""}
         <div class="botoes-foto"><button class="botao pequeno" id="fm-trocar">${f.foto ? "Trocar foto" : "Adicionar foto"}</button>${f.foto ? `<button class="botao pequeno" id="fm-tirar-foto" title="Apagar a foto desta ficha">Tirar foto</button>` : ""}</div>
         <input type="file" id="fm-arq" accept=".png,.jpg,.jpeg,.webp,.gif" hidden>
+        <button class="botao primario" id="fm-preencher" title="Você diz em poucas palavras o que imagina; o Claude preenche os campos olhando a imagem, a casta, a família, a empresa e o cargo">✨ Preencher com o Claude</button>
         <nav class="ficha-indice">${secoesVisiveis.map((s) => `<a data-ir="${esc(s.chave)}">${esc(s.titulo)}</a>`).join("")}</nav>
       </div>
       <div class="ficha-texto">
         <div class="ficha-acoes">
-          ${copia !== null ? `<button class="botao pequeno" id="fp-antiga" title="A ficha como era antes da conversão">Versão antiga</button>` : ""}
           <button class="botao pequeno" id="fp-bruto">Texto completo</button>
           <button class="botao pequeno" id="fm-fechar">Fechar</button>
         </div>
-        ${antiga ? `<div class="aviso" style="margin-bottom:12px"><b>Esta ficha está no formato antigo.</b> Dá para converter para as seções novas sem perder nada:
-            uma cópia fica guardada e você pode voltar quando quiser. Opiniões sobre outras pessoas viram relações.
-            <div style="margin-top:8px"><button class="botao pequeno primario" id="fp-converter">Converter esta ficha</button></div></div>` : ""}
         ${secoesVisiveis.map((s) => `
           <details class="secao-ficha" data-secao="${esc(s.chave)}" ${abertas.has(s.chave) ? "open" : ""}>
             <summary><span>${esc(s.titulo)}</span>${s.sub ? `<span class="sub resumo">${esc(s.sub)}</span>` : ""}
@@ -772,23 +615,7 @@ Escreva em linguagem natural, um traço por linha (corpo, rosto, cabelo, olhos, 
   $$("[data-abrir-rel]", c).forEach((x) => (x.onclick = () => { fecharModal(); ir("relacoes", caminho); }));
   const irRel = $("#fp-ir-rel", c); if (irRel) irRel.onclick = () => { fecharModal(); ir("relacoes", caminho); };
   $("#fp-bruto", c).onclick = () => _abrirFichaGenerica(caminho, aoFechar);
-  const btConv = $("#fp-converter", c);
-  if (btConv) btConv.onclick = async () => {
-    try { await converterFichas([caminho]); toast("Ficha convertida. A versão antiga ficou guardada."); recarregar(); } catch (e) { toast(e.message, true); }
-  };
-  const btAnt = $("#fp-antiga", c);
-  if (btAnt) btAnt.onclick = () => {
-    const m2 = modal(`<h3>Versão antiga da ficha</h3><div class="sub">Guardada em ${esc(PASTA_ANTIGAS)} antes da conversão.</div>
-      <div class="md" style="max-height:60vh;overflow:auto;margin-top:10px;border:1px solid var(--linha);padding:12px;border-radius:8px">${markdown(copia, caminho)}</div>
-      <div class="modal-acoes"><button class="botao" id="va-volta">Fechar</button><button class="botao primario" id="va-restaurar">Voltar para esta versão</button></div>`, "largo");
-    $("#va-volta", m2).onclick = recarregar;
-    $("#va-restaurar", m2).onclick = async () => {
-      await guardarCopia(caminho.replace(/\.md$/, "-convertida.md"), texto);
-      await gravarArquivo(caminho, copia);
-      toast("Ficha antiga restaurada (a convertida também ficou guardada).");
-      recarregar();
-    };
-  };
+  $("#fm-preencher", c).onclick = () => preencherComClaude(caminho, f, $(".ficha-texto", c), recarregar);
   const enviarFoto = async (arq) => {
     if (!arq) return;
     try { await api("/api/foto", { ficha: caminho, nome: arq.name, dados: await lerBase64(arq) }); toast("Foto salva"); recarregar(); }

@@ -1,6 +1,6 @@
 # Zéfiro
 
-> O maior navio da frota Trademerx. Naufraga em junho de 1812 (mês da Tempestade). Fontes: `[roteiro]`, `[antiga]`.
+> O maior navio da frota Trademerx. Naufraga em junho de 1812 (mês da Tempestade).
 
 ## Retrato
 
@@ -40,7 +40,3 @@
 ## Detalhes criados durante a escrita
 
 (a definir)
-
-## Estado atual
-
-- Naufragado, junho de 1812 `[roteiro]`.

@@ -1,6 +1,6 @@
 # Albahara
 
-> Cidade ao sul de [Sylvarene](sylvarene.md). A posição na cadeia fica em [Geografia de Morcal](../geografia.md). Fontes: `[autor]` descrição do autor; `[roteiro]` roteiro novo; `[antiga]` versão antiga.
+> Cidade ao sul de [Sylvarene](sylvarene.md). A posição na cadeia fica em [Geografia de Morcal](../geografia.md).
 
 ## Retrato
 

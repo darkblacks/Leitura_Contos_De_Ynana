@@ -10,6 +10,8 @@ Ilhas quebradas de rocha escura, ventos fortes e faróis. Pescadores, contraband
 
 - Onde fica: em [Morcal](morcal.md)
 - Clima: frio e ventoso `[criado]`
+- Tamanho: (a definir)
+- Relevo: (a definir)
 
 ## Comportamento
 
@@ -17,6 +19,7 @@ Ilhas quebradas de rocha escura, ventos fortes e faróis. Pescadores, contraband
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -25,6 +28,11 @@ Ilhas quebradas de rocha escura, ventos fortes e faróis. Pescadores, contraband
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

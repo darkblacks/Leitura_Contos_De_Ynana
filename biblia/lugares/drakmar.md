@@ -10,6 +10,8 @@ Arquipélago de enseadas escondidas e baías fundas, famoso por abrigar piratas 
 
 - Onde fica: em [Morcal](morcal.md)
 - Clima: quente, com temporadas de furacão `[criado]`
+- Tamanho: (a definir)
+- Relevo: (a definir)
 
 ## Comportamento
 
@@ -17,6 +19,7 @@ Arquipélago de enseadas escondidas e baías fundas, famoso por abrigar piratas 
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -25,6 +28,11 @@ Arquipélago de enseadas escondidas e baías fundas, famoso por abrigar piratas 
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

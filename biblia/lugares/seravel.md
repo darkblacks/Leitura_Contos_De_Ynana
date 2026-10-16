@@ -11,6 +11,8 @@ O arquipélago de Sylvarene: uma ilha grande (a própria [Sylvarene](sylvarene.m
 - Onde fica: em [Morcal](morcal.md)
 - Ilha principal: [Sylvarene](sylvarene.md) `[autor]`
 - Clima: temperado marítimo, com estação de tempestades `[criado]`
+- Tamanho: (a definir)
+- Relevo: (a definir)
 
 ## Comportamento
 
@@ -18,6 +20,7 @@ O arquipélago de Sylvarene: uma ilha grande (a própria [Sylvarene](sylvarene.m
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -26,6 +29,11 @@ O arquipélago de Sylvarene: uma ilha grande (a própria [Sylvarene](sylvarene.m
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

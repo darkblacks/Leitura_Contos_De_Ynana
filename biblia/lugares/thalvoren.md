@@ -11,6 +11,7 @@ Continente do norte gelado: florestas escuras, fiordes, portos que congelam part
 - Onde fica: em [Morcal](morcal.md)
 - Clima: frio, longos invernos `[criado]`
 - Relevo: florestas, fiordes e montanhas baixas `[criado]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,6 +19,7 @@ Continente do norte gelado: florestas escuras, fiordes, portos que congelam part
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -26,6 +28,11 @@ Continente do norte gelado: florestas escuras, fiordes, portos que congelam part
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

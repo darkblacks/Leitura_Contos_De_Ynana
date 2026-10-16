@@ -10,6 +10,8 @@ Duas ilhas gêmeas separadas por um estreito, com uma cidade em cada margem e um
 
 - Onde fica: em [Morcal](morcal.md)
 - Clima: ameno `[criado]`
+- Tamanho: (a definir)
+- Relevo: (a definir)
 
 ## Comportamento
 
@@ -17,6 +19,7 @@ Duas ilhas gêmeas separadas por um estreito, com uma cidade em cada margem e um
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -25,6 +28,11 @@ Duas ilhas gêmeas separadas por um estreito, com uma cidade em cada margem e um
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

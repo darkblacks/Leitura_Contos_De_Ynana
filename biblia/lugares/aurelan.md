@@ -11,6 +11,7 @@ O continente mais antigo e mais povoado: reinos velhos, capitais de pedra, estra
 - Onde fica: em [Morcal](morcal.md)
 - Clima: temperado, com invernos de chuva `[criado]`
 - Relevo: planícies largas cortadas por grandes rios `[criado]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,6 +19,7 @@ O continente mais antigo e mais povoado: reinos velhos, capitais de pedra, estra
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -26,6 +28,11 @@ O continente mais antigo e mais povoado: reinos velhos, capitais de pedra, estra
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

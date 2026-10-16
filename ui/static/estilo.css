@@ -835,3 +835,9 @@ a { color: var(--acento); }
 .parl-aviso { width: 100%; }
 .parl-mais { display: block; margin: 10px auto 0; }
 .parl-principais .sub { align-self: center; }
+
+/* Aviso de conexão */
+.aviso-conexao { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 80; max-width: calc(100vw - 32px); background: var(--alerta); color: #fff; padding: 10px 16px; border-radius: 10px; box-shadow: var(--sombra); font-size: 13px; text-align: center; }
+.aviso-conexao .sub { display: block; color: #fff; opacity: .85; font-size: 12px; margin-top: 2px; }
+.rede { font-size: 11px; color: var(--lateral-tinta-2); margin-left: auto; margin-right: 8px; cursor: help; }
+.rede.off { color: var(--ouro); }

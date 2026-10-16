@@ -76,6 +76,23 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 
 Seções, em linguagem natural (nada de atributos de RPG): Identidade · Apelidos (cada um com quem usa) · Aparência (uma versão `###` por idade ou fase, com Período, Idade, Tipo, Espécie, Imagem e a descrição) · Personalidade · Motivação · Sociedade · Segredos e conhecimento · Voz no diário · Observações narrativas · Estado atual. Família, amores, amizades e inimizades ficam em `biblia/relacoes.md`, não na ficha.
 
+## Formato padrão das fichas
+
+Toda ficha de personagem, lugar e artefato segue o mesmo formato, para ler e editar sem confusão:
+- `# Nome` no topo; depois, se houver, uma linha `>` com as fontes (`[autor]`, `[roteiro]`, `[antiga]`, `[img]`).
+- As seções `##` do `_modelo.md` da pasta, **na ordem do modelo** e com o mesmo nome. Seção que não existe no modelo vai para o fim.
+- Dados em campos `- Campo: valor`, com os nomes de campo do modelo. Lista de vários itens: subitens recuados com dois espaços.
+- O que não se sabe: `(a definir)`. Seção sem nada: só `(a definir)`.
+- Sem texto de instrução nem exemplo do modelo dentro da ficha (as instruções ficam no `_modelo.md`).
+- Ao escrever numa ficha, mantenha esse formato: preencha o campo que já existe em vez de criar outro parecido.
+- A Escrivaninha tem o botão **Padronizar** (Personagens, Lugares, Artefatos), que põe as fichas nesse formato sem apagar nada e guarda a versão anterior em `biblia/_versoes-antigas/`.
+
+## O que é local e o que precisa de internet
+
+- **Local (funciona sem internet):** o programa, todas as telas, capítulos, fichas, famílias, castas, empresas, parlamento, acontecimentos, calendário, estilo, a checagem de tiques e as fontes.
+- **Precisa de internet:** a conversa com o Claude (escrever, ajustar, revisar, canonizar, descrever imagens), a procura de atualização e as vozes naturais do "Ouvir" (sem internet, ele usa a voz do computador).
+- Uma parte online que falha não derruba o resto: o chat mostra o erro e guarda a mensagem; a atualização só não aparece; o programa continua aberto.
+
 ## Dinâmicas de personagem
 
 - Família (`biblia/familias/`), casta (ficha › Sociedade; se faltar, a da família), empresa (`biblia/empresas/`) e profissão (ficha › Sociedade › Ocupação) definem as dinâmicas: quem deve a quem, quem compete com quem, quem trata quem como igual. Use ao escrever cenas com mais de uma pessoa. Nem todo personagem tem tudo preenchido: o que faltar, não invente.

@@ -8,16 +8,45 @@ const estado = { arvore: null, sujo: false, salvarAgora: null, vistaAtual: null 
 
 /* ------------------------------------------------------------ API */
 const SEM_CONEXAO = "A Escrivaninha foi fechada. Feche esta janela e abra de novo pelo atalho Contos de Ynana.";
+/* Uma falha de rede não é o fim: tenta de novo por alguns segundos antes de avisar. */
 async function api(rota, corpo) {
   const op = corpo ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) } : {};
   let r;
-  try { r = await fetch(rota, op); } catch { throw new Error(SEM_CONEXAO); }
+  for (let tentativa = 0; ; tentativa++) {
+    try { r = await fetch(rota, op); conexao.ok(); break; }
+    catch {
+      if (tentativa >= 4) { conexao.caiu(); throw new Error(SEM_CONEXAO); }
+      await new Promise((ok) => setTimeout(ok, 400 * (tentativa + 1)));
+    }
+  }
   const d = await r.json().catch(() => ({ erro: "resposta inválida do servidor" }));
   if (!r.ok || d.erro) throw new Error(d.erro || r.statusText);
   return d;
 }
 const lerArquivo = (c) => api("/api/arquivo?caminho=" + encodeURIComponent(c)).then((d) => d.conteudo);
 const gravarArquivo = (c, conteudo) => api("/api/arquivo", { caminho: c, conteudo });
+
+/* Aviso de conexão: aparece quando o programa não responde e some sozinho quando ele volta. */
+const conexao = {
+  fora: false,
+  caiu() {
+    if (this.fora) return;
+    this.fora = true;
+    let b = document.getElementById("aviso-conexao");
+    if (!b) { document.body.insertAdjacentHTML("beforeend", `<div id="aviso-conexao" class="aviso-conexao">A Escrivaninha não está respondendo. Tentando de novo… <span class="sub">Se não voltar, abra pelo atalho Contos de Ynana: nada do que foi salvo se perde.</span></div>`); }
+    const tentar = async () => {
+      try { const r = await fetch("/api/ping", { cache: "no-store" }); if (r.ok) { this.ok(); const h = document.querySelector("#vista > .vazio h3"); if (h && /foi fechada|deu errado/.test(h.textContent)) rotaDoEndereco(); return; } } catch {}
+      if (this.fora) setTimeout(tentar, 2000);
+    };
+    setTimeout(tentar, 1500);
+  },
+  ok() {
+    if (!this.fora) return;
+    this.fora = false;
+    const b = document.getElementById("aviso-conexao"); if (b) b.remove();
+    fetch("/api/vivo", { method: "POST" }).catch(() => {});
+  },
+};
 
 /* ------------------------------------------------------------ utilidades */
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -591,6 +620,21 @@ const vivo = () => fetch("/api/vivo", { method: "POST" }).catch(() => {});
 vivo();
 setInterval(vivo, 10000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) vivo(); });
+window.addEventListener("focus", vivo);
+
+/* Internet: só o Claude, as atualizações e as vozes naturais precisam dela. O resto é local. */
+function desenharRede() {
+  const e = $("#rede"); if (!e) return;
+  const on = navigator.onLine;
+  e.className = "rede " + (on ? "on" : "off");
+  e.textContent = on ? "● online" : "○ sem internet";
+  e.title = on ? "Com internet: o Claude, as atualizações e as vozes naturais estão disponíveis."
+    : "Sem internet: capítulos, fichas e todas as telas funcionam normalmente. O Claude, as atualizações e as vozes naturais esperam a conexão voltar.";
+}
+window.addEventListener("online", () => { desenharRede(); verificarAtualizacao(); });
+window.addEventListener("offline", desenharRede);
+desenharRede();
+window.addEventListener("pageshow", vivo);
 window.addEventListener("pagehide", () => { try { navigator.sendBeacon("/api/tchau"); } catch {} });
 
 /* ------------------------------------------------------------ atualização do app
@@ -1004,6 +1048,10 @@ VISTAS.conversa = async () => {
   const enviar = async (texto) => {
     texto = (texto || "").trim();
     if (!texto) return;
+    if (!navigator.onLine) {
+      const d = addMsg("erro", "Sem internet agora: conversar com o Claude precisa de internet. Sua mensagem ficou na caixa; o resto da Escrivaninha funciona normalmente.");
+      d.className = "msg erro"; entrada.value = texto; return;
+    }
     $$(".rapidas", msgs).forEach((x) => x.remove());
     $("#atalhos").hidden = false;
     addMsg("autor", texto);

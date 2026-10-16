@@ -11,6 +11,7 @@ Cidade costeira e montanhosa, com falésias, neblina e um clima mais frio. A pre
 - Onde fica: norte de [Sylvarene](sylvarene.md) `[autor]`
 - Clima: mais frio, com neblina `[autor]`
 - Relevo: montanhoso, falésias, enseadas, rochedos e pequenas praias `[autor]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,6 +19,7 @@ Cidade costeira e montanhosa, com falésias, neblina e um clima mais frio. A pre
 - Quem circula: peregrinos e visitantes dos santuários `[autor]`
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -26,6 +28,11 @@ Cidade costeira e montanhosa, com falésias, neblina e um clima mais frio. A pre
 - Materiais: pedra antiga `[autor]`
 - Marcos: santuários, pátios de rito `[autor]`
 - Cheiro: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

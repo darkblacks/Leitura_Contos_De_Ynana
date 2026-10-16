@@ -11,6 +11,7 @@ Paisagem aberta, verde e “rancheira”: grandes campos, pastos, fazendas e vil
 - Onde fica: oeste de [Sylvarene](sylvarene.md) `[autor]`
 - Clima: (a definir)
 - Relevo: campos abertos, muitos rios e lagos `[autor]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,11 +19,20 @@ Paisagem aberta, verde e “rancheira”: grandes campos, pastos, fazendas e vil
 - Quem circula: fazendeiros, tropeiros, feirantes `[autor]`
 - Perigos: (a definir)
 - Regras sociais: ritmo comunitário `[autor]`
+- Quem circula (e quando): (a definir)
 
 ## Características
 
 - Marcos: armazéns, celeiros, currais, feiras de alimento, canais e pontes baixas `[autor]`
 - Cheiro: (a definir)
+- Som: (a definir)
+- Luz: (a definir)
+- Materiais: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

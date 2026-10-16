@@ -11,11 +11,17 @@ O mundo de Ynana, com quatro continentes e sete arquipélagos principais `[autor
 - Continentes: [Aurelan](aurelan.md), [Thalvoren](thalvoren.md), [Ysmerah](ysmerah.md), [Korvhal](korvhal.md) `[criado]`
 - Arquipélagos principais: [Seravel](seravel.md), [Ostrell](ostrell.md), [Nhal'Ura](nhal-ura.md), [Vellmoor](vellmoor.md), [Ithrene](ithrene.md), [Drakmar](drakmar.md), [Saelith](saelith.md) `[criado]`
 - Clima: do gelo de Thalvoren aos atóis quentes de Ithrene `[criado]`
+- Onde fica: (a definir)
+- Tamanho: (a definir)
+- Relevo: (a definir)
 
 ## Comportamento
 
 - Rotina: o ano gira em torno das estações de navegação: há meses de mar aberto e meses de tempestade `[criado]`
 - Regras sociais: (a definir)
+- Rotina e horários: (a definir)
+- Quem circula (e quando): (a definir)
+- Perigos: (a definir)
 
 ## Características
 
@@ -24,6 +30,11 @@ O mundo de Ynana, com quatro continentes e sete arquipélagos principais `[autor
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

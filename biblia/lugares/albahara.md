@@ -11,11 +11,12 @@ Grande cidade portuária, mais densa e vibrante, com uma orla ampla e intensa at
 - Onde fica: sul de [Sylvarene](sylvarene.md), na costa `[autor]` (na versão antiga, "reino de Sylvaréne" `[antiga]`)
 - Papel: capital econômica do reino, polo cosmopolita de comércio exterior `[antiga]`; polo cultural e comercial `[autor]`
 - Bairros: [Calumbres](calumbres.md) `[autor]`; a "cidade alta", subindo para o centro `[autor]`; bairros próximos ao porto `[autor]`
+- Tamanho: (a definir)
+- Clima: (a definir)
+- Relevo: (a definir)
 
 ### Conexões
 
-| Liga-se a | Caminho | Tempo |
-|---|---|---|
 | [Calumbres](calumbres.md) | dentro da cidade (bairro) `[autor]` | (a definir) |
 | [Faunbridge](faunbridge.md) | o eixo que sobe pela cidade alta em direção ao centro `[autor]` | (a definir) |
 
@@ -24,12 +25,25 @@ Grande cidade portuária, mais densa e vibrante, com uma orla ampla e intensa at
 - Porto movimentado, com boatos, imprensa, elite curiosa e credores `[roteiro]`.
 - Imprensa: o *Arauto de Albahara* `[antiga]`.
 - Política: há um Conselho e o cargo de Barão/Baronesa de Albahara `[antiga]`.
+- Rotina e horários: (a definir)
+- Quem circula (e quando): (a definir)
+- Perigos: (a definir)
+- Regras sociais: (a definir)
 
 ## Características
 
 - Marcos: docas, muralhas e fortificações costeiras, mercados `[autor]`; o Alto Salão de Albahara, com cúpula de vidro `[antiga]`; a sede, os galpões e o cais da Trademerx `[roteiro]`; a [Mansão Trademerx](mansao-trademerx.md).
+- Cheiro: (a definir)
+- Som: (a definir)
+- Luz: (a definir)
+- Materiais: (a definir)
 - Favelas perto do cais `[roteiro]`.
 
 ## Quem frequenta / quem evita
 
-- (a definir)
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
+
+## Detalhes criados durante a escrita
+
+(a definir)

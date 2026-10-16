@@ -10,6 +10,8 @@ Atóis e corais rasos de água clara. Mergulhadores de pérolas, sal e um mar tr
 
 - Onde fica: em [Morcal](morcal.md)
 - Clima: quente e seco `[criado]`
+- Tamanho: (a definir)
+- Relevo: (a definir)
 
 ## Comportamento
 
@@ -17,6 +19,7 @@ Atóis e corais rasos de água clara. Mergulhadores de pérolas, sal e um mar tr
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -25,6 +28,11 @@ Atóis e corais rasos de água clara. Mergulhadores de pérolas, sal e um mar tr
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

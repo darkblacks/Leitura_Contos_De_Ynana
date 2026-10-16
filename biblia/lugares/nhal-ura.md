@@ -10,6 +10,8 @@ Arquipélago vulcânico e tropical: terra preta, cana, café e montanhas que fum
 
 - Onde fica: em [Morcal](morcal.md)
 - Clima: quente, chuvas fortes `[criado]`
+- Tamanho: (a definir)
+- Relevo: (a definir)
 
 ## Comportamento
 
@@ -17,6 +19,7 @@ Arquipélago vulcânico e tropical: terra preta, cana, café e montanhas que fum
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -25,6 +28,11 @@ Arquipélago vulcânico e tropical: terra preta, cana, café e montanhas que fum
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

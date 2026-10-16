@@ -480,6 +480,9 @@ func responderErro(w http.ResponseWriter, err error) {
 
 func servirArquivo(w http.ResponseWriter, nome string, dados []byte) {
 	tipo := mime.TypeByExtension(strings.ToLower(filepath.Ext(nome)))
+	if strings.EqualFold(filepath.Ext(nome), ".woff2") {
+		tipo = "font/woff2" // o Windows nem sempre conhece
+	}
 	if tipo == "" {
 		tipo = "application/octet-stream"
 	}

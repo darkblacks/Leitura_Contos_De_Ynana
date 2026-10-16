@@ -500,7 +500,7 @@ function converterFicha(texto, caminho, personagens) {
     if (l.trim()) sobra.push(l);
   }
   novo.secoes.push({ titulo: "Identidade", corpo: [ident.texto(), ...sobra].join("\n") });
-  novo.secoes.push({ titulo: "Apelidos", corpo: apelidos.join("\n") || "Um por linha: o apelido e quem usa." });
+  novo.secoes.push({ titulo: "Apelidos", corpo: apelidos.join("\n") || "(a definir)" });
 
   // Aparência: o que existe vira a primeira versão (sem inventar idade nem período)
   const apSec = pegar("Aparência");
@@ -979,22 +979,11 @@ function htmlVersao(v, i, img) {
     </div></div>`;
 }
 
-/* Lista de personagens: aviso de conversão para fichas antigas */
+/* Lista de personagens: abas (o aviso de fichas fora do padrão, antigas inclusive, vem de padrao.js) */
 const _vistaPersonagens = VISTAS.personagens;
 VISTAS.personagens = async () => {
   await _vistaPersonagens();
   $(".cabecalho-vista", vista).insertAdjacentHTML("afterend", abasPersonagens("fichas"));
-  const a = estado.arvore;
-  const antigas = [];
-  for (const f of a.personagens) { const t = await lerSeExiste(f.caminho); if (t && ehFichaAntiga(t)) antigas.push(f.caminho); }
-  if (!antigas.length) return;
-  const cab = $(".abas", vista);
-  cab.insertAdjacentHTML("afterend", `<div class="aviso" style="margin:0 0 18px">${antigas.length} ficha(s) no formato antigo.
-    A conversão reorganiza nas seções novas (Identidade, Aparência por idade, Motivação, Sociedade…) sem apagar nada; a versão antiga fica guardada e dá para voltar.
-    <button class="botao pequeno primario" id="converter-todas" style="margin-left:8px">Converter todas</button></div>`);
-  $("#converter-todas").onclick = async () => {
-    try { const n = await converterFichas(antigas); toast(`${n} ficha(s) convertida(s)`); VISTAS.personagens(); } catch (e) { toast(e.message, true); }
-  };
 };
 
 /* ============================================================ Tela: Calendário (Meses · Eventos) */

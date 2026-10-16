@@ -13,6 +13,7 @@ import base64
 import importlib.util
 import json
 import mimetypes
+mimetypes.add_type("font/woff2", ".woff2")
 import re
 import sys
 import threading

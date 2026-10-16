@@ -1,9 +1,10 @@
 {
-  "versao": "2.7.0",
-  "sha256": "8ee738c4cb8ccd55d0b11b5735ad70beceeaeae7a3f3d1b5c06d0e0e821cae4b",
+  "versao": "2.8.0",
+  "sha256": "b1aa63b8ef4e35042eb5d965831084e8af8b5033adc02ff90b91e6fb8099275c",
   "notas": [
-    "Parlamento: Federal (Senhor Supremo, General, Távola Redonda com 6 cadeiras fixas) e Municipal (Barão e Ministro da Milícia em cada cidade)",
-    "Acrescente ou tire cargos federais e municipais; dá para pôr um cargo em todas as cidades de uma vez",
-    "Ficha nova de personagem já vem com o nome preenchido"
+    "Estabilidade: o programa não se desliga mais sozinho com a janela minimizada, o Edge economizando energia ou o PC suspenso",
+    "Se a conexão com o programa piscar, a tela tenta de novo e volta sozinha",
+    "Separado o que é local (tudo) do que precisa de internet (Claude, atualização, voz natural); fontes agora vêm dentro do app",
+    "Fichas: botão Padronizar deixa personagens, lugares e artefatos no mesmo formato, sem apagar nada"
   ]
 }

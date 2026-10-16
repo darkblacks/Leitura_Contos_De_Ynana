@@ -11,6 +11,7 @@ Continente de desertos, oásis e cidades de cúpula. Especiarias, tecidos tingid
 - Onde fica: em [Morcal](morcal.md)
 - Clima: quente e seco; noites frias no deserto `[criado]`
 - Relevo: desertos, planaltos e uma faixa costeira fértil `[criado]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,6 +19,7 @@ Continente de desertos, oásis e cidades de cúpula. Especiarias, tecidos tingid
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -26,6 +28,11 @@ Continente de desertos, oásis e cidades de cúpula. Especiarias, tecidos tingid
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

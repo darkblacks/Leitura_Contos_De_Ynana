@@ -13,6 +13,8 @@ Reino na ilha principal do arquipélago de [Seravel](seravel.md), onde se passa 
 - Governo: reino `[antiga]`
 - Cidades: norte [Grimward](grimward.md), leste [Vyrwyll](vyrwyll.md), oeste [Kalun](kalun.md), centro [Faunbridge](faunbridge.md), sul [Albahara](albahara.md) `[autor]`
 - Relevo: montanhas e falésias ao norte, cordilheira alta a leste, campos e rios a oeste, planalto murado no centro, porto ao sul `[autor]`
+- Tamanho: (a definir)
+- Clima: (a definir)
 
 ## Comportamento
 
@@ -20,6 +22,7 @@ Reino na ilha principal do arquipélago de [Seravel](seravel.md), onde se passa 
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: castas e bolhas, ver [Sociedade de Sylvarene](../sociedade.md)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -28,6 +31,11 @@ Reino na ilha principal do arquipélago de [Seravel](seravel.md), onde se passa 
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

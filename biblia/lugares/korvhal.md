@@ -11,6 +11,7 @@ O continente pouco mapeado: selvas, serras úmidas e rios que ninguém subiu at�
 - Onde fica: em [Morcal](morcal.md)
 - Clima: quente e úmido `[criado]`
 - Relevo: selvas, serras e grandes rios `[criado]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,6 +19,7 @@ O continente pouco mapeado: selvas, serras úmidas e rios que ninguém subiu at�
 - Quem circula: (a definir)
 - Perigos: (a definir)
 - Regras sociais: (a definir)
+- Quem circula (e quando): (a definir)
 
 ## Características
 
@@ -26,6 +28,11 @@ O continente pouco mapeado: selvas, serras úmidas e rios que ninguém subiu at�
 - Luz: (a definir)
 - Materiais: (a definir)
 - Marcos: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

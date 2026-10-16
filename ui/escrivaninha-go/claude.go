@@ -387,6 +387,8 @@ func traduzirErro(stderr string, err error) string {
 		return "O Claude Code precisa que você entre na sua conta. Abra o Claude Code uma vez (no terminal, digite claude) e faça o login; depois tente de novo."
 	case strings.Contains(s, "rate") || strings.Contains(s, "limit") || strings.Contains(s, "usage"):
 		return "O limite de uso da sua assinatura foi atingido por agora. Tente de novo mais tarde."
+	case strings.Contains(s, "enotfound") || strings.Contains(s, "econnrefused") || strings.Contains(s, "etimedout") || strings.Contains(s, "network") || strings.Contains(s, "fetch failed") || strings.Contains(s, "getaddrinfo") || strings.Contains(s, "connection"):
+		return "Sem internet agora: conversar com o Claude precisa de internet. O resto da Escrivaninha (capítulos, fichas, telas) funciona normalmente; tente de novo quando a conexão voltar."
 	case strings.Contains(s, "killed") || strings.Contains(err.Error(), "killed") || strings.Contains(err.Error(), "exit status 1") && stderr == "":
 		return "Resposta interrompida."
 	}

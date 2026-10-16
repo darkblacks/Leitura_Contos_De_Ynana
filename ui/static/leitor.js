@@ -17,8 +17,16 @@ function carregarVozes() {
   leitor.vozes = speechSynthesis.getVoices().filter((v) => /^pt/i.test(v.lang)).sort((a, b) => nota(b) - nota(a));
   return leitor.vozes;
 }
+window.addEventListener("online", () => { leitor.onlineFalhou = false; });
 if ("speechSynthesis" in window) { carregarVozes(); speechSynthesis.onvoiceschanged = () => { carregarVozes(); desenharVozes(); }; }
-const vozAtual = () => leitor.vozes.find((v) => v.name === prefLer(PREF_VOZ, "")) || leitor.vozes[0] || null;
+/* Vozes "Online (Natural)" precisam de internet; sem ela, usa uma voz do próprio computador. */
+const vozOnline = (v) => /online|natural|neural|google/i.test(v.name) && !v.localService;
+const vozAtual = () => {
+  const semRede = !navigator.onLine || leitor.onlineFalhou;
+  const ok = (v) => !semRede || !vozOnline(v);
+  const escolhida = leitor.vozes.find((v) => v.name === prefLer(PREF_VOZ, ""));
+  return (escolhida && ok(escolhida) ? escolhida : null) || leitor.vozes.find(ok) || leitor.vozes[0] || null;
+};
 const nomeVoz = (v) => v.name.replace(/^Microsoft\s+/, "").replace(/\s*-\s*Portuguese.*$/i, "").replace(/\s*\((Natural)\)/i, " · natural").replace(/Online\s*/i, "");
 
 /* Divide o texto em frases curtas (o navegador corta falas longas). */
@@ -96,6 +104,10 @@ function tocar() {
   const v = vozAtual();
   if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "pt-BR";
   u.rate = +prefLer(PREF_VEL, "1");
+  u.onerror = (ev) => {
+    if (leitor.fala !== u || !leitor.tocando || ev.error === "interrupted" || ev.error === "canceled") return;
+    if (v && vozOnline(v) && !leitor.onlineFalhou) { leitor.onlineFalhou = true; toast("Sem internet para a voz natural: usando a voz do computador."); desenharVozes(); tocar(); }
+  };
   u.onend = () => {
     if (leitor.fala !== u || !leitor.tocando) return;
     if (++leitor.f >= b.frases.length) { leitor.f = 0; leitor.i++; }

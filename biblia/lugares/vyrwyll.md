@@ -11,6 +11,7 @@ Cordilheira muito alta, rochosa, imponente, com picos dominando o horizonte. É 
 - Onde fica: leste de [Sylvarene](sylvarene.md) `[autor]`
 - Clima: de altitude `[autor]`
 - Relevo: cordilheira muito alta; sem mar `[autor]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,12 +19,20 @@ Cordilheira muito alta, rochosa, imponente, com picos dominando o horizonte. É 
 - Quem circula: mineiros e gente de ofício `[autor]`
 - Perigos: (a definir)
 - Regras sociais: caráter estratégico e disciplinado `[autor]`
+- Quem circula (e quando): (a definir)
 
 ## Características
 
 - Materiais: pedra, metal, pedras preciosas `[autor]`
 - Marcos: terraços, mirantes, fortificações, áreas de mineração `[autor]`
 - Cheiro: (a definir)
+- Som: (a definir)
+- Luz: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

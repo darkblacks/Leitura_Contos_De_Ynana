@@ -11,6 +11,7 @@ Cidade conectora, elevada e murada, marcada por pontes e construções altas. Vi
 - Onde fica: centro de [Sylvarene](sylvarene.md) `[autor]`
 - Clima: (a definir)
 - Relevo: elevada, murada `[autor]`
+- Tamanho: (a definir)
 
 ## Comportamento
 
@@ -18,12 +19,20 @@ Cidade conectora, elevada e murada, marcada por pontes e construções altas. Vi
 - Quem circula: aristocracia e estudantes das instituições de elite `[autor]`
 - Perigos: (a definir)
 - Regras sociais: ar aristocrático; poder social `[autor]`
+- Quem circula (e quando): (a definir)
 
 ## Características
 
 - Materiais: arquitetura monumental `[autor]`
 - Marcos: pontes, arcos, muralhas, instituições de elite `[autor]`
 - Cheiro: (a definir)
+- Som: (a definir)
+- Luz: (a definir)
+
+## Quem frequenta / quem evita
+
+- Frequenta: (a definir)
+- Evita (e por quê): (a definir)
 
 ## Detalhes criados durante a escrita
 

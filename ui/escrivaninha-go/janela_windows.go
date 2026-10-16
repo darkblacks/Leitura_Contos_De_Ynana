@@ -66,7 +66,7 @@ func navegadorApp() string {
 }
 
 // abrirJanela abre a interface numa janela própria, sem barra de endereço, e volta na hora.
-// Quem decide quando encerrar é o sinal de vida que a própria janela manda (ver vida.go).
+// O processo da janela é vigiado: enquanto ele estiver aberto, o programa não encerra (ver vida.go).
 func abrirJanela(url string) {
 	nav := navegadorApp()
 	if nav == "" {
@@ -87,7 +87,9 @@ func abrirJanela(url string) {
 	if err := cmd.Start(); err != nil {
 		logar("Não consegui abrir a janela (%v); abrindo no navegador padrão.", err)
 		abrirNavegador(url)
+		return
 	}
+	vigiarJanela(cmd.Wait)
 }
 
 // encerrarOutrasInstancias fecha qualquer outra Escrivaninha aberta (inclusive versões

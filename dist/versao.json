@@ -1,9 +1,8 @@
 {
-  "versao": "2.10.0",
-  "sha256": "04aa373db4f79861214846dd26536ce7c62f5329c3a888623893095da928ff97",
+  "versao": "2.11.0",
+  "sha256": "20189b03fbf3287789c31acda8e70bc10b028351c12e9bf236b59b1c6ef1ee83",
   "notas": [
-    "Troca de página suave: a tela não pisca nem fica em branco; a página nova entra quando estiver pronta",
-    "Fichas que não mudaram não são lidas de novo (telas mais rápidas)",
-    "Pedido de capítulo agora leva uma ficha técnica: data, feriado, ciclo, idade, aparência, família, casta, empresa, cargo, relações, lugar e estado vigente"
+    "Nova tela Opções: temas de cor (Limpo branco/preto/vermelho como padrão, Azul, Laranja, Verde, Pergaminho, Noturno preto e branco, Azul noturno, Pergaminho escuro)",
+    "Tamanho e fonte do texto de leitura ajustáveis"
   ]
 }

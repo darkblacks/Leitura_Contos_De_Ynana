@@ -640,17 +640,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") fecharModal();
 });
 window.addEventListener("beforeunload", (e) => { if (estado.sujo) { estado.salvarAgora && estado.salvarAgora(); e.preventDefault(); } });
-function aplicarTema(t) {
-  if (t) document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme");
-}
-try { aplicarTema(localStorage.getItem("tema")); } catch {}
-$("#tema").onclick = () => {
-  const escuro = document.documentElement.getAttribute("data-theme") === "dark" ||
-    (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
-  const novo = escuro ? "light" : "dark";
-  aplicarTema(novo);
-  try { localStorage.setItem("tema", novo); } catch {}
-};
+// cores e leitura ficam em Opções (opcoes.js); o botão do rodapé leva para lá
+$("#tema").onclick = () => ir("opcoes");
 
 /* ------------------------------------------------------------ sinal de vida
    O programa fica aberto enquanto esta janela estiver aberta, e encerra sozinho quando ela fecha. */

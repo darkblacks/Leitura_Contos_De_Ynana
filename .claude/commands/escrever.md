@@ -11,12 +11,13 @@ Não existe roteiro pronto: o que acontece vem do **pedido do autor** (no chat o
 
 ## Loop
 
-1. **Ler** (só isto):
-   - o pedido e as notas do capítulo (`continuidade/notas-do-autor/cap-NN.md`), inclusive o que está em "manter"
+1. **Ler** (só isto). Se a mensagem trouxer a **Ficha técnica** montada pela Escrivaninha (data, ciclo, quem é quem, família, casta, empresa, cargo, relações, lugar, estado vigente, com os caminhos), comece por ela: ela diz exatamente quais arquivos abrir.
+   - o pedido e as notas do capítulo (`continuidade/notas-do-autor/cap-NN.md`), inclusive o que está em "manter" e em "Tiques mantidos"
    - **a escrita de quem escreve**: `estilo/escritas/<nome>.md` e, se ela herda de outra, a de cima também (o que estiver vazio vem de lá); `estilo/estilo.md` (regras gerais) e `estilo/guardrails.md`
    - a ficha de quem escreve (a versão de aparência da idade); **não abra imagens**, use só as descrições
    - o capítulo anterior inteiro (`cap-(N-1).md`), se existir; para os de antes, os **acontecimentos canonizados** (`biblia/acontecimentos/`: onde estava cada um, função) e `continuidade/resumos.md`; `continuidade/registro.md`
-   - as fichas dos personagens, lugares e artefatos do pedido (só o texto)
+   - as fichas dos personagens, lugares e artefatos do pedido (só o texto). Em cada personagem use: a **versão de aparência** da idade ou fase na data, a idade (data − nascimento), Personalidade, Motivação, Segredos e conhecimento ("Sabe" e "Desconhece" limitam o que ele pode dizer), Voz e Estado atual
+   - as **dinâmicas** de quem aparece: família e árvore (`biblia/familias/`), casta e bolha (ficha › Sociedade, ou a da família; `biblia/sociedade.md`), empresa e papel (`biblia/empresas/`), ocupação, e o **cargo público na data** (`biblia/parlamento.md`, versão do ano mais alto que não passa do ano do capítulo). Elas decidem quem trata quem como igual, quem obedece, quem desconfia, como cada um fala com o outro
    - para o lugar da cena, a cadeia dele em `biblia/geografia.md` e as fichas dessa cadeia
    - o **estado vigente** de cada lugar e objeto da cena: a última linha de "Mudanças nos lugares/objetos" antes da data do capítulo (busque o nome em `biblia/acontecimentos/`)
    - os acontecimentos escolhidos (`biblia/acontecimentos/`) e o ciclo deles (`biblia/ciclos.md`); `biblia/relacoes.md` entre quem aparece
@@ -39,8 +40,8 @@ Não existe roteiro pronto: o que acontece vem do **pedido do autor** (no chat o
 3. **Script**: `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md` (no Windows sem Python: `.\Escrivaninha.exe tiques capitulos\cap-NN.md`).
 
 4. **Revisores** (em paralelo, contexto limpo, só os caminhos):
-   - `revisor-continuidade`: o capítulo, as notas do capítulo (pedido), a ficha de quem escreve, registro, resumos, fichas envolvidas, capítulo anterior, `biblia/calendario.md`, `biblia/geografia.md`, `biblia/relacoes.md` e os acontecimentos escolhidos.
-   - `revisor-estilo`: o capítulo, a escrita de quem escreve (e a que ela herda), `estilo/estilo.md`, `estilo/guardrails.md`, a saída do script e as fichas de quem fala.
+   - `revisor-continuidade`: o capítulo, as notas do capítulo (pedido), a ficha de quem escreve, registro, resumos, fichas envolvidas, capítulo anterior, `biblia/calendario.md`, `biblia/geografia.md`, `biblia/relacoes.md`, `biblia/parlamento.md`, as famílias e empresas de quem aparece e os acontecimentos escolhidos.
+   - `revisor-estilo`: o capítulo, a escrita de quem escreve (e a que ela herda), `estilo/estilo.md`, `estilo/guardrails.md`, a saída do script, as notas do capítulo ("Tiques mantidos") e as fichas de quem fala.
 
 5. **Corrigir só os trechos apontados.** Discordou de um apontamento: mantenha e anote o motivo.
 

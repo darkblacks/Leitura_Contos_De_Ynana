@@ -1,9 +1,9 @@
 {
-  "versao": "2.9.0",
-  "sha256": "7dc70d5316377f520838fe21f376e6bd61b64bca5b30e86fa7dfa7c94abc708c",
+  "versao": "2.10.0",
+  "sha256": "04aa373db4f79861214846dd26536ce7c62f5329c3a888623893095da928ff97",
   "notas": [
-    "Fichas: acabou a ficha antiga; ficam só as seções e campos do modelo",
-    "Padronizar refeito: sai o exemplo 'Pessoa', seções fora do modelo e textos de instrução; sem cópias",
-    "Novo: ✨ Preencher com o Claude na ficha de personagem (você diz em poucas palavras, ele preenche olhando a imagem, casta, família, empresa e cargo)"
+    "Troca de página suave: a tela não pisca nem fica em branco; a página nova entra quando estiver pronta",
+    "Fichas que não mudaram não são lidas de novo (telas mais rápidas)",
+    "Pedido de capítulo agora leva uma ficha técnica: data, feriado, ciclo, idade, aparência, família, casta, empresa, cargo, relações, lugar e estado vigente"
   ]
 }

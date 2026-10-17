@@ -258,6 +258,71 @@ async function abrirPedidoCapitulo({ n, pre = {}, modo = "novo", aoEnviar }) {
     enviarPedido(n, p, modo, aoEnviar);
   };
 }
+/* Ficha técnica do capítulo: a Escrivaninha junta, sem gastar nada do Claude, o que as páginas
+   já sabem para aquela data (calendário, ciclo, quem é quem, família, casta, empresa, cargo,
+   relações, lugar e estado vigente) com os caminhos exatos dos arquivos. */
+async function fichaTecnica(n, p) {
+  const L = [];
+  const a = estado.arvore || (await atualizarArvore());
+  const cal = await calendario(true);
+  const d = lerData(p.quando, cal);
+  const absData = d ? faixaData(d)[0] : null;
+  if (d) {
+    const fer = feriadosEm(d, cal);
+    L.push(`- Data: ${formatarData(d, cal)}${d.mes ? ` (= ${d.dia ? d.dia + " de " : ""}${MESES_GREG[d.mes - 1]} do calendário humano)` : ""}${fer.length ? `; nesta data: ${fer.map((x) => x.nome + (x.desc ? " (" + x.desc + ")" : "")).join("; ")}` : "; sem feriado nesta data"}.`);
+    const cic = (await ciclos()).lista.find((c) => c.faixa && absData >= c.faixa[0] && absData <= c.faixa[1]);
+    if (cic) L.push(`- Ciclo: ${cic.nome}${cic.resumo && !vazio(cic.resumo) ? " — " + cic.resumo : ""} (biblia/ciclos.md).`);
+  }
+  // pessoas: quem escreve + quem aparece
+  const pessoas = [];
+  const add = (nome, papel) => { const f = a.personagens.find((x) => x.titulo === nome) || acharFichaPorNome(nome, a.personagens); if (f && !pessoas.some((x) => x.f === f)) pessoas.push({ f, papel }); };
+  if (p.quem) add(p.quem, "escreve");
+  (p.aparecem || []).forEach((x) => add(x, "aparece"));
+  const soc = await dadosSociais().catch(() => null);
+  const ano = d ? d.ano : null;
+  for (const { f, papel } of pessoas) {
+    const t = (await lerSeExiste(f.caminho)) || "";
+    const doc = secoesMd(t);
+    const ident = lerCampos((acharSecao(doc, "Identidade") || {}).corpo || "");
+    const idade = idadeEm(lerData(ident.get("Nascimento"), cal), d);
+    const versoes = versoesAparencia((acharSecao(doc, "Aparência") || {}).corpo || "").versoes;
+    const versao = versoes.find((v) => ano && String(v.campos.get("Período")).includes(String(ano))) || versoes[0];
+    const x = soc && soc.porPessoa[f.caminho];
+    const cargos = x ? x.cargos.filter((c) => !ano || (+c.de.match(/\d+/) <= ano && (!c.ate || ano < +c.ate.match(/\d+/)))) : [];
+    const partes = [
+      idade ? `idade na data: ${textoIdade(idade)}` : "",
+      versao ? `aparência: versão "${versao.titulo}"` : "",
+      x && x.familias.length ? `família: ${x.familias.map((fa) => `${fa.titulo} (${fa.caminho})`).join(", ")}` : "",
+      x && x.casta ? `casta: ${x.casta}${x.bolha ? " / " + x.bolha : ""}` : "",
+      x && x.profissao ? `ocupação: ${x.profissao}` : "",
+      x && x.empresas.length ? `empresa: ${x.empresas.map((e) => e.titulo + ((e.pessoas.find((q) => q.caminho === f.caminho) || {}).papel ? " · " + e.pessoas.find((q) => q.caminho === f.caminho).papel : "") + ` (${e.caminho})`).join(", ")}` : "",
+      cargos.length ? `cargo nesta data: ${cargos.map((c) => c.rotulo).join(", ")}` : "",
+    ].filter(Boolean);
+    L.push(`- ${papel === "escreve" ? "Quem escreve" : "Aparece"}: ${f.titulo} (${f.caminho})${partes.length ? " — " + partes.join("; ") : ""}.`);
+  }
+  // relações entre quem está na cena
+  const cam = new Set(pessoas.map((x) => x.f.caminho));
+  const rels = (await relacoes()).rels.filter((r) => cam.has(r.a.caminho) && cam.has(r.b.caminho));
+  if (rels.length) L.push(`- Relações entre eles (biblia/relacoes.md): ${rels.map((r) => `${r.a.nome} → ${r.b.nome}: ${[r.titulo, r.papel, r.frase].filter((v) => v && !vazio(v)).join(", ") || "sem frase"}${r.periodo ? ` [${r.periodo}]` : ""}`).join("; ")}.`);
+  // lugar, cadeia e estado vigente
+  const lugar = (a.lugares || []).find((x) => semAcento(x.titulo) === semAcento(p.onde));
+  if (lugar) {
+    const geo = await geografia();
+    const cadeia = [...geo.cadeia(lugar.caminho)].reverse().filter((x) => x.caminho);
+    L.push(`- Lugar: ${lugar.titulo} (${lugar.caminho})${cadeia.length ? `; herda de: ${cadeia.map((x) => `${x.nome} (${x.caminho})`).join(" › ")}` : ""}.`);
+    if (absData !== null) {
+      const evs = await todosAcontecimentos();
+      const mud = (await historicoDe("lugar", lugar.caminho, evs)).filter((h) => h.mudanca && h.e.ord < absData);
+      if (mud.length) L.push(`- Estado vigente do lugar nesta data: ${mud[mud.length - 1].texto} (desde "${mud[mud.length - 1].e.titulo}").`);
+    }
+  }
+  // capítulo anterior e notas
+  const ant = a.capitulos.find((c) => +((c.caminho.match(/cap-(\d+)/) || [])[1] || 0) === n - 1);
+  if (ant) L.push(`- Capítulo anterior: ${ant.caminho}.`);
+  L.push(`- Notas do capítulo (pedido, "manter", tiques mantidos): ${arqNotas(n)}.`);
+  L.push(`- Também: biblia/parlamento.md (cargos de ${ano || "o ano"}), biblia/sociedade.md (castas e bolhas), continuidade/registro.md, continuidade/resumos.md.`);
+  return L.join("\n");
+}
 async function enviarPedido(n, p, modo, aoEnviar) {
   if (!(await claudePronto())) return;
   const evs = await todosAcontecimentos();
@@ -273,6 +338,7 @@ async function enviarPedido(n, p, modo, aoEnviar) {
     quando: p.quando, quem_escreve: pessoa ? `[${pessoa.titulo}](../${pessoa.caminho})` : p.quem };
   await gravarArquivo(arqCap(n), juntarCapitulo(meta, [], ""));
   const escrita = pessoa ? `estilo/escritas/${pessoa.nome}.md` : "";
+  const tecnica = await fichaTecnica(n, p).catch(() => "");
   const evTxt = p.acontecimentos.map((t) => { const e = evs.find((x) => x.titulo === t); return e ? `- ${t} (${e.caminho})` : `- ${t}`; }).join("\n");
   const msg = [
     modo === "zero" ? `Reescreva o capítulo ${n} DO ZERO. ${guardado ? `O texto antigo foi guardado em ${guardado}; não leia nem aproveite nada dele.` : ""}` : `Escreva o capítulo ${n}.`,
@@ -282,7 +348,8 @@ async function enviarPedido(n, p, modo, aoEnviar) {
     evTxt ? `Acontecimentos deste capítulo (registre o vínculo em "Nos capítulos" de cada um depois):\n${evTxt}` : "",
     p.acontece ? `O que acontece (do autor):\n${p.acontece}` : "",
     p.tom ? `Tom e cuidados: ${p.tom}` : "",
-    `Mínimo de ${p.tamanho.toLocaleString("pt-BR")} palavras. Confira o estado de cada lugar e objeto da cena nesta data (a última "Mudança" registrada antes dela nos acontecimentos). Reúna sozinho o capítulo anterior, os acontecimentos já canonizados, as fichas (só as descrições, sem abrir imagens), a cadeia do lugar, o calendário (feriados na data) e as relações antes de escrever.`,
+    `Mínimo de ${p.tamanho.toLocaleString("pt-BR")} palavras. Siga /escrever ${n}: reúna o capítulo anterior, os acontecimentos já canonizados, as fichas (só as descrições, sem abrir imagens), a cadeia do lugar, o calendário, as relações, a família, a casta, a empresa e o cargo de cada um, e o estado de cada lugar e objeto nesta data.`,
+    tecnica ? `Ficha técnica (a Escrivaninha montou a partir das páginas; use como ponto de partida e confira nos arquivos):\n${tecnica}` : "",
   ].filter(Boolean).join("\n\n");
   if (aoEnviar) aoEnviar(msg, arqCap(n)); else enviarAoClaude(msg, arqCap(n));
 }

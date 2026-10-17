@@ -23,8 +23,27 @@ async function api(rota, corpo) {
   if (!r.ok || d.erro) throw new Error(d.erro || r.statusText);
   return d;
 }
-const lerArquivo = (c) => api("/api/arquivo?caminho=" + encodeURIComponent(c)).then((d) => d.conteudo);
-const gravarArquivo = (c, conteudo) => api("/api/arquivo", { caminho: c, conteudo });
+/* Leituras guardadas na memória: um arquivo que está na árvore só é lido de novo quando a data
+   de modificação dele muda (o Claude ou o autor mexeu). Gravar pela Escrivaninha atualiza a cópia. */
+const _cacheArq = new Map();
+function modificadoDe(c) {
+  const a = estado.arvore;
+  if (!a) return null;
+  for (const k of ["capitulos", "personagens", "lugares", "artefatos", "acontecimentos", "familias", "empresas"]) {
+    const it = (a[k] || []).find((x) => x.caminho === c);
+    if (it) return it.modificado || null;
+  }
+  return null;
+}
+async function lerArquivo(c) {
+  const mod = modificadoDe(c);
+  const g = _cacheArq.get(c);
+  if (g && mod && g.mod === mod) return g.texto;
+  const texto = await api("/api/arquivo?caminho=" + encodeURIComponent(c)).then((d) => d.conteudo);
+  if (mod) _cacheArq.set(c, { mod, texto }); else _cacheArq.delete(c);
+  return texto;
+}
+const gravarArquivo = async (c, conteudo) => { _cacheArq.delete(c); return api("/api/arquivo", { caminho: c, conteudo }); };
 
 /* Aviso de conexão: aparece quando o programa não responde e some sozinho quando ele volta. */
 const conexao = {
@@ -187,11 +206,27 @@ async function ir(nome, arg) {
   $("#lateral").classList.remove("aberta");
   const hash = "#" + nome + (arg ? "/" + encodeURIComponent(arg) : "");
   if (location.hash !== hash) history.pushState(null, "", hash);
-  vista.innerHTML = "";
-  vista.scrollTop = 0;
+  // A página atual fica na tela até a nova estar pronta; aí troca de uma vez, com um fade curto.
+  const minha = (estado.nav = (estado.nav || 0) + 1);
+  vista.classList.add("trocando");
+  const carga = setTimeout(() => document.body.classList.add("carregando"), 150);
+  let trocou = false;
+  const terminar = () => {
+    if (trocou) return;
+    trocou = true; obs.disconnect(); clearTimeout(carga);
+    document.body.classList.remove("carregando");
+    vista.classList.remove("trocando", "entrando");
+    vista.scrollTop = 0;
+    void vista.offsetWidth; // reinicia a animação
+    vista.classList.add("entrando");
+  };
+  const obs = new MutationObserver(() => { if (minha === estado.nav) terminar(); });
+  obs.observe(vista, { childList: true });
   try { await VISTAS[nome](arg); } catch (e) {
     const fechada = e.message === SEM_CONEXAO;
-    vista.innerHTML = `<div class="vazio"><h3>${fechada ? "A Escrivaninha foi fechada" : "Algo deu errado"}</h3>${esc(fechada ? "Feche esta janela e abra de novo pelo atalho Contos de Ynana. Nada do que você escreveu se perdeu." : e.message)}</div>`;
+    if (minha === estado.nav) vista.innerHTML = `<div class="vazio"><h3>${fechada ? "A Escrivaninha foi fechada" : "Algo deu errado"}</h3>${esc(fechada ? "Feche esta janela e abra de novo pelo atalho Contos de Ynana. Nada do que você escreveu se perdeu." : e.message)}</div>`;
+  } finally {
+    if (minha === estado.nav) terminar(); else { obs.disconnect(); clearTimeout(carga); }
   }
 }
 function abrirCaminho(c) {

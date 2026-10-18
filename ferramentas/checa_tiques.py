@@ -90,7 +90,8 @@ def raiz(palavra):
 # Classes de tique: cada categoria entra na primeira classe cujo prefixo casa.
 CLASSES = [
     ("Comparação e contraste", ("contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa")),
-    ("Ritmo e repetição", ("palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica")),
+    ("Ritmo e repetição", ("palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica",
+                           "parágrafos picados", "parágrafos curtos demais", "parágrafos seguidos abrindo", "ritmo monótono")),
     ("Vocabulário artificial", ("palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto")),
     ("Exagero e efeito", ("linguagem grandiosa", "gancho artificial")),
     ("Emoção e corpo", ("emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou")),
@@ -320,6 +321,56 @@ def checar(caminho, cfg):
                 for x in tokens[j]:
                     if x[0] == w:
                         add(pars[j][0], cat, trecho(pars[j][1], x[1], x[2]), (x[1], x[2]))
+
+    # Parágrafos picados (24): o jeito do autor junta ação, fala, lembrança e sentimento no mesmo parágrafo
+    max_seg = cfg.get("max_paragrafos_picados_seguidos", 2)
+    pal_picado = cfg.get("palavras_paragrafo_picado", 25)
+    prop_max = cfg.get("max_proporcao_paragrafos_uma_frase", 0.25)
+    def uma_frase(t):
+        return (len(FRASES.findall(t)) or 1) <= 1 and contar_palavras(t) <= pal_picado
+    seguidos = []
+    def fechar_picados():
+        if len(seguidos) > max_seg:
+            for num, t in seguidos:
+                add(num, f"parágrafos picados: {len(seguidos)} seguidos com uma frase só (24)", t[:200])
+    for num, t in pars:
+        if uma_frase(t):
+            seguidos.append((num, t))
+        else:
+            fechar_picados()
+            seguidos = []
+    fechar_picados()
+    curtos = sum(1 for _, t in pars if uma_frase(t))
+    if len(pars) >= 10 and curtos / len(pars) > prop_max:
+        add(0, f"parágrafos curtos demais: {curtos} de {len(pars)} têm uma frase só ({int(100 * curtos / len(pars))}%) (24)",
+            "o jeito do autor junta o que aconteceu, a fala, a lembrança e o que se sente no mesmo parágrafo")
+
+    # Abertura de parágrafo repetida (25): três parágrafos seguidos começando com a mesma palavra
+    abre = [None if eh_dialogo(t) else (re.findall(r"[^\W\d_]+", t.lower()) or [None])[0] for _, t in pars]
+    seq = 1
+    for i in range(1, len(pars)):
+        seq = seq + 1 if abre[i] and abre[i] == abre[i - 1] else 1
+        if seq == 3:
+            add(pars[i][0], f"parágrafos seguidos abrindo com \"{abre[i]}\" (25)", " / ".join(t[:60] for _, t in pars[i - 2:i + 1]))
+
+    # Ritmo monótono (25): seis frases seguidas quase do mesmo tamanho
+    frs = []
+    for num, t in pars:
+        if eh_dialogo(t):
+            continue
+        for f in FRASES.findall(t):
+            f = f.strip()
+            n = contar_palavras(f)
+            if n > 0:
+                frs.append((num, f, n))
+    i = 0
+    while i + 6 <= len(frs):
+        ns = [x[2] for x in frs[i:i + 6]]
+        if min(ns) >= 5 and max(ns) - min(ns) <= 3:
+            add(frs[i][0], "ritmo monótono: 6 frases seguidas do mesmo tamanho (25)", (frs[i][1] + " " + frs[i + 1][1])[:200])
+            i += 6
+        else:
+            i += 1
 
     # Tamanho mínimo (estilo)
     minimo = cfg.get("palavras_minimas_capitulo")

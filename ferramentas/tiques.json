@@ -10,6 +10,10 @@
   "palavras_frase_curta": 3,
   "max_onomatopeias_por_capitulo": 4,
   "max_aberturas_iguais_seguidas": 2,
+  "max_paragrafos_picados_seguidos": 2,
+  "palavras_paragrafo_picado": 25,
+  "max_proporcao_paragrafos_uma_frase": 0.25,
+  "_paragrafos_picados": "Parágrafo picado = uma frase só e até 25 palavras. Mais de 2 seguidos, ou mais de 25% do capítulo, viram tique (guardrail 24).",
   "palavras_minimas_capitulo": 4600,
 
   "onomatopeias": [

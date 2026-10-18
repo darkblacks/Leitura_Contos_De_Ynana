@@ -169,7 +169,8 @@ var classesTique = []struct {
 	prefixos []string
 }{
 	{"Comparação e contraste", []string{"contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa"}},
-	{"Ritmo e repetição", []string{"palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica"}},
+	{"Ritmo e repetição", []string{"palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica",
+		"parágrafos picados", "parágrafos curtos demais", "parágrafos seguidos abrindo", "ritmo monótono"}},
 	{"Vocabulário artificial", []string{"palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto"}},
 	{"Exagero e efeito", []string{"linguagem grandiosa", "gancho artificial"}},
 	{"Emoção e corpo", []string{"emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou"}},
@@ -292,6 +293,22 @@ func (c config) numero(k string, padrao int) int {
 		return int(v)
 	}
 	return padrao
+}
+
+func (c config) real(k string, padrao float64) float64 {
+	if v, ok := c[k].(float64); ok {
+		return v
+	}
+	return padrao
+}
+
+// corteRunas corta o texto em n caracteres (como o fatiamento do Python).
+func corteRunas(s string, n int) string {
+	r := []rune(s)
+	if len(r) > n {
+		return string(r[:n])
+	}
+	return s
 }
 
 func (c config) booleano(k string, padrao bool) bool {
@@ -653,6 +670,104 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 	for _, t := range tamanhos {
 		total += t
 	}
+	// Parágrafos picados (24): o jeito do autor junta ação, fala, lembrança e sentimento no mesmo parágrafo
+	maxSeg := cfg.numero("max_paragrafos_picados_seguidos", 2)
+	palPicado := cfg.numero("palavras_paragrafo_picado", 25)
+	propMax := cfg.real("max_proporcao_paragrafos_uma_frase", 0.25)
+	umaFrase := func(t string) bool {
+		n := len(reFrases.FindAllString(t, -1))
+		if n == 0 {
+			n = 1
+		}
+		return n <= 1 && contarPalavras(t) <= palPicado
+	}
+	var seguidos []parTexto
+	fecharPicados := func() {
+		if len(seguidos) > maxSeg {
+			for _, p := range seguidos {
+				add(p.num, fmt.Sprintf("parágrafos picados: %d seguidos com uma frase só (24)", len(seguidos)), corteRunas(p.texto, 200), nil)
+			}
+		}
+	}
+	for _, p := range pars {
+		if umaFrase(p.texto) {
+			seguidos = append(seguidos, p)
+		} else {
+			fecharPicados()
+			seguidos = nil
+		}
+	}
+	fecharPicados()
+	curtos := 0
+	for _, p := range pars {
+		if umaFrase(p.texto) {
+			curtos++
+		}
+	}
+	if len(pars) >= 10 && float64(curtos)/float64(len(pars)) > propMax {
+		add(0, fmt.Sprintf("parágrafos curtos demais: %d de %d têm uma frase só (%d%%) (24)", curtos, len(pars), 100*curtos/len(pars)),
+			"o jeito do autor junta o que aconteceu, a fala, a lembrança e o que se sente no mesmo parágrafo", nil)
+	}
+
+	// Abertura de parágrafo repetida (25): três parágrafos seguidos começando com a mesma palavra
+	abre := make([]string, len(pars))
+	for i, p := range pars {
+		if !ehDialogo(p.texto) {
+			abre[i] = reLetras.FindString(strings.ToLower(p.texto))
+		}
+	}
+	seqAb := 1
+	for i := 1; i < len(pars); i++ {
+		if abre[i] != "" && abre[i] == abre[i-1] {
+			seqAb++
+		} else {
+			seqAb = 1
+		}
+		if seqAb == 3 {
+			partes := []string{}
+			for _, p := range pars[i-2 : i+1] {
+				partes = append(partes, corteRunas(p.texto, 60))
+			}
+			add(pars[i].num, fmt.Sprintf("parágrafos seguidos abrindo com \"%s\" (25)", abre[i]), strings.Join(partes, " / "), nil)
+		}
+	}
+
+	// Ritmo monótono (25): seis frases seguidas quase do mesmo tamanho
+	type fraseN struct {
+		num   int
+		texto string
+		n     int
+	}
+	var frs []fraseN
+	for _, p := range pars {
+		if ehDialogo(p.texto) {
+			continue
+		}
+		for _, f := range reFrases.FindAllString(p.texto, -1) {
+			f = strings.TrimSpace(f)
+			if n := contarPalavras(f); n > 0 {
+				frs = append(frs, fraseN{p.num, f, n})
+			}
+		}
+	}
+	for i := 0; i+6 <= len(frs); {
+		mn, mx := frs[i].n, frs[i].n
+		for _, x := range frs[i : i+6] {
+			if x.n < mn {
+				mn = x.n
+			}
+			if x.n > mx {
+				mx = x.n
+			}
+		}
+		if mn >= 5 && mx-mn <= 3 {
+			add(frs[i].num, "ritmo monótono: 6 frases seguidas do mesmo tamanho (25)", corteRunas(frs[i].texto+" "+frs[i+1].texto, 200), nil)
+			i += 6
+		} else {
+			i++
+		}
+	}
+
 	if minimo := cfg.numero("palavras_minimas_capitulo", 0); minimo > 0 && total > 0 && total < minimo {
 		add(0, "capítulo curto (estilo)", fmt.Sprintf("%d palavras; o mínimo é %d (faltam %d)", total, minimo, minimo-total), nil)
 	}

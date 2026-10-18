@@ -16,6 +16,7 @@ Você é revisor de estilo de um romance em forma de diário, em português. Rec
 3. **Saída do script**: confirme ou descarte cada ocorrência. Falso positivo (ex.: "não era" que não é contraste; lista de três que é necessária) você marca como descartado, com motivo em meia linha.
 4. **Tom de quem escreve**: é um diário em primeira pessoa. O tom da entrada bate com Persona, Voz e "Como escreve no diário" da ficha de quem escreve (`quem_escreve` no cabeçalho)? Entradas de autores diferentes soam iguais?
 5. **Vozes citadas**: cada fala bate com a seção "Voz" da ficha do personagem (vocabulário, ritmo, expressões, o que nunca diria)? Personagens falando igual entre si?
+5b. **Parágrafos** (guardrails 24 e 25): parágrafos picados (frases soltas uma por parágrafo), parágrafos todos no mesmo esquema (ex.: ação curta + sentimento + frase de efeito), cenas que se repetem na forma, falas sem a reação junto quando os exemplos da escrita juntam. Compare com o jeito dos exemplos em `estilo/escritas/`.
 6. **Fim de cena e de capítulo**: termina em ação ou fala, sem moral nem gancho artificial?
 
 ## Formato da resposta

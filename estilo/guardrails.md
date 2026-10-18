@@ -159,3 +159,17 @@
 **Faça:** depois de nomear uma coisa, deixe o leitor carregar: pronome, um detalhe, ou nada.
 **Errado:** "Chegamos na Bruma de manhã. A Bruma estava fria e a Bruma cobria tudo. Na Bruma ninguém fala alto."
 **Reescrita:** "Chegamos na Bruma de manhã. Estava fria e cobria tudo, até o cais; ali ninguém fala alto."
+
+## 24. Parágrafo picado `[script]`
+
+**Faça:** monte o parágrafo como um momento inteiro: o que aconteceu, a fala, a reação, a lembrança e o que se sente, juntos. É assim que os exemplos do autor escrevem (`estilo/escritas/`). Frase sozinha num parágrafo só na virada forte, e rara.
+**Errado:** "Eu acordei cedo. / Eu desci a escada. / Eu vi meu pai na mesa. / Ele não olhou para mim." (cada frase um parágrafo)
+**Reescrita:** "Acordei cedo e desci ainda com o cabelo cheio de nós, achando que ia escapar da mãe e do pente, mas quem estava na mesa era o pai, lendo as cartas da Trademerx, e ele nem levantou os olhos quando eu entrei."
+Limite do script: mais de 2 parágrafos de uma frase seguidos, ou mais de 25% do capítulo (`ferramentas/tiques.json`).
+
+## 25. Molde repetido `[script, parcial]`
+
+**Faça:** varie a forma de um parágrafo para o outro: um abre na ação, outro na fala, outro numa lembrança ou num comentário de quem escreve; frases longas e curtas misturadas.
+**Errado:** três parágrafos seguidos abrindo com "Eu…" ou "Então…"; seis frases seguidas do mesmo tamanho; todo parágrafo no mesmo esquema (ação curta + sentimento nomeado + frase de efeito).
+**Reescrita:** troque a entrada de um dos parágrafos (comece pelo detalhe, pela fala ou pelo que ela lembrou), junte duas frases curtas numa longa e corte o fechamento que repete o esquema.
+O script pega abertura repetida e ritmo monótono; o molde de cena (todo parágrafo com a mesma estrutura) fica com o revisor.

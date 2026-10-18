@@ -66,6 +66,8 @@ Em diário, a fala dos outros chega pela memória de quem escreve.
 ## Estrutura de parágrafos e pontuação
 
 **Regra:** respeitar a pontuação e a divisão de parágrafos dos capítulos oficiais, sem fragmentar o texto com frases curtas em excesso.
+**Regra (aprovada pelo autor):** o parágrafo é um momento inteiro. O que aconteceu, a fala, a reação, a lembrança e o que se sente ficam juntos, como nos exemplos de `estilo/escritas/` (ação, onomatopeia e fala na mesma linha; depois da fala, quem disse e o que se sentiu). Parágrafo de uma frase só aparece na virada forte, e raro: nunca mais de 2 seguidos, nem mais de um quarto do capítulo. (guardrail 24)
+**Regra (aprovada pelo autor):** cada parágrafo tem forma diferente do anterior: um abre na ação, outro na fala, outro numa lembrança ou num comentário de quem escreve; frases longas e curtas misturadas; não repetir o mesmo esquema de parágrafo nem a mesma palavra de abertura em seguida. (guardrail 25)
 
 - [DECIDIR] Há número fixo de parágrafos por entrada ou por bloco? Se sim, quantos? (vai também para `paragrafos_por_bloco` em `ferramentas/tiques.json`)
   - *Proposta do Claude (pelos exemplos):* sem número fixo. Parágrafos de narração com 2 a 6 frases; frases de uma linha soltas só em momentos de virada ("Eu sabia que todos estavam errados.", "Derrubei o chá.").

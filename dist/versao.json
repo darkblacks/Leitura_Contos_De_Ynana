@@ -1,8 +1,9 @@
 {
-  "versao": "2.11.0",
-  "sha256": "20189b03fbf3287789c31acda8e70bc10b028351c12e9bf236b59b1c6ef1ee83",
+  "versao": "2.12.0",
+  "sha256": "0a11e636f05889e4683f08306cb25e5aed2d34b345a415ad1ac59797ec364bd8",
   "notas": [
-    "Nova tela Opções: temas de cor (Limpo branco/preto/vermelho como padrão, Azul, Laranja, Verde, Pergaminho, Noturno preto e branco, Azul noturno, Pergaminho escuro)",
-    "Tamanho e fonte do texto de leitura ajustáveis"
+    "Escrita: parágrafo como momento inteiro (ação, fala, reação, lembrança e sentimento juntos), sem parágrafos picados",
+    "Tiques novos: parágrafos picados, parágrafos seguidos com a mesma abertura e ritmo monótono",
+    "O Claude planeja cada cena em poucos parágrafos cheios e o revisor confere a forma dos parágrafos"
   ]
 }

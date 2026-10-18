@@ -35,7 +35,7 @@ Não existe roteiro pronto: o que acontece vem do **pedido do autor** (no chat o
    quem_escreve:
    ---
    ```
-   Esses dados formam o **cabeçalho fixo** de todo capítulo (`TÍTULO - QUEM ESCREVE` / `subtítulo - local - data`), que a Escrivaninha mostra no topo. Não repita o cabeçalho no texto. O texto é uma entrada de diário em primeira pessoa, **do jeito da escrita de quem escreve** (escrita comum, diálogo, ação, diálogo com ação, com os exemplos dela). Quem escreve só conta o que sabe até a data. A data do capítulo tem que bater com a dos acontecimentos escolhidos; se não bater, avise antes de escrever. Fato novo importante fora do pedido: pergunte. **Mínimo de 4.600 palavras** (ou o tamanho do pedido): aprofunde as cenas, sem enchimento e sem fato novo.
+   Esses dados formam o **cabeçalho fixo** de todo capítulo (`TÍTULO - QUEM ESCREVE` / `subtítulo - local - data`), que a Escrivaninha mostra no topo. Não repita o cabeçalho no texto. **Parágrafos** (estilo.md, guardrails 24 e 25): cada parágrafo é um momento inteiro, com o que aconteceu, a fala, a reação, a lembrança e o que se sente juntos, como nos exemplos da escrita; nada de uma frase por parágrafo (no máximo 2 seguidos, e raros); varie a entrada e a forma de cada parágrafo e o tamanho das frases. Antes de escrever cada cena, pense nela em poucos parágrafos cheios, não numa lista de frases. O texto é uma entrada de diário em primeira pessoa, **do jeito da escrita de quem escreve** (escrita comum, diálogo, ação, diálogo com ação, com os exemplos dela). Quem escreve só conta o que sabe até a data. A data do capítulo tem que bater com a dos acontecimentos escolhidos; se não bater, avise antes de escrever. Fato novo importante fora do pedido: pergunte. **Mínimo de 4.600 palavras** (ou o tamanho do pedido): aprofunde as cenas, sem enchimento e sem fato novo.
 
 3. **Script**: `python3 ferramentas/checa_tiques.py capitulos/cap-NN.md` (no Windows sem Python: `.\Escrivaninha.exe tiques capitulos\cap-NN.md`).
 
@@ -43,7 +43,7 @@ Não existe roteiro pronto: o que acontece vem do **pedido do autor** (no chat o
    - `revisor-continuidade`: o capítulo, as notas do capítulo (pedido), a ficha de quem escreve, registro, resumos, fichas envolvidas, capítulo anterior, `biblia/calendario.md`, `biblia/geografia.md`, `biblia/relacoes.md`, `biblia/parlamento.md`, as famílias e empresas de quem aparece e os acontecimentos escolhidos.
    - `revisor-estilo`: o capítulo, a escrita de quem escreve (e a que ela herda), `estilo/estilo.md`, `estilo/guardrails.md`, a saída do script, as notas do capítulo ("Tiques mantidos") e as fichas de quem fala.
 
-5. **Corrigir só os trechos apontados.** Discordou de um apontamento: mantenha e anote o motivo.
+5. **Corrigir só os trechos apontados.** Parágrafos picados: junte as frases soltas no parágrafo do momento a que pertencem. Abertura repetida ou ritmo monótono: mude a entrada ou junte frases; não troque por sinônimo. Discordou de um apontamento: mantenha e anote o motivo.
 
 6. **Registrar** (sem falar disso com o autor, a não ser que ele pergunte):
    - `continuidade/registro.md` (fatos novos com `[cap-NN]`) e `continuidade/resumos.md` (até 5 linhas)

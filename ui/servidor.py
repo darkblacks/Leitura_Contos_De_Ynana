@@ -482,6 +482,8 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json({"instalado": False, "rodando": False, "motivo": "A conversa com o Claude funciona no Escrivaninha.exe."})
             if url.path == "/api/claude/historico":
                 return self._json([])
+            if url.path == "/api/celular":
+                return self._json({"disponivel": False, "motivo": "O acesso pelo celular funciona no Escrivaninha.exe."})
             if url.path == "/api/ping":
                 return self._json({"app": ASSINATURA, "pasta": str(RAIZ)})
             if url.path == "/api/arvore":

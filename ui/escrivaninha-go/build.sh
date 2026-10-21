@@ -6,7 +6,7 @@ AQUI="$(cd "$(dirname "$0")" && pwd)"
 RAIZ="$(cd "$AQUI/../.." && pwd)"
 rm -rf "$AQUI/embutido" && mkdir -p "$AQUI/embutido/projeto"
 cd "$RAIZ"
-tar --exclude=.git --exclude=./ui/escrivaninha-go --exclude=./dist --exclude='__pycache__' --exclude='*.pyc' \
+tar --exclude=.git --exclude=./ui/escrivaninha-go --exclude=./dist --exclude=./sync --exclude='__pycache__' --exclude='*.pyc' \
     -cf - . | tar -xf - -C "$AQUI/embutido/projeto"
 # Impressões (sha256) de todas as versões já publicadas dos arquivos da história.
 # O app usa para atualizar só os arquivos que o autor nunca mexeu.

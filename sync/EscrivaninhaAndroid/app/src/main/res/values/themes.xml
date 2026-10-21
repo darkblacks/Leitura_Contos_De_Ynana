@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Escrivaninha" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/vermelho</item>
+        <item name="colorPrimaryDark">@color/lateral</item>
+        <item name="colorAccent">@color/vermelho</item>
+        <item name="android:statusBarColor">@color/lateral</item>
+        <item name="android:windowBackground">@color/fundo</item>
+    </style>
+</resources>

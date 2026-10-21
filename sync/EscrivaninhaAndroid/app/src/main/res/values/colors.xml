@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="fundo">#F3F3F1</color>
+    <color name="tinta">#141414</color>
+    <color name="tinta2">#555555</color>
+    <color name="vermelho">#C8102E</color>
+    <color name="lateral">#151515</color>
+</resources>

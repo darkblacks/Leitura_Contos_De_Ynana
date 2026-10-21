@@ -1,9 +1,8 @@
 {
-  "versao": "2.12.0",
-  "sha256": "0a11e636f05889e4683f08306cb25e5aed2d34b345a415ad1ac59797ec364bd8",
+  "versao": "2.13.0",
+  "sha256": "ca9790ef06a043e0a1587ee7ed2dcbe59c65afeff25351311a7beb3e17a79198",
   "notas": [
-    "Escrita: parágrafo como momento inteiro (ação, fala, reação, lembrança e sentimento juntos), sem parágrafos picados",
-    "Tiques novos: parágrafos picados, parágrafos seguidos com a mesma abertura e ritmo monótono",
-    "O Claude planeja cada cena em poucos parágrafos cheios e o revisor confere a forma dos parágrafos"
+    "Celular: Opções › Celular liga o acesso pelo Wi-Fi de casa, com código de 6 números (app Android em sync/EscrivaninhaAndroid)",
+    "No celular funcionam todas as telas e o Claude, que continua rodando no computador"
   ]
 }

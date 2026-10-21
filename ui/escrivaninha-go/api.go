@@ -500,6 +500,10 @@ func origemOK(r *http.Request) bool {
 		return true
 	}
 	u, err := url.Parse(o)
+	if veioDaRede(r) {
+		// pela rede (celular já autorizado pelo cookie): só a própria página
+		return err == nil && u.Host == r.Host
+	}
 	return err == nil && (u.Hostname() == "127.0.0.1" || u.Hostname() == "localhost")
 }
 
@@ -507,6 +511,7 @@ func novoRoteador(estatico fs.FS) http.Handler {
 	mux := http.NewServeMux()
 	rotasClaude(mux)
 	rotasAtualizacao(mux)
+	rotasCelular(mux)
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()

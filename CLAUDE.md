@@ -70,6 +70,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `referencias/`, `estilo/exemplos/`, `escaleta/`, `biblia/historia.md`, `entrada/` | Material antigo de consulta (nunca apagado) |
 | `ui/` | Escrivaninha: interface local (`abrir-escrivaninha.bat` ou `.sh`) |
 | `dist/Escrivaninha.exe` | A Escrivaninha num executável para Windows; instala-se em `C:\Os_Contos_De_Ynana` (código em `ui/escrivaninha-go/`) |
+| `sync/EscrivaninhaAndroid/` | **App do celular** (projeto Android Studio): abre a Escrivaninha do computador pelo Wi-Fi, com código (Opções › Celular). Não vai para dentro do exe |
 
 ## Ficha de personagem
 
@@ -92,6 +93,7 @@ Toda ficha de personagem, lugar e artefato segue o mesmo formato, para ler e edi
 
 - **Local (funciona sem internet):** o programa, todas as telas, capítulos, fichas, famílias, castas, empresas, parlamento, acontecimentos, calendário, estilo, a checagem de tiques e as fontes.
 - **Precisa de internet:** a conversa com o Claude (escrever, ajustar, revisar, canonizar, descrever imagens), a procura de atualização e as vozes naturais do "Ouvir" (sem internet, ele usa a voz do computador).
+- **Celular**: o app Android é uma janela para a Escrivaninha do computador, pelo Wi-Fi de casa; precisa do computador ligado com a Escrivaninha aberta e o acesso ligado em Opções › Celular (código de 6 números). Desligado por padrão; só o computador liga, desliga e troca o código.
 - Uma parte online que falha não derruba o resto: o chat mostra o erro e guarda a mensagem; a atualização só não aparece; o programa continua aberto.
 
 ## Dinâmicas de personagem
@@ -155,7 +157,7 @@ Toda ficha de personagem, lugar e artefato segue o mesmo formato, para ler e edi
 - `ui/servidor.py` (Python puro, só em 127.0.0.1) serve uma interface que lê e grava estes mesmos arquivos. `Escrivaninha.exe` é a mesma coisa em Go. `Escrivaninha.exe tiques <arquivo>` dá a mesma saída do `checa_tiques.py`.
 - Ao mudar `ui/static/`, `ferramentas/checa_tiques.py` ou `ui/servidor.py`, mantenha `ui/escrivaninha-go/` igual e gere o exe de novo.
 - O que o autor muda pela interface é texto dele: vale a regra 1.
-- Telas: Escrever com o Claude (chat + folha), Capítulos, Personagens (fichas, relações, famílias, castas, empresas, parlamento), Lugares, Artefatos, Acontecimentos (por ciclo), Calendário (meses e eventos), Estilo (escritores), Comandos.
+- Telas: Escrever com o Claude (chat + folha), Capítulos, Personagens (fichas, relações, famílias, castas, empresas, parlamento), Lugares, Artefatos, Acontecimentos (por ciclo), Calendário (meses e eventos), Estilo (escritores), Comandos, Opções (cores, leitura, celular).
 
 ## Atualizações do app (Escrivaninha.exe)
 

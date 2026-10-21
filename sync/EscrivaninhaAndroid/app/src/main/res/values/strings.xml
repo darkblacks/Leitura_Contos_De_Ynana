@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Contos de Ynana</string>
+    <string name="instrucoes">No computador, abra a Escrivaninha e vá em Opções › Celular › Ligar acesso pelo celular. Digite aqui o endereço e o código que aparecem lá. O celular precisa estar no mesmo Wi-Fi.</string>
+    <string name="rotulo_endereco">Endereço do computador</string>
+    <string name="dica_endereco">ex.: 192.168.0.15:8800</string>
+    <string name="rotulo_codigo">Código</string>
+    <string name="dica_codigo">6 números</string>
+    <string name="conectar">Conectar</string>
+    <string name="falta_endereco">Digite o endereço que aparece no computador.</string>
+</resources>

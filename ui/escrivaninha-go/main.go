@@ -126,6 +126,7 @@ func main() {
 	fmt.Sscanf(endereco[strings.LastIndex(endereco, ":")+1:], "%d", &portaEmUso)
 	estatico, _ := fs.Sub(projeto, "embutido/projeto/ui/static")
 	srv := &http.Server{Handler: novoRoteador(estatico)}
+	iniciarCelular(srv.Handler)
 	logar("Contos de Ynana · Escrivaninha %s", versao)
 	logar("Pasta da história: %s", pasta)
 	logar("Aberta em:         %s", endereco)
@@ -151,6 +152,7 @@ func main() {
 	esperarJanelaFechar()
 	ctx, cancelar := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancelar()
+	desligarCelular()
 	srv.Shutdown(ctx)
 	logar("Escrivaninha encerrada.")
 }

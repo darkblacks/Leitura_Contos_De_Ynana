@@ -181,7 +181,7 @@ a { color: var(--acento); }
 .metricas b { color: var(--tinta); font-size: 15px; display: block; font-family: var(--serif-titulo); }
 
 /* ---------- lista de capítulos */
-.linha-capitulo { display: grid; grid-template-columns: 64px 1fr auto auto; gap: 16px; align-items: center; padding: 14px 18px;
+.linha-capitulo { display: grid; grid-template-columns: 64px 1fr auto auto auto; gap: 16px; align-items: center; padding: 14px 18px;
   background: var(--papel); border: 1px solid var(--linha); border-radius: var(--raio); margin-bottom: 10px; cursor: pointer; transition: border-color .15s; }
 .linha-capitulo:hover { border-color: var(--acento); }
 .linha-capitulo .num { font-family: var(--serif-titulo); font-size: 30px; color: var(--tinta-3); font-weight: 600; }
@@ -838,6 +838,5 @@ body.carregando::before { content: ""; position: fixed; top: 0; left: 0; height:
 @keyframes carregar { from { background-position: -40% 0; } to { background-position: 140% 0; } }
 @media (prefers-reduced-motion: reduce) { .vista.entrando > * { animation: none; } body.carregando::before { animation: none; } }
 
-/* Romance */
-.romance-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 18px 12px; padding-top: 8px; }
-.romance-barra .sub { margin-right: auto; }
+/* Romantizar na lista de Capítulos */
+.linha-capitulo [data-romantizar] { white-space: nowrap; }

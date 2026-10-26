@@ -1,9 +1,8 @@
 {
-  "versao": "2.14.0",
-  "sha256": "f93b806eaa592d3723f4321fd66e98f438ae3b31839e65e9c65010ab4dbf0b08",
+  "versao": "2.15.0",
+  "sha256": "096ae79f7ffe6e08912ec361ada2deb985e454e270653fa59ccdc01682bf4586",
   "notas": [
-    "📖 Romantizar: o Claude conta o capítulo como num livro de romance (cenas, diálogo, ritmo), no nosso jeito: \"— fala.\" e *TOC* *CHUA* *VUC*",
-    "Aba Romance ao lado da Folha; o diário não muda",
-    "Técnica de romance guardada no estilo (narrador, abertura, cena, pensamento, diálogo, personagem, ritmo, fecho)"
+    "📖 Romantizar agora fica em Capítulos (na lista e no capítulo aberto) e reescreve o próprio capítulo como num livro de verdade",
+    "O texto de antes fica guardado como cópia; você escolhe 3ª ou 1ª pessoa e pode deixar uma observação"
   ]
 }

@@ -615,7 +615,7 @@ const COMANDOS = [
   { c: "/ficha", a: "nome", d: "Cria ou completa a ficha de um personagem, lugar ou artefato, perguntando o que falta." },
   { c: "/canonizar", a: "1", d: "Gostou do capítulo: registra nos Acontecimentos o que aconteceu, a função na história e onde estava cada personagem." },
   { c: "/descrever", a: "nome", d: "Olha as imagens de um lugar, personagem ou artefato e escreve a descrição na ficha." },
-  { c: "/romantizar", a: "N", d: "Conta o capítulo N como num livro de romance (cenas, diálogo, ritmo), no nosso jeito de escrever. O diário não muda." },
+  { c: "/romantizar", a: "N", d: "Reescreve o capítulo N como num livro de romance (cenas, diálogo, ritmo), no nosso jeito de escrever. O texto de antes fica guardado." },
   { c: "/preencher", a: "personagem e ideia", d: "Você diz em poucas palavras o que imagina; o Claude preenche a ficha (pode inventar), sem mexer na voz, família, empresa e cargo." },
   { c: "/estado", d: "Onde a história está: último capítulo, ciclo atual, o que falta." },
 ];
@@ -760,27 +760,30 @@ async function abrirTiques(opcoes) {
   return desenharTiques($("#tq-corpo", c), opcoes);
 }
 
-/* ============================================================ Romantizar: o capítulo contado como livro
-   O diário continua igual; o romance fica em romance/cap-NN.md. A técnica está em estilo/romance.md. */
-function abrirRomantizar(cap, aoEnviar) {
+/* ============================================================ Romantizar: o capítulo reescrito como livro
+   Reescreve o próprio capítulo com a técnica de romance (estilo/romance.md) e o nosso jeito por cima.
+   O texto de antes fica guardado em continuidade/descartados/ (cópia de segurança). */
+function abrirRomantizar(cap) {
   const n = cap.n, nn = String(n).padStart(2, "0");
-  const c = modal(`<h3>📖 Romantizar o capítulo ${n}</h3>
-    <div class="sub" style="margin-bottom:10px">O Claude conta este capítulo como num livro de romance: cenas, diálogo, ritmo, o pensamento dentro da narração. Com o nosso jeito por cima: <b>"— fala." Disse…</b> e onomatopeias como <b>*TOC*</b>, <b>*CHUA*</b>, <b>*VUC*</b>. Os fatos são os do diário, que não muda.</div>
+  const c = modal(`<h3>📖 Romantizar o capítulo ${n}${cap.titulo ? ` · ${esc(cap.titulo)}` : ""}</h3>
+    <div class="sub" style="margin-bottom:10px">O Claude reescreve este capítulo como num livro de verdade: cenas mostradas em vez de resumidas, diálogo com gesto e silêncio, o pensamento dentro da narração, ritmo de romance. Com o nosso jeito por cima: <b>"— fala." Disse…</b> e onomatopeias como <b>*TOC*</b>, <b>*CHUA*</b>, <b>*VUC*</b>. Os fatos continuam os mesmos.</div>
+    ${cap.status === "editado" ? `<div class="aviso" style="margin-bottom:10px">Este capítulo está como <b>editado</b> (texto seu). Romantizar reescreve o texto; o de agora fica guardado como cópia.</div>` : ""}
     <div class="campo"><label>Narrador</label><div class="chips-escolha" id="rom-narrador">
-      <button class="chip sel" data-v="3ª pessoa, colada em quem escreve a entrada">3ª pessoa (como num livro)</button>
+      <button class="chip sel" data-v="3ª pessoa no passado, colada em quem escreve a entrada">3ª pessoa (como num livro)</button>
       <button class="chip" data-v="1ª pessoa, na voz de quem escreve a entrada">1ª pessoa (a voz de quem escreve)</button>
     </div></div>
     <div class="campo"><label>Observação (opcional)</label><textarea id="rom-obs" rows="3" placeholder="ex.: mais tensão na cena do jantar; abrir no porto"></textarea></div>
     <div class="modal-acoes"><button class="botao" id="rom-no">Cancelar</button><button class="botao primario" id="rom-ok">Romantizar</button></div>`);
-  let narrador = "3ª pessoa, colada em quem escreve a entrada";
+  let narrador = "3ª pessoa no passado, colada em quem escreve a entrada";
   $$("#rom-narrador .chip", c).forEach((b) => (b.onclick = () => { $$("#rom-narrador .chip", c).forEach((x) => x.classList.remove("sel")); b.classList.add("sel"); narrador = b.dataset.v; }));
   $("#rom-no", c).onclick = fecharModal;
-  $("#rom-ok", c).onclick = () => {
+  $("#rom-ok", c).onclick = async () => {
     const obs = $("#rom-obs", c).value.trim();
     fecharModal();
-    const msg = `Romantize o capítulo ${n} (/romantizar ${n}): conte capitulos/cap-${nn}.md como um capítulo de romance, em romance/cap-${nn}.md.
+    const copia = await guardarDescartado(n).catch(() => "");
+    const msg = `Romantize o capítulo ${n} (/romantizar ${n}): reescreva capitulos/cap-${nn}.md como um capítulo de livro de romance, no próprio arquivo, mantendo o cabeçalho.
 Narrador: ${narrador}.
-${obs ? `Observação do autor: ${obs}\n` : ""}Siga .claude/commands/romantizar.md e a técnica de estilo/romance.md, com o nosso jeito por cima (diálogo "— fala." Disse…, onomatopeia entre asteriscos como *TOC* *CHUA* *VUC*). O diário não muda.`;
-    if (aoEnviar) aoEnviar(msg); else enviarAoClaude(msg);
+${obs ? `Observação do autor: ${obs}\n` : ""}${copia ? `O texto de antes foi guardado em ${copia} (só cópia de segurança; leia o capítulo como está agora antes de reescrever).\n` : ""}Siga .claude/commands/romantizar.md e a técnica de estilo/romance.md, com o nosso jeito por cima (diálogo "— fala." Disse…, onomatopeia entre asteriscos como *TOC* *CHUA* *VUC*). Os fatos continuam os mesmos.`;
+    enviarAoClaude(msg, cap.caminho);
   };
 }

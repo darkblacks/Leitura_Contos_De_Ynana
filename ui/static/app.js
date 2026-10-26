@@ -306,12 +306,18 @@ VISTAS.capitulos = async () => {
       <div class="linha-capitulo" data-abrir="${esc(c.caminho)}">
         <div class="num">${esc(String(c.meta.capitulo || c.nome.replace("cap-", "")).padStart(2, "0"))}</div>
         <div><div class="t">${esc(c.meta.titulo || "Sem título")}</div>
-          <small>${esc(c.meta.quem_escreve || "quem escreve?")} · ${esc(c.meta.quando || "quando?")}</small></div>
+          <small>${esc(semLink(c.meta.quem_escreve) || "quem escreve?")} · ${esc(c.meta.quando || "quando?")}</small></div>
         <div class="sub">${c.palavras} palavras</div>
         <span class="etiqueta ${esc(c.meta.status)}">${esc(c.meta.status || "—")}</span>
+        ${c.palavras ? `<button class="botao pequeno" data-romantizar="${esc(c.caminho)}" title="Reescreve este capítulo como num livro de romance, no nosso jeito">📖 Romantizar</button>` : ""}
       </div>`).join("")
       : `<div class="vazio"><h3>O diário está em branco</h3>Crie a primeira entrada aqui, ou peça ao Claude: <code>/escrever 1</code> (depois de aprovar a escaleta).</div>`);
   $("#novo-cap").onclick = novoCapitulo;
+  $$("[data-romantizar]").forEach((b) => (b.onclick = (e) => {
+    e.stopPropagation();
+    const c = a.capitulos.find((x) => x.caminho === b.dataset.romantizar);
+    abrirRomantizar({ caminho: c.caminho, n: +(c.meta.capitulo || c.nome.replace("cap-", "")), titulo: c.meta.titulo, status: c.meta.status });
+  }));
 };
 
 function separarCapitulo(texto) {
@@ -362,6 +368,7 @@ VISTAS.capitulo = async (caminho) => {
       <span class="caminho">${esc(caminho)}</span>
       <div class="direita">
         <button class="botao pequeno" data-ouvir="#f-previa" title="Ler o capítulo em voz alta">🔊 Ouvir</button>
+        <button class="botao pequeno" id="romantizar-cap" title="Reescreve este capítulo como num livro de romance, no nosso jeito">📖 Romantizar</button>
         <button class="botao pequeno" id="alternar">Leitura</button>
         <button class="botao pequeno primario" id="salvar">Salvar</button>
       </div>
@@ -455,6 +462,10 @@ VISTAS.capitulo = async (caminho) => {
   $$(".status-escolha button").forEach((b) => (b.onclick = () => setStatus(b.dataset.s)));
   $("#marcar-editado").onclick = () => setStatus("editado");
   $("#salvar").onclick = salvar;
+  $("#romantizar-cap").onclick = async () => {
+    if (estado.sujo) await salvar();
+    abrirRomantizar({ caminho, n: +(meta.capitulo || (caminho.match(/cap-(\d+)/) || [])[1] || 0), titulo: meta.titulo, status: statusAtual });
+  };
   $("#voltar").onclick = (e) => { e.preventDefault(); ir("capitulos"); };
   $("#alternar").onclick = () => {
     const lendo = ta.style.display !== "none";
@@ -807,7 +818,6 @@ VISTAS.conversa = async () => {
             <button class="botao pequeno gostei" id="cap-gostei" title="Registra o capítulo nos Acontecimentos, com a função na história">♥ Gostei</button>
             <button class="botao pequeno" id="cap-zero" title="Guarda o texto atual e o Claude escreve de novo, do zero">↺ Do zero</button>
             <button class="botao pequeno primario" id="cap-ajustar" title="Diga o que mudar e o que manter">✎ Ajustar</button>
-            <button class="botao pequeno" id="cap-romantizar" title="O Claude conta este capítulo como num livro de romance, no nosso jeito de escrever (o diário não muda)">📖 Romantizar</button>
           </div>
           <div class="meta-palavras" id="meta"></div>
         </div>
@@ -815,13 +825,11 @@ VISTAS.conversa = async () => {
           <div class="aba ativa" data-aba="folha">Folha</div>
           <div class="aba" data-aba="contexto">Contexto</div>
           <div class="aba" data-aba="revisao">Revisão</div>
-          <div class="aba" data-aba="romance">Romance</div>
           <button class="botao pequeno" id="abrir-cap" title="Abrir na escrivaninha para editar à mão">Editar à mão</button>
         </div>
         <div class="painel-cap-corpo" id="aba-folha"></div>
         <div class="painel-cap-corpo" id="aba-contexto" hidden></div>
         <div class="painel-cap-corpo" id="aba-revisao" hidden></div>
-        <div class="painel-cap-corpo" id="aba-romance" hidden></div>
         <div class="flutuante" id="flutuante" hidden>
           <button data-acao="Reescreva este trecho mantendo os fatos, com prosa mais viva e específica.">Reescrever</button>
           <button data-acao="Expanda este trecho: mais detalhe sensorial e mais tempo dentro da cena, sem fato novo.">Expandir</button>
@@ -844,37 +852,11 @@ VISTAS.conversa = async () => {
   // ------------------------------------------------ abas do painel
   const abrirAba = (id) => {
     $$(".abas-cap .aba").forEach((a) => a.classList.toggle("ativa", a.dataset.aba === id));
-    ["folha", "contexto", "revisao", "romance"].forEach((x) => ($("#aba-" + x).hidden = x !== id));
+    ["folha", "contexto", "revisao"].forEach((x) => ($("#aba-" + x).hidden = x !== id));
     if (id === "revisao") desenharRevisao();
-    if (id === "romance") desenharRomance();
   };
   $$(".abas-cap .aba").forEach((a) => (a.onclick = () => abrirAba(a.dataset.aba)));
 
-  // ------------------------------------------------ romance (o capítulo contado como livro)
-  const arqRomance = (n) => `romance/cap-${String(n).padStart(2, "0")}.md`;
-  const mostrarRomance = (meta, corpo, vivo) => {
-    const caixa = $("#aba-romance");
-    const n = capAtual ? capAtual.n : 0;
-    caixa.innerHTML = `
-      <div class="romance-barra">
-        <span class="sub">${meta && meta.narrador ? esc(meta.narrador) : "Versão de romance do capítulo. O diário não muda."}</span>
-        ${vivo ? "" : `<button class="botao pequeno" data-ouvir="#aba-romance .folha">🔊 Ouvir</button>
-        <button class="botao pequeno" id="rom-abrir">Editar à mão</button>
-        <button class="botao pequeno primario" id="rom-refazer">📖 ${corpo ? "Romantizar de novo" : "Romantizar"}</button>`}
-      </div>
-      ${corpo ? `<div class="folha">${cabecalhoDiario({ titulo: (meta && meta.titulo) || (capAtual && capAtual.titulo) || `Capítulo ${n}` })}
-        <div class="previa-corpo md ${vivo ? "cursor-escrita" : ""}">${markdown(corpo)}</div></div>`
-        : `<div class="vazio folha-vazia"><h3>Ainda sem versão de romance</h3>Clique em <b>📖 Romantizar</b>: o Claude conta este capítulo como num livro, com cenas, diálogo e ritmo de romance, no nosso jeito de escrever. O diário continua igual.</div>`}`;
-    if ($("#rom-refazer")) $("#rom-refazer").onclick = () => capAtual && !capAtual.novo && abrirRomantizar(capAtual, enviar);
-    if ($("#rom-abrir")) $("#rom-abrir").onclick = () => ir("capitulo", arqRomance(n));
-  };
-  const desenharRomance = async () => {
-    if (!capAtual || capAtual.novo) { $("#aba-romance").innerHTML = `<div class="vazio folha-vazia">Escreva o capítulo primeiro; depois dá para romantizar.</div>`; return; }
-    const t = await lerSeExiste(arqRomance(capAtual.n));
-    if (!t) return mostrarRomance(null, "", false);
-    const { meta, corpo } = separarCapitulo(t);
-    mostrarRomance(meta, corpo, false);
-  };
 
   const medir = (corpo) => {
     const n = palavras(corpo || "");
@@ -1055,7 +1037,6 @@ VISTAS.conversa = async () => {
   };
   $("#cap-ajustar").onclick = () => capAtual && !capAtual.novo && abrirAjuste({ caminho: capAtual.caminho, n: capAtual.n, status: capAtual.status, aoEnviar: enviar,
     trecho: (document.getSelection() || "").toString().trim() });
-  $("#cap-romantizar").onclick = () => capAtual && !capAtual.novo && abrirRomantizar(capAtual, enviar);
   $("#cap-gostei").onclick = () => capAtual && !capAtual.novo && canonizarCapitulo({ caminho: capAtual.caminho, n: capAtual.n, aoEnviar: enviar });
   $("#cap-zero").onclick = () => capAtual && !capAtual.novo && reescreverDoZero({ caminho: capAtual.caminho, n: capAtual.n, meta: capAtual.meta || {}, status: capAtual.status, aoEnviar: enviarECarregar });
   $("#abrir-pedido").onclick = () => abrirPedido();
@@ -1087,15 +1068,9 @@ VISTAS.conversa = async () => {
           abrirAba("folha");
           const { meta, corpo } = separarCapitulo(texto);
           mostrarFolha(meta.titulo ? meta : { titulo: "Escrevendo…" }, corpo || semCabecalho(texto), true);
-        } else if (caminho.includes("romance/") && texto) {
-          // o romance aparece sendo escrito na aba Romance
-          if ($("#aba-romance").hidden) abrirAba("romance");
-          const { meta, corpo } = separarCapitulo(texto);
-          mostrarRomance(meta, corpo || semCabecalho(texto), true);
         }
       } else if (e.tipo === "fim" || e.tipo === "erro") {
         fonteEventos.close(); fonteEventos = null; ocupado(false);
-        if (!$("#aba-romance").hidden) setTimeout(desenharRomance, 300);
         let ultima = null;
         if (e.tipo === "erro") { ultima = addMsg("erro", e.texto); ultima.className = "msg erro"; }
         else if (bolhasDaResposta.length) {

@@ -27,7 +27,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 ESTATICO = Path(__file__).resolve().parent / "static"
 
 # Pastas e arquivos que a interface pode ler e gravar
-EDITAVEIS = ["biblia", "estilo", "escaleta", "continuidade", "capitulos", "romance", "entrada", "referencias"]
+EDITAVEIS = ["biblia", "estilo", "escaleta", "continuidade", "capitulos", "entrada", "referencias"]
 ARQUIVOS_SOLTOS = ["ferramentas/tiques.json", "CLAUDE.md"]
 EXT_TEXTO = {".md", ".txt", ".json"}
 EXT_IMAGEM = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}

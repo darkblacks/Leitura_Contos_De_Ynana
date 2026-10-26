@@ -47,13 +47,12 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | Caminho | Conteúdo |
 |---|---|
 | `capitulos/cap-NN.md` | Capítulos, com o cabeçalho (status, título, subtítulo, onde, quando, quem escreve) |
-| `romance/cap-NN.md` | **Versão de romance** do capítulo (botão 📖 Romantizar ou `/romantizar N`): os mesmos fatos do diário contados como livro, com a técnica de `estilo/romance.md` e o nosso jeito por cima. O diário continua sendo o cânone |
 | `continuidade/notas-do-autor/cap-NN.md` | O **pedido** do capítulo e as notas de ajuste (contexto, fazer, não fazer, **manter**) |
 | `continuidade/descartados/` | Textos tirados da folha com "Reescrever do zero". Não são fonte: não leia nem aproveite |
 | `continuidade/registro.md`, `resumos.md` | Sua memória interna: fatos vigentes com capítulo de origem e o resumo de cada capítulo. O autor não vê; mantenha em dia |
 | `estilo/escritas/<nome>.md` | A escrita de cada escritor (persona, jeitos de escrever com exemplos, importante, herança) |
 | `estilo/estilo.md`, `estilo/guardrails.md` | Regras gerais para todos e padrões proibidos |
-| `estilo/romance.md` | **Técnica de romance** (narrador e ponto de vista, abertura, cena, parágrafo, pensamento, diálogo, apresentar personagem, ritmo, fecho), tirada de um romance de referência que o autor enviou; nunca copiar a obra |
+| `estilo/romance.md` | **Técnica de romance**, usada pelo botão **📖 Romantizar** em Capítulos (ou `/romantizar N`), que reescreve o próprio capítulo como livro (o texto de antes fica em `continuidade/descartados/`): (narrador e ponto de vista, abertura, cena, parágrafo, pensamento, diálogo, apresentar personagem, ritmo, fecho), tirada de um romance de referência que o autor enviou; nunca copiar a obra |
 | `biblia/personagens/<nome>.md` | Uma ficha por personagem (modelo em `_modelo.md`) |
 | `biblia/familias/<nome>.md` | Uma ficha por família: casta, empresa, descrição e **Membros** (cada um com pai, mãe e cônjuge: daí sai a árvore genealógica) |
 | `biblia/empresas/<nome>.md` | Uma ficha por empresa: ramo, sede, família, casta, descrição e **Pessoas** (com o papel de cada uma); a logo é a imagem com o mesmo nome |

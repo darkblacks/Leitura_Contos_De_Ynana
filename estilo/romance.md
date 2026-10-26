@@ -1,6 +1,6 @@
 # Técnica de romance
 
-> Como transformar uma entrada do diário num capítulo de romance (livro), usado pelo botão **📖 Romantizar** e por `/romantizar`.
+> Como escrever um capítulo como num livro de romance. Usado pelo botão **📖 Romantizar** (em Capítulos) e por `/romantizar`, que reescrevem o próprio capítulo.
 > Tirado da leitura de um romance de fantasia que o autor mandou como referência (o primeiro capítulo de uma série famosa): aqui ficam só as técnicas, em palavras nossas. Nunca copie frases, nomes, cenas ou criaturas da obra de referência.
 > **Por cima da técnica vale o nosso jeito** (seção "Nosso jeito"): diálogo entre aspas com travessão, onomatopeia entre asteriscos e as regras de `estilo/estilo.md` e `estilo/guardrails.md`.
 
@@ -75,4 +75,4 @@
 - **Onomatopeia** entre asteriscos, no meio da ação, quando o som importa: `*TOC*`, `*CHUA*`, `*VUC*`, `*Zap*`. Poucas por capítulo, nunca em sequência (guardrail 19).
 - As regras de `estilo/estilo.md` e todos os guardrails valem (nada de contraste falso, trincas, emoção nomeada, parágrafos picados…).
 - A **escrita de quem escreve** (`estilo/escritas/<nome>.md`) dá o vocabulário, o humor e o que a personagem repara, mesmo em terceira pessoa.
-- **Os fatos são os do diário**: o romance mostra melhor o que aconteceu, não muda o que aconteceu. Nada de morte, revelação, relação ou regra do mundo nova (regra 2 do CLAUDE.md). Detalhe pequeno criado para encher a cena (o prato, a cor da cortina) vira fato fixo e vai para o registro.
+- **Os fatos são os do capítulo**: romantizar mostra melhor o que aconteceu, não muda o que aconteceu. Nada de morte, revelação, relação ou regra do mundo nova (regra 2 do CLAUDE.md). Detalhe pequeno criado para encher a cena (o prato, a cor da cortina) vira fato fixo e vai para o registro.

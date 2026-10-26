@@ -92,8 +92,8 @@ CLASSES = [
     ("Comparação e contraste", ("contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa")),
     ("Ritmo e repetição", ("palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica",
                            "parágrafos picados", "parágrafos curtos demais", "parágrafos seguidos abrindo", "ritmo monótono")),
-    ("Vocabulário artificial", ("palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto")),
-    ("Exagero e efeito", ("linguagem grandiosa", "gancho artificial")),
+    ("Vocabulário artificial", ("palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto", "advérbio redundante")),
+    ("Exagero e efeito", ("linguagem grandiosa", "gancho artificial", "explicação do óbvio")),
     ("Emoção e corpo", ("emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou")),
     ("Formato", ()),
 ]
@@ -145,6 +145,7 @@ VERBOS = r"(é|era|foi|está|estava|são|eram|foram|seria|parecia)"
 CONTRASTE = [
     re.compile(r"(?<!\w)não " + VERBOS + r" (só|apenas|somente|simplesmente) ", re.IGNORECASE),
     re.compile(r"(?<!\w)não " + VERBOS + r"\b[^.!?\n]{1,70}?[,;:.—–]\s*(mas |e sim |e, sim, )?" + VERBOS + r"\b", re.IGNORECASE),
+    re.compile(r"(?<!\w)não " + VERBOS + r"\b[^.!?\n]{1,60}? " + VERBOS + r" (o|a) (maior|pior|melhor|mais)\b", re.IGNORECASE),
     re.compile(r"(?<!\w)não (se trata|se tratava) de\b", re.IGNORECASE),
     re.compile(r"(?<!\w)não (é|era) sobre\b", re.IGNORECASE),
     re.compile(r"(?<!\w)mais (do )?que (um|uma|só|apenas)\b[^.!?\n]{1,50}?,\s*" + VERBOS + r"\b", re.IGNORECASE),
@@ -202,6 +203,8 @@ def checar(caminho, cfg):
         "gancho artificial (15)": compilar(cfg.get("gancho_artificial", [])),
         "gerúndio de comentário (17, pendente)": [re.compile(p, re.IGNORECASE) for p in cfg.get("gerundio_comentario", [])],
         "linguagem de folheto (18, pendente)": compilar(cfg.get("folheto", [])),
+        "advérbio redundante (26)": compilar(cfg.get("adverbios_redundantes", [])),
+        "explicação do óbvio (27)": compilar(cfg.get("explicacao_obvia", [])),
     }
     sussurros = compilar(cfg.get("sussurros", []))
     max_comp = cfg.get("max_comparacoes_por_paragrafo", 1)

@@ -46,11 +46,13 @@ Então eu corri, mas oque eu não esperava era que o tapete seria tão escorrega
 
 ### Como
 
-Ação, onomatopeia e fala na mesma linha, sem quebrar o parágrafo.
+Ação, onomatopeia e fala na mesma linha, sem quebrar o parágrafo. Várias falas seguidas (de pessoas diferentes) podem ficar no mesmo parágrafo, no meio da narração; a fala vai para um parágrafo só dela quando é para dar ênfase. A onomatopeia também pode entrar na própria frase, sem asterisco, quando é o som de uma coisa ("fizeram tlec tlec").
 
 ### Exemplos
 
 Então Hela deu um tapa nele *Zap* "— Eiiiii!!!!!!! Essa doeu." Disse o bandido desconcertado.
+
+"— Ynana." Disse ela, devagar, do jeito que ela fala quando tem certeza de que o erro é mesmo um erro e vai reclamar. "— O que é isto?" "— Minha mala." "— Eu vejo que é uma mala. Eu perguntei o que é isto." E tirou lá de dentro, com dois dados, o tabuleiro de conchas embrulhado no lenço, e depois o baralho, que fizeram tlec tlec quando bateram um no outro na mão dela, e enfileirou tudo em cima da colcha, um do lado do outro, as provas do crime.
 
 ## Importante
 

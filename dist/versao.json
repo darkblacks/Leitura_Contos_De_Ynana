@@ -1,8 +1,8 @@
 {
-  "versao": "2.15.0",
-  "sha256": "096ae79f7ffe6e08912ec361ada2deb985e454e270653fa59ccdc01682bf4586",
+  "versao": "2.16.0",
+  "sha256": "b30a13ad00d53e7a1214780c83715b724356e2318a353a3aa24cd5aa2494cbbd",
   "notas": [
-    "📖 Romantizar agora fica em Capítulos (na lista e no capítulo aberto) e reescreve o próprio capítulo como num livro de verdade",
-    "O texto de antes fica guardado como cópia; você escolhe 3ª ou 1ª pessoa e pode deixar uma observação"
+    "Romantizar agora mantém o seu jeito (a voz do diário, falas no meio do parágrafo) com qualidade de livro de fantasia",
+    "Novos avisos de tique: advérbio que sobra, frase de propaganda e explicar o óbvio"
   ]
 }

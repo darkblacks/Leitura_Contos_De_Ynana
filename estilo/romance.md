@@ -1,78 +1,80 @@
 # Técnica de romance
 
-> Como escrever um capítulo como num livro de romance. Usado pelo botão **📖 Romantizar** (em Capítulos) e por `/romantizar`, que reescrevem o próprio capítulo.
-> Tirado da leitura de um romance de fantasia que o autor mandou como referência (o primeiro capítulo de uma série famosa): aqui ficam só as técnicas, em palavras nossas. Nunca copie frases, nomes, cenas ou criaturas da obra de referência.
-> **Por cima da técnica vale o nosso jeito** (seção "Nosso jeito"): diálogo entre aspas com travessão, onomatopeia entre asteriscos e as regras de `estilo/estilo.md` e `estilo/guardrails.md`.
+> O que é **romantizar** para o autor: manter o jeito dele de escrever (o diário, a primeira pessoa, as falas no meio do parágrafo) e escrever com a qualidade dos bons livros de fantasia. Usado pelo botão **📖 Romantizar** (em Capítulos) e por `/romantizar`, que reescrevem o próprio capítulo.
+> As técnicas vêm da leitura de romances de fantasia (um deles o autor mandou como referência). Aqui ficam só as técnicas, em palavras nossas. Nunca copie frases, nomes, cenas ou criaturas de livro nenhum.
+> **A voz é de quem escreve** (`estilo/escritas/<nome>.md`). A técnica deste guia melhora a voz; não troca a voz.
 
-## 1. Narrador e ponto de vista
+## 0. O que romantizar é, e o que não é
 
-- **Padrão: terceira pessoa, no passado, colada em um personagem por cena** (o ponto de vista). O narrador vê pelos olhos dele, ouve o que ele ouve e pensa com as palavras dele. Ex.: a cena da manhã acompanha a Ynana; a de madrugada pode acompanhar o Rufus.
-- **Troca de ponto de vista só na troca de cena** (`* * *`), nunca no meio de um parágrafo.
-- O narrador pode, raramente, dar um passo atrás e falar com o leitor (anunciar que algo está para mudar, uma ironia curta). Uma ou duas vezes por capítulo, no máximo.
-- **Opção 1ª pessoa**: quando o autor escolher, a voz continua sendo de quem escreve o diário, mas a forma vira de romance (cenas, diálogo, ritmo), sem "querido diário" e sem resumo de dia.
-- O ponto de vista limita o que se conta: o personagem só sabe o que sabe (regra "Quem sabe o quê" do CLAUDE.md). O leitor pode perceber o que ele não percebe, mas o narrador não explica.
+- **É**: o mesmo diário, a mesma pessoa contando, com cenas mostradas, detalhe certo, fala que soa como gente, humor do personagem e ritmo de livro.
+- **Não é**: trocar para um narrador de fora, enfeitar, pôr adjetivo e advérbio, vender a cena com superlativo, explicar o que o leitor já entendeu.
+- O exemplo que manda (do autor):
+  > "— Ynana." Disse ela, devagar, do jeito que ela fala quando tem certeza de que o erro é mesmo um erro e vai reclamar. "— O que é isto?" "— Minha mala." "— Eu vejo que é uma mala. Eu perguntei o que é isto." E tirou lá de dentro, com dois dados, o tabuleiro de conchas embrulhado no lenço, e depois o baralho, que fizeram tlec tlec quando bateram um no outro na mão dela, e enfileirou tudo em cima da colcha, um do lado do outro, as provas do crime.
+- Por que ele funciona: as falas correm no mesmo parágrafo, uma atrás da outra, sem "disse" em todas; o "devagar" vem explicado pelo que a Ynana sabe da mãe, não por um advérbio solto; os objetos são específicos (tabuleiro de conchas, lenço, dois dados); o som entra na frase (tlec tlec); e o fecho é uma piada seca da própria Ynana ("as provas do crime"), sem moral.
 
-## 2. Abertura do capítulo
+## 1. Confiar no leitor (a regra mais importante)
 
-- Começa no **normal do personagem**: quem ele é, do que se orgulha, do que tem medo, em poucos parágrafos concretos e com um pouco de humor ou ironia.
-- Logo cedo, um **segredo ou uma tensão** que ele quer esconder.
-- Depois, o **estranho entra aos poucos**: um sinal pequeno, ele explica para si mesmo e deixa para lá; outro sinal, maior; outro. Cada desculpa do personagem aumenta a tensão, porque o leitor já desconfia.
-- Nada de abrir com resumo ("Naquele dia muita coisa aconteceu"). Abre num lugar, numa hora, com alguém fazendo algo.
+- **Diga uma vez.** "O som que descia das nuvens estava alto." Ponto. Não precisa "tão alto que machucava meu ouvido" (guardrail 27).
+- **Palavra forte sozinha.** "Claro." e não "Calmamente, claro."; "sussurrou" e não "sussurrou baixinho"; "subi" e não "subi para cima" (guardrail 26).
+- **Nada de propaganda.** Nada de "não era o som da nuvem, era o maior barulho de todos", "o mais lindo de todos", "nada seria como antes". O livro bom não vende a cena; mostra e segue (guardrails 1, 4 e 27).
+- **Nada de explicar o que a cena já mostrou**: se a mãe enfileirou as provas na colcha, o leitor já entendeu que a Ynana está encrencada. Não precisa "e eu soube que estava encrencada".
+- **Emoção pelo que se faz e se vê**, não pelo nome dela (guardrail 6).
 
-## 3. Cena
+## 2. A voz de quem escreve
 
-- Cada cena tem **lugar, hora, quem está, o que cada um quer** e termina diferente de como começou (alguém sabe mais, perdeu algo, decidiu algo).
-- **Mostre o que o diário só contava**: onde o diário diz "brigamos no jantar", o romance mostra a mesa, quem falou primeiro, o que foi dito, o que ficou sem dizer.
-- **Transição por tempo e lugar**, numa frase só, no começo do parágrafo: "Às oito e meia…", "Quando o sino do porto tocou meio-dia…", "Era quase meia-noite quando…". Pulo maior: `* * *`.
-- A cena gira em torno de **objetos e detalhes recorrentes** (um colar, uma xícara, uma janela): eles voltam ao longo do capítulo e ganham peso (o Synzoe no pescoço, a xícara de chá do Rufus, o sino do porto).
+- **Padrão: primeira pessoa, a de quem escreve o diário**, no tempo que a escrita dele usa. O leitor está lendo o diário; é a Ynana (ou outro escritor) contando.
+- O que entra é o que ela viu, ouviu e soube até a data (regra "Quem sabe o quê"). Ela pode comentar, lembrar, implicar, ter opinião: é o diário dela.
+- O comentário dela é a graça do texto: o julgamento sobre os outros ("do jeito que ela fala quando tem certeza de que o erro é mesmo um erro"), a desculpa que ela dá para si, a piada curta no fim.
+- **Opção 3ª pessoa** (só se o autor escolher): narrador de fora, colado nela, com as mesmas regras.
 
-## 4. Parágrafo
+## 3. Abertura do capítulo
 
-- **Parágrafo é um momento inteiro** (guardrails 24 e 25): ação, percepção, pensamento e reação juntos, de 3 a 8 frases. Frases longas que correm, cortadas por uma curta quando algo pesa.
-- Frase sozinha num parágrafo só na virada forte, e rara.
-- Cada parágrafo abre de um jeito: ação, hora, fala, detalhe, pensamento.
+- Abre num lugar, numa hora, com alguém fazendo algo. Nada de resumo ("Hoje aconteceu muita coisa").
+- Logo cedo, uma tensão pequena: o que ela quer, o que ela está escondendo, o que a incomoda.
+- O estranho entra aos poucos: um sinal pequeno que ela explica para si mesma e deixa para lá; outro maior; outro. O leitor desconfia antes dela.
 
-## 5. Pensamento (discurso indireto livre)
+## 4. Cena
 
-- O pensamento entra **na própria narração, sem aspas e sem "pensou ela"**, com as perguntas e as desculpas do personagem: *Devia ser o vento. Ninguém sobe a escada da Mansão àquela hora.* Assim o leitor fica dentro da cabeça dele sem o texto parar.
-- Às vezes uma pergunta direta no meio da narração, com "pensou" no fim, para marcar a dúvida.
-- O pensamento mostra o caráter: o que ele nota, o que ele se recusa a notar, como se justifica.
+- Cada cena tem lugar, hora, quem está e o que cada um quer, e termina diferente de como começou.
+- **Mostre o que o resumo só contava**: onde estaria "brigamos no jantar", a mesa, quem falou primeiro, o que foi dito e o que ficou sem dizer.
+- Transição por tempo e lugar numa frase só ("Quando o sino do porto tocou meio-dia…"). Pulo maior: `* * *`.
+- Objetos que voltam (um colar, um baralho, uma xícara) ganham peso ao longo do capítulo.
 
-## 6. Diálogo
+## 5. Parágrafo
 
-- **Cada fala num parágrafo**, com quem fala e como fala colado na fala (verbo de dizer simples: disse, perguntou, respondeu, cortou, murmurou; e, de vez em quando, um modo: "seca", "sem levantar os olhos").
-- **Ação no meio do diálogo**: entre uma fala e outra, um gesto, um objeto, uma reação que diz o que a fala não diz (o Rufus mexe o chá sem beber; a Ynana gira o Synzoe entre os dedos enquanto espera a resposta).
-- **Informação aos poucos**: a conversa dá voltas, alguém evita o assunto, o outro insiste; a notícia grande sai no fim, quebrada, com hesitação ("… estão… estão…").
-- **Subtexto**: as pessoas raramente dizem o que sentem. Ninguém explica a trama para o outro (guardrail 10).
-- Cada personagem fala do seu jeito (ficha › Voz): um formal e lento, outro seco, outro que muda de assunto.
+- **Parágrafo é um momento inteiro** (guardrails 24 e 25): ação, fala, reação, lembrança e o comentário dela juntos. Frases longas que correm, com vírgula e "e", cortadas por uma curta quando algo pesa.
+- Frase sozinha num parágrafo é para a virada forte, e rara.
+- Cada parágrafo abre de um jeito: ação, hora, fala, detalhe, lembrança.
 
-## 7. Apresentar um personagem
+## 6. Diálogo (o jeito do autor)
 
-- Na primeira vez que aparece: **dois ou três traços físicos marcantes e um traço de comportamento**, em uma ou duas frases, e o nome por último ou logo em seguida.
-- A descrição vem do que o ponto de vista repara, com o julgamento dele (o que acha ridículo, o que admira).
-- Depois disso, o personagem se mostra pelo que faz e fala, não por adjetivo.
+- Formato: `"— Fala." Disse ela, …` (aspas, travessão dentro, e quem disse depois).
+- **As falas ficam no meio do parágrafo**, junto da ação. Várias falas seguidas, de pessoas diferentes, podem correr no mesmo parágrafo; quando a troca é rápida e clara, nem precisa de "disse" em todas (`"— O que é isto?" "— Minha mala."`).
+- **Fala em parágrafo próprio só para dar ênfase**: a frase que tem de pesar, a que muda a cena.
+- Verbo de dizer simples (disse, perguntou, respondeu); o jeito vem do gesto ou do comentário dela, não de advérbio.
+- Informação aos poucos: a conversa dá voltas, alguém foge do assunto, o outro insiste. Ninguém explica a trama para o outro (guardrail 10). Cada um fala do seu jeito (ficha › Voz).
+
+## 7. Apresentar alguém
+
+- Na primeira vez: dois ou três traços marcantes e um jeito de agir, do jeito que ela repara (com o julgamento dela).
+- Depois disso, a pessoa se mostra pelo que faz e fala.
 
 ## 8. Detalhe concreto e humor
 
-- Detalhe **específico e um pouco inesperado** em vez de genérico: não "um vestido", mas "o vestido preto de babados que a mãe odiava"; não "comida", mas o prato com nome e cheiro.
-- O humor nasce do personagem (a teimosia, a vaidade, a desculpa que ele dá), nunca de piada do narrador por cima.
-- Exagero pequeno e preciso funciona; exagero grandioso não (guardrail 4).
+- Detalhe **específico e um pouco inesperado**: não "uns jogos", mas "o tabuleiro de conchas embrulhado no lenço, com dois dados".
+- Um detalhe certo vale mais que três adjetivos. Corte o adjetivo que não acrescenta.
+- O humor nasce dela (a teimosia, a desculpa, o exagero pequeno de criança), nunca de piada de narrador.
 
-## 9. Ritmo e tensão
+## 9. Ritmo e som
 
-- Alterna **cena lenta** (conversa, observação) e **cena rápida** (ação, fuga), e dentro da cena alterna frase longa e curta.
-- A tensão cresce por **ironia**: o leitor sabe ou desconfia de mais coisa que o personagem.
-- **Som e silêncio**: um barulho que cresce (o vento que vira tempestade no casco) é uma boa entrada para a virada. No nosso jeito, o som vira onomatopeia entre asteriscos.
+- Alterna cena lenta (conversa) e rápida (ação), frase longa e curta.
+- Som: onomatopeia entre asteriscos no meio da ação (`*TOC*`, `*CHUA*`, `*VUC*`), ou dentro da frase quando é o som de uma coisa ("fizeram tlec tlec"). Poucas por capítulo, nunca em sequência (guardrail 19).
 
-## 10. Fecho do capítulo
+## 10. Fecho
 
-- Termina numa **imagem ou ação**, não numa moral (guardrail 3). Pode deixar uma pergunta aberta, mas sem gancho artificial (guardrail 15).
-- O personagem termina o capítulo **diferente** de como começou, mesmo que pouco.
+- Termina numa imagem, numa ação ou num comentário seco dela, não numa moral (guardrail 3), sem gancho artificial (guardrail 15).
+- Ela termina o capítulo um pouco diferente de como começou.
 
-## Nosso jeito (vale por cima de tudo)
+## Fatos
 
-- **Diálogo** no formato do autor: entre aspas, com travessão dentro, e depois quem disse e como: `"— Bom dia, Ynana." Disse ele, sem levantar os olhos.` Fala e ação podem ficar na mesma linha.
-- **Onomatopeia** entre asteriscos, no meio da ação, quando o som importa: `*TOC*`, `*CHUA*`, `*VUC*`, `*Zap*`. Poucas por capítulo, nunca em sequência (guardrail 19).
-- As regras de `estilo/estilo.md` e todos os guardrails valem (nada de contraste falso, trincas, emoção nomeada, parágrafos picados…).
-- A **escrita de quem escreve** (`estilo/escritas/<nome>.md`) dá o vocabulário, o humor e o que a personagem repara, mesmo em terceira pessoa.
-- **Os fatos são os do capítulo**: romantizar mostra melhor o que aconteceu, não muda o que aconteceu. Nada de morte, revelação, relação ou regra do mundo nova (regra 2 do CLAUDE.md). Detalhe pequeno criado para encher a cena (o prato, a cor da cortina) vira fato fixo e vai para o registro.
+- **Os fatos são os do capítulo**: romantizar conta melhor o que aconteceu, não muda o que aconteceu. Nada de morte, revelação, relação ou regra do mundo nova (regra 2 do CLAUDE.md). Detalhe pequeno criado para a cena (o prato, a cor da cortina) vira fato fixo e vai para o registro.

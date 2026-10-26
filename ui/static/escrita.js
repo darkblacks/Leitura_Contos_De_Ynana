@@ -666,6 +666,8 @@ const EXPLICA_TIQUE = [
   ["parágrafos curtos demais", () => "Parágrafos de uma frase só demais no capítulo. O seu jeito junta ação, fala, lembrança e sentimento no mesmo parágrafo."],
   ["parágrafos seguidos abrindo", () => "Três parágrafos seguidos começando com a mesma palavra: fica um molde repetido. Comece um pela fala, outro pelo detalhe ou pela lembrança."],
   ["ritmo monótono", () => "Seis frases seguidas quase do mesmo tamanho: o ritmo fica de máquina. Junte duas, alongue uma, quebre outra."],
+  ["advérbio redundante", () => "Um advérbio repete o que a palavra já diz (“calmamente, claro”, “sussurrou baixinho”, “subi para cima”). Deixe só a palavra forte: “Claro.”"],
+  ["explicação do óbvio", () => "Você completou o que o leitor já entendeu (“tão alto que machucava meu ouvido”). Diga uma vez: “estava alto”."],
   ["palavra-assinatura", () => "Palavras típicas de texto gerado por máquina (tapeçaria, sinfonia, ecoou, palpável…)."],
   ["conectivo de redação", () => "Conectivo de redação escolar (além disso, no entanto, contudo…). Num diário soa artificial."],
   ["gerúndio de comentário", () => "Gerúndio que explica o que a cena já mostrou (“…, mostrando que…”)."],
@@ -766,24 +768,24 @@ async function abrirTiques(opcoes) {
 function abrirRomantizar(cap) {
   const n = cap.n, nn = String(n).padStart(2, "0");
   const c = modal(`<h3>📖 Romantizar o capítulo ${n}${cap.titulo ? ` · ${esc(cap.titulo)}` : ""}</h3>
-    <div class="sub" style="margin-bottom:10px">O Claude reescreve este capítulo como num livro de verdade: cenas mostradas em vez de resumidas, diálogo com gesto e silêncio, o pensamento dentro da narração, ritmo de romance. Com o nosso jeito por cima: <b>"— fala." Disse…</b> e onomatopeias como <b>*TOC*</b>, <b>*CHUA*</b>, <b>*VUC*</b>. Os fatos continuam os mesmos.</div>
+    <div class="sub" style="margin-bottom:10px">O Claude reescreve este capítulo no seu jeito, com a qualidade de um bom livro de fantasia: a mesma voz do diário, as falas no meio do parágrafo (<b>"— fala." Disse…</b>), onomatopeias como <b>*TOC*</b>, cenas mostradas, detalhe certo. Sem advérbio sobrando, sem frase de propaganda e sem explicar o óbvio. Os fatos continuam os mesmos.</div>
     ${cap.status === "editado" ? `<div class="aviso" style="margin-bottom:10px">Este capítulo está como <b>editado</b> (texto seu). Romantizar reescreve o texto; o de agora fica guardado como cópia.</div>` : ""}
-    <div class="campo"><label>Narrador</label><div class="chips-escolha" id="rom-narrador">
-      <button class="chip sel" data-v="3ª pessoa no passado, colada em quem escreve a entrada">3ª pessoa (como num livro)</button>
-      <button class="chip" data-v="1ª pessoa, na voz de quem escreve a entrada">1ª pessoa (a voz de quem escreve)</button>
+    <div class="campo"><label>Voz</label><div class="chips-escolha" id="rom-narrador">
+      <button class="chip sel" data-v="1ª pessoa, na voz de quem escreve a entrada (o diário)">A de quem escreve (diário)</button>
+      <button class="chip" data-v="3ª pessoa no passado, colada em quem escreve a entrada">3ª pessoa</button>
     </div></div>
     <div class="campo"><label>Observação (opcional)</label><textarea id="rom-obs" rows="3" placeholder="ex.: mais tensão na cena do jantar; abrir no porto"></textarea></div>
     <div class="modal-acoes"><button class="botao" id="rom-no">Cancelar</button><button class="botao primario" id="rom-ok">Romantizar</button></div>`);
-  let narrador = "3ª pessoa no passado, colada em quem escreve a entrada";
+  let narrador = "1ª pessoa, na voz de quem escreve a entrada (o diário)";
   $$("#rom-narrador .chip", c).forEach((b) => (b.onclick = () => { $$("#rom-narrador .chip", c).forEach((x) => x.classList.remove("sel")); b.classList.add("sel"); narrador = b.dataset.v; }));
   $("#rom-no", c).onclick = fecharModal;
   $("#rom-ok", c).onclick = async () => {
     const obs = $("#rom-obs", c).value.trim();
     fecharModal();
     const copia = await guardarDescartado(n).catch(() => "");
-    const msg = `Romantize o capítulo ${n} (/romantizar ${n}): reescreva capitulos/cap-${nn}.md como um capítulo de livro de romance, no próprio arquivo, mantendo o cabeçalho.
-Narrador: ${narrador}.
-${obs ? `Observação do autor: ${obs}\n` : ""}${copia ? `O texto de antes foi guardado em ${copia} (só cópia de segurança; leia o capítulo como está agora antes de reescrever).\n` : ""}Siga .claude/commands/romantizar.md e a técnica de estilo/romance.md, com o nosso jeito por cima (diálogo "— fala." Disse…, onomatopeia entre asteriscos como *TOC* *CHUA* *VUC*). Os fatos continuam os mesmos.`;
+    const msg = `Romantize o capítulo ${n} (/romantizar ${n}): reescreva capitulos/cap-${nn}.md no jeito do autor com qualidade de livro de fantasia, no próprio arquivo, mantendo o cabeçalho.
+Voz: ${narrador}.
+${obs ? `Observação do autor: ${obs}\n` : ""}${copia ? `O texto de antes foi guardado em ${copia} (só cópia de segurança; leia o capítulo como está agora antes de reescrever).\n` : ""}Siga .claude/commands/romantizar.md e a técnica de estilo/romance.md, no jeito do autor (falas no meio do parágrafo "— fala." Disse…, onomatopeia como *TOC*), confiando no leitor: sem advérbio sobrando, sem frase de propaganda, sem explicar o óbvio. Os fatos continuam os mesmos.`;
     enviarAoClaude(msg, cap.caminho);
   };
 }

@@ -13,7 +13,7 @@ Não existe roteiro pronto: o que acontece vem do **pedido do autor** (no chat o
 
 1. **Ler** (só isto). Se a mensagem trouxer a **Ficha técnica** montada pela Escrivaninha (data, ciclo, quem é quem, família, casta, empresa, cargo, relações, lugar, estado vigente, com os caminhos), comece por ela: ela diz exatamente quais arquivos abrir.
    - o pedido e as notas do capítulo (`continuidade/notas-do-autor/cap-NN.md`), inclusive o que está em "manter" e em "Tiques mantidos"
-   - **a escrita de quem escreve**: `estilo/escritas/<nome>.md` e, se ela herda de outra, a de cima também (o que estiver vazio vem de lá); `estilo/estilo.md` (regras gerais) e `estilo/guardrails.md`
+   - **a escrita de quem escreve**: `estilo/escritas/<nome>.md` e, se ela herda de outra, a de cima também (o que estiver vazio vem de lá); `estilo/estilo.md` (regras gerais), `estilo/guardrails.md` e `estilo/romance.md` (qualidade de livro no jeito do autor: confiar no leitor, falas no meio do parágrafo, detalhe certo)
    - a ficha de quem escreve (a versão de aparência da idade); **não abra imagens**, use só as descrições
    - o capítulo anterior inteiro (`cap-(N-1).md`), se existir; para os de antes, os **acontecimentos canonizados** (`biblia/acontecimentos/`: onde estava cada um, função) e `continuidade/resumos.md`; `continuidade/registro.md`
    - as fichas dos personagens, lugares e artefatos do pedido (só o texto). Em cada personagem use: a **versão de aparência** da idade ou fase na data, a idade (data − nascimento), Personalidade, Motivação, Segredos e conhecimento ("Sabe" e "Desconhece" limitam o que ele pode dizer), Voz e Estado atual

@@ -173,3 +173,16 @@ Limite do script: mais de 2 parágrafos de uma frase seguidos, ou mais de 25% do
 **Errado:** três parágrafos seguidos abrindo com "Eu…" ou "Então…"; seis frases seguidas do mesmo tamanho; todo parágrafo no mesmo esquema (ação curta + sentimento nomeado + frase de efeito).
 **Reescrita:** troque a entrada de um dos parágrafos (comece pelo detalhe, pela fala ou pelo que ela lembrou), junte duas frases curtas numa longa e corte o fechamento que repete o esquema.
 O script pega abertura repetida e ritmo monótono; o molde de cena (todo parágrafo com a mesma estrutura) fica com o revisor.
+
+## 26. Advérbio que sobra `[script]`
+
+**Faça:** deixe a palavra forte trabalhar sozinha. Se o verbo ou a fala já dizem o jeito, o advérbio sai.
+**Errado:** "Calmamente, claro." / "Sussurrou baixinho." / "Gritou alto." / "Subi para cima." / "Entrei para dentro."
+**Reescrita:** "Claro." / "Sussurrou." / "Gritou." / "Subi." / "Entrei."
+
+## 27. Explicar o óbvio e frase de propaganda `[script, parcial]`
+
+**Faça:** diga uma vez e confie no leitor. Se está alto, ele já sabe que está alto. Nada de vender a cena com superlativo nem com "não era X, era o maior Y".
+**Errado:** "O som que descia das nuvens estava tão alto que machucava meu ouvido." / "Não era o som da nuvem, era o maior barulho de todos." / "O que significava que ela sabia."
+**Reescrita:** "O som que descia das nuvens estava alto." / "O som descia das nuvens." / deixe o leitor concluir que ela sabia pelo que ela faz.
+O script pega "tão X que", "que machucava/doía…", "a ponto de", "de tão…", "o maior … de todos" e "não era X, era o maior…"; o resto fica com o revisor.

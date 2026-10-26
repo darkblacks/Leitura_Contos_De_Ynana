@@ -171,8 +171,8 @@ var classesTique = []struct {
 	{"Comparação e contraste", []string{"contraste falso", "comparações empilhadas", "repetição comparativa", "alternativa comparativa"}},
 	{"Ritmo e repetição", []string{"palavra repetida", "possível trinca de termos", "trinca de frases curtas", "frases seguidas abrindo", "simetria mecânica",
 		"parágrafos picados", "parágrafos curtos demais", "parágrafos seguidos abrindo", "ritmo monótono"}},
-	{"Vocabulário artificial", []string{"palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto"}},
-	{"Exagero e efeito", []string{"linguagem grandiosa", "gancho artificial"}},
+	{"Vocabulário artificial", []string{"palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto", "advérbio redundante"}},
+	{"Exagero e efeito", []string{"linguagem grandiosa", "gancho artificial", "explicação do óbvio"}},
 	{"Emoção e corpo", []string{"emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou"}},
 	{"Formato", nil},
 }
@@ -390,6 +390,8 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 		{"gancho artificial (15)", lista("gancho_artificial", true)},
 		{"gerúndio de comentário (17, pendente)", lista("gerundio_comentario", false)},
 		{"linguagem de folheto (18, pendente)", lista("folheto", true)},
+		{"advérbio redundante (26)", lista("adverbios_redundantes", true)},
+		{"explicação do óbvio (27)", lista("explicacao_obvia", true)},
 	}
 	sussurros := lista("sussurros", true)
 	var onomatopeias []padrao
@@ -399,6 +401,7 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 	contraste := []padrao{
 		compilarPy(`não `+verbos+` (?:só|apenas|somente|simplesmente) `, true, false),
 		compilarPy(`não `+verbos+`[^\pL\pN_][^.!?\n]{0,69}?[,;:.—–]\s*(?:mas |e sim |e, sim, )?`+verbos, true, true),
+		compilarPy(`não `+verbos+`[^\pL\pN_][^.!?\n]{0,59}? `+verbos+` (?:o|a) (?:maior|pior|melhor|mais)`, true, true),
 		compilarPy(`não (?:se tratava|se trata) de`, true, true),
 		compilarPy(`não (?:é|era) sobre`, true, true),
 		compilarPy(`mais (?:do )?que (?:uma|um|só|apenas)[^\pL\pN_][^.!?\n]{0,49}?,\s*`+verbos, true, true),

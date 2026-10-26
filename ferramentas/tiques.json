@@ -39,8 +39,26 @@
     "um testemunho de", "marcari[ao] para sempre", "para sempre marcad[oa]", "o peso do mundo",
     "algo mudou dentro d", "algo se quebrou dentro d", "nada seria como antes", "nada mais seria o mesmo",
     "nunca mais seria [oa] mesm[oa]", "uma nova era", "o início de uma nova", "era só o começo",
-    "o destino (havia|tinha) ", "mudaria tudo", "mudou tudo"
+    "o destino (havia|tinha) ", "mudaria tudo", "mudou tudo",
+    "(o|a) (maior|pior|melhor|mais \\w+) \\w+ de tod[oa]s"
   ],
+
+  "adverbios_redundantes": [
+    "(disse|respondeu|falou|perguntou|murmurou|sussurrou|gritou|retrucou|concordou|repetiu|explicou)\\s+\\w+mente",
+    "sussurr\\w*\\s+baixinho", "grit\\w*\\s+alto", "berr\\w*\\s+alto",
+    "sub\\w*\\s+(para|pra)\\s+cima", "desc\\w*\\s+(para|pra)\\s+baixo",
+    "entr\\w*\\s+(para|pra)\\s+dentro", "sa(i|iu|ía|íram|ímos)\\s+(para|pra)\\s+fora",
+    "claro,?\\s+\\w+mente", "\\w+mente,?\\s+claro"
+  ],
+  "_adverbios_redundantes": "Guardrail 26: advérbio que repete o que o verbo ou a palavra já diz ('sussurrou baixinho', 'calmamente, claro').",
+
+  "explicacao_obvia": [
+    "t[ãa]o (alto|alta|forte|grande|frio|fria|quente|claro|clara|escuro|escura|rápido|rápida|pesado|pesada|bonito|bonita) que",
+    "que (doía|doíam|machucava|machucavam|feria|feriam) (meu|minha|meus|minhas|o|a|os|as|nos|no|na)",
+    "a ponto de", "de tão \\w+",
+    "(o que|isso) (significava|queria dizer) que"
+  ],
+  "_explicacao_obvia": "Guardrail 27: completar o que o leitor já entendeu ('alto que machucava meu ouvido').",
 
   "emocao_nomeada": [
     "sentiu (uma|um) (onda|pontada|nó|aperto|lampejo|misto|turbilhão)",

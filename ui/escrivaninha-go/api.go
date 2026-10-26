@@ -25,7 +25,7 @@ import (
 var raiz string // pasta da história
 
 var (
-	editaveis      = []string{"biblia", "estilo", "escaleta", "continuidade", "capitulos", "entrada", "referencias"}
+	editaveis      = []string{"biblia", "estilo", "escaleta", "continuidade", "capitulos", "romance", "entrada", "referencias"}
 	arquivosSoltos = []string{"ferramentas/tiques.json", "CLAUDE.md"}
 	extTexto       = map[string]bool{".md": true, ".txt": true, ".json": true}
 	extImagem      = map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".webp": true, ".svg": true}

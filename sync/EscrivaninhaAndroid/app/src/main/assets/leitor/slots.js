@@ -2,7 +2,8 @@
    Igual no computador e no celular. Cada slot guarda a história inteira (capítulos, fichas,
    imagens, estilo e notas) num "pacote"; salvar num slot troca o que estava lá.
 
-   No Back4App ficam duas tabelas, criadas sozinhas no primeiro salvamento:
+   No Back4App ficam duas tabelas (o autor cria uma vez, em Database › Create a class; app novo
+   não deixa criar de fora):
      Slot      — numero (1 a 4), nome, aparelho, quando, tamanho, capitulos, versao
      SlotParte — versao, ordem, dados (o pacote comprimido, em pedaços de até 100 mil letras)
    Salvar grava as partes novas primeiro e só depois aponta o slot para elas; se a internet cair
@@ -35,10 +36,50 @@ async function parse(rota, { metodo = "GET", corpo, consulta } = {}) {
   } catch { throw new Error("Sem internet (ou o Back4App não respondeu). Os slots precisam de internet; o resto continua funcionando."); }
   const d = await r.json().catch(() => ({}));
   if (!r.ok) {
-    if (r.status === 401 || r.status === 403 || d.code === 403) throw new Error("O Back4App recusou a chave. Confira a ID do app e a chave (REST API Key).");
-    throw new Error(d.error || `O Back4App respondeu com erro (${r.status}).`);
+    throw erroDoBack4App(r.status, d);
   }
   return d;
+}
+
+/* Traduz a recusa do Back4App em português, com o passo para resolver. O texto original vai junto. */
+function erroDoBack4App(status, d) {
+  const original = d.error || `erro ${status}`;
+  const tabela = d.code === 119 || /non-existent class|not allowed to access|permission denied|class creation/i.test(original);
+  let msg;
+  if (tabela) {
+    msg = "O Back4App não deixou criar as tabelas dos slots (num app novo ele vem travado). Resolva uma vez só: no Back4App, abra o app › Database › Create a class › tipo Custom › nome Slot › Create; e de novo com o nome SlotParte. Depois toque em Salvar de novo.";
+  } else if (status === 401 || status === 403 || d.code === 101 || /unauthorized/i.test(original)) {
+    msg = "O Back4App recusou a chave. Confira a ID do app (Application ID) e a chave (REST API Key), sem espaço no começo ou no fim.";
+  } else if (status === 413 || /too large|exceed/i.test(original)) {
+    msg = "O Back4App recusou o tamanho do salvamento (imagens muito grandes?).";
+  } else if (status === 429 || /limit/i.test(original)) {
+    msg = "O plano grátis do Back4App atingiu o limite de pedidos. Espere um pouco e tente de novo.";
+  } else {
+    msg = `O Back4App respondeu com erro (${status}).`;
+  }
+  const e = new Error(msg);
+  e.detalhe = `${status}${d.code ? ` · código ${d.code}` : ""} · ${original}`;
+  return e;
+}
+
+/* Testa ler e gravar nas duas tabelas (grava um item de teste e apaga), para achar o problema no "Ligar slots". */
+async function testarSlots() {
+  await listarSlots();
+  for (const [classe, corpo] of [["SlotParte", { versao: "teste", ordem: 0, dados: "ok" }], ["Slot", { numero: 0, nome: "teste", versao: "teste" }]]) {
+    const r = await parse("/classes/" + classe, { metodo: "POST", corpo });
+    await parse(`/classes/${classe}/${r.objectId}`, { metodo: "DELETE" }).catch(() => {});
+  }
+}
+
+/* O último erro dos slots fica na tela (o aviso rápido some antes de dar para ler). */
+let erroSlots = null;
+const guardarErroSlots = (e) => { erroSlots = e ? { msg: e.message, detalhe: e.detalhe || "" } : null; };
+const htmlErroSlots = () => erroSlots ? `<div class="aviso erro-slots" style="margin-bottom:12px"><b>Não deu certo.</b> ${esc(erroSlots.msg)}
+  ${erroSlots.detalhe ? `<div class="sub" style="margin-top:6px">Resposta do Back4App: ${esc(erroSlots.detalhe)}</div>` : ""}
+  <div style="margin-top:6px"><a href="#" data-fechar-erro>fechar</a></div></div>` : "";
+function ligarFecharErro(caixa, redesenhar) {
+  const a = caixa.querySelector("[data-fechar-erro]");
+  if (a) a.onclick = (e) => { e.preventDefault(); guardarErroSlots(null); redesenhar(); };
 }
 
 async function listarSlots() {
@@ -128,8 +169,9 @@ function htmlConfigSlots() {
         <li>Clique em <b>Build new app</b> (Backend as a Service), dê um nome (ex.: Contos de Ynana) e crie.</li>
         <li>No app, vá em <b>App Settings › Security &amp; Keys</b>.</li>
         <li>Copie a <b>Application ID</b> e a <b>REST API Key</b> e cole aqui. Faça o mesmo no outro aparelho.</li>
+        <li>Em <b>Database</b>, crie duas tabelas: <b>Create a class</b> › tipo <b>Custom</b> › nome <b>Slot</b>; e de novo com o nome <b>SlotParte</b>.</li>
       </ol>
-      As tabelas dos slots são criadas sozinhas no primeiro salvamento. Não use a Master Key.</details>`;
+      Não use a Master Key.</details>`;
 }
 function lerConfigSlots(caixa, aparelhoPadrao) {
   const v = (s) => caixa.querySelector(s).value.trim();

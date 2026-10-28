@@ -43,16 +43,18 @@ async function exportarLivro(selecionados) {
 async function desenharSlots(caixa) {
   if (!caixa) return;
   if (!slotsProntos() || caixa.dataset.config === "1") {
-    caixa.innerHTML = `<div style="margin-bottom:10px">Guarde a história inteira em até <b>4 slots</b> na internet, como save de jogo, e abra no celular (ou em outro computador). Usa uma conta grátis do <b>Back4App</b>.</div>
+    caixa.innerHTML = htmlErroSlots() + `<div style="margin-bottom:10px">Guarde a história inteira em até <b>4 slots</b> na internet, como save de jogo, e abra no celular (ou em outro computador). Usa uma conta grátis do <b>Back4App</b>.</div>
       ${htmlConfigSlots()}
       <div class="opcoes-linha" style="margin:12px 0 0"><button class="botao primario" id="sl-ligar">Ligar slots</button>${slotsProntos() ? `<button class="botao" id="sl-cancelar">Cancelar</button>` : ""}</div>`;
     $("#sl-ligar", caixa).onclick = async () => {
       const c = lerConfigSlots(caixa, "Computador");
       if (!c.appId || !c.chave) { toast("Cole a ID do app e a chave.", true); return; }
-      try { await listarSlots(); caixa.dataset.config = ""; toast("Slots ligados ✓"); desenharSlots(caixa); }
-      catch (e) { toast(e.message, true); }
+      try { await testarSlots(); guardarErroSlots(null); caixa.dataset.config = ""; toast("Slots ligados ✓"); }
+      catch (e) { guardarErroSlots(e); }
+      desenharSlots(caixa);
     };
     if ($("#sl-cancelar", caixa)) $("#sl-cancelar", caixa).onclick = () => { caixa.dataset.config = ""; desenharSlots(caixa); };
+    ligarFecharErro(caixa, () => desenharSlots(caixa));
     return;
   }
   caixa.innerHTML = `<span class="sub">Abrindo os slots…</span>`;
@@ -64,7 +66,7 @@ async function desenharSlots(caixa) {
     $("#sl-mudar", caixa).onclick = () => { caixa.dataset.config = "1"; desenharSlots(caixa); };
     return;
   }
-  caixa.innerHTML = `<div class="grade-slots">${slots.map((s) => `
+  caixa.innerHTML = htmlErroSlots() + `<div class="grade-slots">${slots.map((s) => `
       <div class="slot-cartao ${s.vazio ? "vazio" : ""}">
         <div class="slot-num">Slot ${s.numero}</div>
         ${s.vazio ? `<div class="slot-nome sub">vazio</div>` : `<div class="slot-nome">${esc(s.nome)}</div>
@@ -75,6 +77,7 @@ async function desenharSlots(caixa) {
     <div class="sub" style="margin-top:10px">Salvar guarda a história deste computador no slot. Carregar troca a história deste computador pela do slot; a de agora fica guardada numa cópia de segurança.
       <a href="#" id="sl-mudar">Mudar a chave</a></div>`;
   $("#sl-mudar", caixa).onclick = (e) => { e.preventDefault(); caixa.dataset.config = "1"; desenharSlots(caixa); };
+  ligarFecharErro(caixa, () => desenharSlots(caixa));
   $$("[data-salvar]", caixa).forEach((b) => (b.onclick = () => salvarSlotPC(slots[b.dataset.salvar - 1], caixa)));
   $$("[data-carregar]", caixa).forEach((b) => (b.onclick = () => carregarSlotPC(slots[b.dataset.carregar - 1], caixa)));
 }
@@ -91,7 +94,8 @@ async function salvarSlotPC(s, caixa) {
     await salvarNoSlot(s.numero, nome, pacote, (f, t) => setSalvamento(`enviando ao slot ${s.numero}… ${Math.round((f / t) * 100)}%`, true));
     setSalvamento("salvo no slot ✓");
     toast(`Salvo no slot ${s.numero} ✓`);
-  } catch (e) { setSalvamento("erro no slot", true); toast(e.message, true); }
+    guardarErroSlots(null);
+  } catch (e) { setSalvamento("erro no slot", true); guardarErroSlots(e); toast("O slot não foi salvo: veja o aviso em Slots online.", true); }
   desenharSlots(caixa);
 }
 
@@ -107,6 +111,7 @@ async function carregarSlotPC(s, caixa) {
     await atualizarArvore();
     setSalvamento("slot carregado ✓");
     toast(`Slot ${s.numero} carregado. A história de antes ficou em ${r.copia}.`);
-  } catch (e) { setSalvamento("erro no slot", true); toast(e.message, true); }
+    guardarErroSlots(null);
+  } catch (e) { setSalvamento("erro no slot", true); guardarErroSlots(e); toast("O slot não foi carregado: veja o aviso em Slots online.", true); }
   desenharSlots(caixa);
 }

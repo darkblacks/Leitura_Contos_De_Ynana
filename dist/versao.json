@@ -1,9 +1,7 @@
 {
-  "versao": "2.17.0",
-  "sha256": "d40c261190999a42e09894e03cb941690482c0472618fab68bda453e00e99826",
+  "versao": "2.17.1",
+  "sha256": "9a0674f1f82433a1841118d351d45f4e3aa4c66eae1358b7445b881df9d17714",
   "notas": [
-    "Exportar: a história como livro em PDF (igual ao app) ou Word, em Capítulos",
-    "Slots online: 4 slots para guardar a história na internet e abrir no celular (Opções › Slots online)",
-    "App do celular: ler e editar as histórias sem o computador"
+    "Slots: quando o Back4App recusa, o aviso fica na tela e diz o que fazer (criar as tabelas Slot e SlotParte)"
   ]
 }

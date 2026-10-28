@@ -173,13 +173,15 @@ TELAS.inicio = () => {
 
 async function desenharSlotsCel(caixa, config = false) {
   if (!slotsProntos() || config) {
-    caixa.innerHTML = `${htmlConfigSlots()}<div class="cel-botoes"><button class="botao primario" id="sl-ligar">Ligar slots</button>${slotsProntos() ? `<button class="botao" id="sl-cancelar">Cancelar</button>` : ""}</div>`;
+    caixa.innerHTML = `${htmlErroSlots()}${htmlConfigSlots()}<div class="cel-botoes"><button class="botao primario" id="sl-ligar">Ligar slots</button>${slotsProntos() ? `<button class="botao" id="sl-cancelar">Cancelar</button>` : ""}</div>`;
     $("#sl-ligar", caixa).onclick = async () => {
       const c = lerConfigSlots(caixa, "Celular");
       if (!c.appId || !c.chave) { toast("Cole a ID do app e a chave.", true); return; }
-      try { await listarSlots(); toast("Slots ligados ✓"); desenharSlotsCel(caixa); } catch (e) { toast(e.message, true); }
+      try { await testarSlots(); guardarErroSlots(null); toast("Slots ligados ✓"); desenharSlotsCel(caixa); }
+      catch (e) { guardarErroSlots(e); desenharSlotsCel(caixa, true); }
     };
     if ($("#sl-cancelar", caixa)) $("#sl-cancelar", caixa).onclick = () => desenharSlotsCel(caixa);
+    ligarFecharErro(caixa, () => desenharSlotsCel(caixa, true));
     return;
   }
   caixa.innerHTML = `<span class="sub">Abrindo os slots…</span>`;
@@ -191,7 +193,7 @@ async function desenharSlotsCel(caixa, config = false) {
     $("#sl-mudar", caixa).onclick = () => desenharSlotsCel(caixa, true);
     return;
   }
-  caixa.innerHTML = `<div class="grade-slots">${slots.map((s) => `
+  caixa.innerHTML = htmlErroSlots() + `<div class="grade-slots">${slots.map((s) => `
     <div class="slot-cartao ${s.vazio ? "vazio" : ""}">
       <div class="slot-num">Slot ${s.numero}</div>
       ${s.vazio ? `<div class="slot-nome sub">vazio</div>` : `<div class="slot-nome">${esc(s.nome)}</div>
@@ -201,6 +203,7 @@ async function desenharSlotsCel(caixa, config = false) {
     </div>`).join("")}</div>
     <div class="sub" style="margin-top:10px">Baixar troca a história do celular pela do slot. Salvar guarda a história do celular no slot. <a href="#" id="sl-mudar">Mudar a chave</a></div>`;
   $("#sl-mudar", caixa).onclick = (e) => { e.preventDefault(); desenharSlotsCel(caixa, true); };
+  ligarFecharErro(caixa, () => desenharSlotsCel(caixa));
   $$("[data-baixar]", caixa).forEach((b) => (b.onclick = () => baixarCel(slots[b.dataset.baixar - 1])));
   $$("[data-salvar]", caixa).forEach((b) => (b.onclick = () => salvarCel(slots[b.dataset.salvar - 1])));
 }
@@ -215,7 +218,8 @@ async function baixarCel(s) {
     est.info = { slot: s.numero, nome: s.nome, baixadoEm: new Date().toISOString(), mudado: false };
     await gravarNoCelular();
     toast(`Slot ${s.numero} no celular ✓`);
-  } catch (e) { toast(e.message, true); }
+    guardarErroSlots(null);
+  } catch (e) { guardarErroSlots(e); toast("O slot não foi baixado: veja o aviso em Slots online.", true); }
   TELAS.inicio();
 }
 
@@ -229,7 +233,8 @@ async function salvarCel(s) {
     est.info = { ...(est.info || {}), slot: s.numero, nome, mudado: false };
     await gravarNoCelular();
     toast(`Salvo no slot ${s.numero} ✓`);
-  } catch (e) { toast(e.message, true); }
+    guardarErroSlots(null);
+  } catch (e) { guardarErroSlots(e); toast("O slot não foi salvo: veja o aviso em Slots online.", true); }
   TELAS.inicio();
 }
 

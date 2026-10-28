@@ -17,6 +17,7 @@ O GitHub monta o APK sozinho a cada versão nova. No celular, abra
 
 1. Crie uma conta grátis em **back4app.com** e um app (Build new app › Backend as a Service).
 2. Em **App Settings › Security & Keys**, copie a **Application ID** e a **REST API Key**.
+   Em **Database**, crie duas tabelas: **Create a class › Custom › Slot**, e de novo com o nome **SlotParte**.
 3. No computador: **Opções › Slots online**, cole as duas e toque em **Ligar slots**. Depois **Salvar aqui** num dos 4 slots.
 4. No celular: **Ler minhas histórias**, cole as mesmas duas chaves, **Ligar slots** e **Baixar** o slot.
 5. Editou no celular? **Salvar aqui** num slot; no computador, **Carregar** esse slot (a história de antes fica guardada em `copias/`).

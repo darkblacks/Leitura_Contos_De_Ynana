@@ -1,8 +1,9 @@
 {
-  "versao": "2.16.0",
-  "sha256": "b30a13ad00d53e7a1214780c83715b724356e2318a353a3aa24cd5aa2494cbbd",
+  "versao": "2.17.0",
+  "sha256": "d40c261190999a42e09894e03cb941690482c0472618fab68bda453e00e99826",
   "notas": [
-    "Romantizar agora mantém o seu jeito (a voz do diário, falas no meio do parágrafo) com qualidade de livro de fantasia",
-    "Novos avisos de tique: advérbio que sobra, frase de propaganda e explicar o óbvio"
+    "Exportar: a história como livro em PDF (igual ao app) ou Word, em Capítulos",
+    "Slots online: 4 slots para guardar a história na internet e abrir no celular (Opções › Slots online)",
+    "App do celular: ler e editar as histórias sem o computador"
   ]
 }

@@ -71,7 +71,8 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `referencias/`, `estilo/exemplos/`, `escaleta/`, `biblia/historia.md`, `entrada/` | Material antigo de consulta (nunca apagado) |
 | `ui/` | Escrivaninha: interface local (`abrir-escrivaninha.bat` ou `.sh`) |
 | `dist/Escrivaninha.exe` | A Escrivaninha num executável para Windows; instala-se em `C:\Os_Contos_De_Ynana` (código em `ui/escrivaninha-go/`) |
-| `sync/EscrivaninhaAndroid/` | **App do celular** (projeto Android Studio): abre a Escrivaninha do computador pelo Wi-Fi, com código (Opções › Celular). Não vai para dentro do exe |
+| `sync/EscrivaninhaAndroid/` | **App do celular** (projeto Android Studio): **Ler minhas histórias** (o leitor `ui/static/celular.html`, copiado para `assets/leitor` por `sync/atualizar-android.sh`: baixa um slot, lê, edita à mão, salva no slot, exporta) ou abre a Escrivaninha do computador pelo Wi-Fi, com código (Opções › Celular). O GitHub monta o APK (`.github/workflows/android.yml`, Releases › "App do celular"). Não vai para dentro do exe |
+| `copias/`, `exportados/` | Cópias de segurança feitas ao carregar um slot (as 10 últimas) e os livros exportados em PDF e Word. Ficam só no computador do autor |
 
 ## Ficha de personagem
 
@@ -95,6 +96,8 @@ Toda ficha de personagem, lugar e artefato segue o mesmo formato, para ler e edi
 - **Local (funciona sem internet):** o programa, todas as telas, capítulos, fichas, famílias, castas, empresas, parlamento, acontecimentos, calendário, estilo, a checagem de tiques e as fontes.
 - **Precisa de internet:** a conversa com o Claude (escrever, ajustar, revisar, canonizar, descrever imagens), a procura de atualização e as vozes naturais do "Ouvir" (sem internet, ele usa a voz do computador).
 - **Celular**: o app Android é uma janela para a Escrivaninha do computador, pelo Wi-Fi de casa; precisa do computador ligado com a Escrivaninha aberta e o acesso ligado em Opções › Celular (código de 6 números). Desligado por padrão; só o computador liga, desliga e troca o código.
+- **Slots online** (Opções › Slots online, e no celular): 4 slots no Back4App do autor (ID do app e REST API Key coladas no aparelho, nunca no chat). Salvar guarda a história inteira (capítulos, bíblia, continuidade, estilo); carregar troca a do aparelho e guarda a de antes em `copias/`. Precisa de internet.
+- **Exportar** (Capítulos › ⇩ Exportar, ou no capítulo): livro com capa e um capítulo por página, com o cabeçalho do diário, em **PDF** (A5, igual ao app, gerado pelo Edge sem janela) ou **Word** (.docx). Sai em `exportados/`. Funciona sem internet.
 - Uma parte online que falha não derruba o resto: o chat mostra o erro e guarda a mensagem; a atualização só não aparece; o programa continua aberto.
 
 ## Dinâmicas de personagem
@@ -158,7 +161,7 @@ Toda ficha de personagem, lugar e artefato segue o mesmo formato, para ler e edi
 - `ui/servidor.py` (Python puro, só em 127.0.0.1) serve uma interface que lê e grava estes mesmos arquivos. `Escrivaninha.exe` é a mesma coisa em Go. `Escrivaninha.exe tiques <arquivo>` dá a mesma saída do `checa_tiques.py`.
 - Ao mudar `ui/static/`, `ferramentas/checa_tiques.py` ou `ui/servidor.py`, mantenha `ui/escrivaninha-go/` igual e gere o exe de novo.
 - O que o autor muda pela interface é texto dele: vale a regra 1.
-- Telas: Escrever com o Claude (chat + folha), Capítulos, Personagens (fichas, relações, famílias, castas, empresas, parlamento), Lugares, Artefatos, Acontecimentos (por ciclo), Calendário (meses e eventos), Estilo (escritores), Comandos, Opções (cores, leitura, celular).
+- Telas: Escrever com o Claude (chat + folha), Capítulos, Personagens (fichas, relações, famílias, castas, empresas, parlamento), Lugares, Artefatos, Acontecimentos (por ciclo), Calendário (meses e eventos), Estilo (escritores), Comandos, Opções (cores, leitura, slots online, celular).
 
 ## Atualizações do app (Escrivaninha.exe)
 

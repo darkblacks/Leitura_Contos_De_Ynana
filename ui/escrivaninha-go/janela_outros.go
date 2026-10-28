@@ -45,3 +45,6 @@ func encerrarOutrasInstancias() {
 	}
 	time.Sleep(700 * time.Millisecond)
 }
+
+// navegadorApp só existe no Windows (Edge/Chrome da janela).
+func navegadorApp() string { return "" }

@@ -68,7 +68,6 @@ const conexao = {
 };
 
 /* ------------------------------------------------------------ utilidades */
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function toast(msg, erro = false) {
   const t = $("#toast");
   t.textContent = msg;
@@ -81,7 +80,6 @@ function corDoNome(nome) {
   for (const c of nome) h = (h * 31 + c.charCodeAt(0)) % 360;
   return `hsl(${h} 38% 38%)`;
 }
-function palavras(t) { return (t.match(/[\p{L}\p{N}]+/gu) || []).length; }
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 function setSalvamento(txt, sujo = false) { const s = $("#salvamento"); s.textContent = txt; s.classList.toggle("sujo", sujo); }
 
@@ -95,10 +93,10 @@ function modal(html, classe = "") {
 function fecharModal() { $("#modal").classList.remove("aberto"); }
 $("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") fecharModal(); });
 
-function pedirTexto(titulo, rotulo, valor = "") {
+function pedirTexto(titulo, rotulo, valor = "", botao = "Criar") {
   return new Promise((res) => {
     const c = modal(`<h3>${esc(titulo)}</h3><div class="campo"><label>${esc(rotulo)}</label><input id="m-in" value="${esc(valor)}"></div>
-      <div class="modal-acoes"><button class="botao" id="m-no">Cancelar</button><button class="botao primario" id="m-ok">Criar</button></div>`);
+      <div class="modal-acoes"><button class="botao" id="m-no">Cancelar</button><button class="botao primario" id="m-ok">${esc(botao)}</button></div>`);
     const i = $("#m-in", c); i.focus();
     const ok = () => { fecharModal(); res(i.value.trim()); };
     $("#m-ok", c).onclick = ok;
@@ -107,87 +105,6 @@ function pedirTexto(titulo, rotulo, valor = "") {
   });
 }
 
-/* ------------------------------------------------------------ markdown mínimo */
-function inline(s) {
-  s = esc(s);
-  s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
-  s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-  s = s.replace(/(^|[^*])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
-  s = s.replace(/(^|\W)_([^_]+)_(?=\W|$)/g, "$1<em>$2</em>");
-  s = s.replace(/~~([^~]+)~~/g, "<del>$1</del>");
-  s = s.replace(/\[DECIDIR\]/g, '<span class="decidir">DECIDIR</span>');
-  s = s.replace(/\(a definir\)/g, '<span class="a-definir">(a definir)</span>');
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, t, u) => {
-    const alvo = resolverLink(u);
-    return alvo ? `<a href="#" data-abrir="${esc(alvo)}">${t}</a>` : `<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
-  });
-  return s;
-}
-let _baseLink = "";
-function resolverLink(u) {
-  if (/^https?:/.test(u) || !u.endsWith(".md")) return null;
-  const partes = (_baseLink ? _baseLink.split("/").slice(0, -1) : []).concat(u.split("/"));
-  const out = [];
-  for (const p of partes) { if (p === "..") out.pop(); else if (p && p !== ".") out.push(p); }
-  return out.join("/");
-}
-function markdown(md, base = "") {
-  _baseLink = base;
-  const linhas = md.replace(/\r/g, "").split("\n");
-  let html = "", i = 0;
-  if (linhas[0] === "---") { const f = linhas.indexOf("---", 1); if (f > 0) i = f + 1; }
-  let lista = null, par = [];
-  const fecharPar = () => { if (par.length) { html += `<p>${inline(par.join(" "))}</p>`; par = []; } };
-  const fecharLista = () => { if (lista) { html += `</${lista}>`; lista = null; } };
-  for (; i < linhas.length; i++) {
-    const l = linhas[i];
-    if (/^```/.test(l)) {
-      fecharPar(); fecharLista();
-      let bloco = []; i++;
-      while (i < linhas.length && !/^```/.test(linhas[i])) bloco.push(linhas[i++]);
-      html += `<pre><code>${esc(bloco.join("\n"))}</code></pre>`; continue;
-    }
-    if (!l.trim()) { fecharPar(); fecharLista(); continue; }
-    let m;
-    if ((m = l.match(/^(#{1,4})\s+(.*)/))) { fecharPar(); fecharLista(); html += `<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`; continue; }
-    if (/^(\* \* \*|---|\*\*\*)\s*$/.test(l)) { fecharPar(); fecharLista(); html += "<hr>"; continue; }
-    if (/^\|/.test(l)) {
-      fecharPar(); fecharLista();
-      const rows = [];
-      while (i < linhas.length && /^\|/.test(linhas[i])) rows.push(linhas[i++]);
-      i--;
-      const cel = (r) => r.replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
-      html += "<table>";
-      rows.forEach((r, k) => {
-        if (/^\|[\s:|-]+\|$/.test(r)) return;
-        const tag = k === 0 ? "th" : "td";
-        html += "<tr>" + cel(r).map((c) => `<${tag}>${inline(c)}</${tag}>`).join("") + "</tr>";
-      });
-      html += "</table>"; continue;
-    }
-    if (/^>/.test(l)) {
-      fecharPar(); fecharLista();
-      const grupos = [[]];
-      while (i < linhas.length && /^>/.test(linhas[i])) {
-        const t = linhas[i++].replace(/^>\s?/, "");
-        if (t.trim()) grupos[grupos.length - 1].push(t); else if (grupos[grupos.length - 1].length) grupos.push([]);
-      }
-      i--;
-      html += "<blockquote>" + grupos.filter((g) => g.length).map((g) => `<p>${g.map(inline).join("<br>")}</p>`).join("") + "</blockquote>";
-      continue;
-    }
-    if ((m = l.match(/^\s*[-*]\s+(.*)/)) || (m = l.match(/^\s*\d+\.\s+(.*)/))) {
-      fecharPar();
-      const tipo = /^\s*\d+\./.test(l) ? "ol" : "ul";
-      if (lista !== tipo) { fecharLista(); html += `<${tipo}>`; lista = tipo; }
-      html += `<li>${inline(m[1])}</li>`; continue;
-    }
-    fecharLista();
-    par.push(l);
-  }
-  fecharPar(); fecharLista();
-  return html;
-}
 document.addEventListener("click", (e) => {
   const a = e.target.closest("[data-abrir]");
   if (!a) return;
@@ -301,7 +218,7 @@ async function novoCapitulo() {
 VISTAS.capitulos = async () => {
   const a = await atualizarArvore();
   vista.innerHTML = cabecalho("Capítulos", "Cada capítulo é uma ou mais entradas do diário. Clique para abrir na escrivaninha.",
-    `<button class="botao primario" id="novo-cap">✎ Nova entrada</button>`) +
+    `<button class="botao" id="exportar-livro" title="Gera um livro em PDF ou Word, para ler e compartilhar">⇩ Exportar</button><button class="botao primario" id="novo-cap">✎ Nova entrada</button>`) +
     (a.capitulos.length ? a.capitulos.map((c) => `
       <div class="linha-capitulo" data-abrir="${esc(c.caminho)}">
         <div class="num">${esc(String(c.meta.capitulo || c.nome.replace("cap-", "")).padStart(2, "0"))}</div>
@@ -313,47 +230,13 @@ VISTAS.capitulos = async () => {
       </div>`).join("")
       : `<div class="vazio"><h3>O diário está em branco</h3>Crie a primeira entrada aqui, ou peça ao Claude: <code>/escrever 1</code> (depois de aprovar a escaleta).</div>`);
   $("#novo-cap").onclick = novoCapitulo;
+  $("#exportar-livro").onclick = () => exportarLivro();
   $$("[data-romantizar]").forEach((b) => (b.onclick = (e) => {
     e.stopPropagation();
     const c = a.capitulos.find((x) => x.caminho === b.dataset.romantizar);
     abrirRomantizar({ caminho: c.caminho, n: +(c.meta.capitulo || c.nome.replace("cap-", "")), titulo: c.meta.titulo, status: c.meta.status });
   }));
 };
-
-function separarCapitulo(texto) {
-  const meta = {}, ordem = [];
-  let corpo = texto, offset = 0;
-  if (texto.startsWith("---\n")) {
-    const fim = texto.indexOf("\n---", 3);
-    if (fim !== -1) {
-      texto.slice(4, fim).split("\n").forEach((l) => {
-        const k = l.indexOf(":");
-        if (k > 0) { const ch = l.slice(0, k).trim(); meta[ch] = l.slice(k + 1).trim(); ordem.push(ch); }
-      });
-      let resto = texto.slice(fim + 4);
-      if (resto.startsWith("\n")) resto = resto.slice(1);
-      let pulou = 0;
-      while (resto.startsWith("\n")) { resto = resto.slice(1); pulou++; }
-      corpo = resto;
-      offset = texto.slice(0, fim + 4).split("\n").length + pulou;
-    }
-  }
-  return { meta, ordem, corpo, offset };
-}
-/* Cabeçalho fixo dos Contos de Ynana (igual em todo capítulo, vem dos dados do capítulo):
-   TÍTULO - QUEM ESCREVE
-   subtítulo - local - data */
-const semLink = (t) => String(t || "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").trim();
-function cabecalhoDiario(meta) {
-  const l1 = [meta.titulo || "Sem título", semLink(meta.quem_escreve)].filter(Boolean).join(" - ");
-  const l2 = [meta.subtitulo, semLink(meta.onde), meta.quando].map((x) => String(x || "").trim()).filter(Boolean).join(" - ");
-  return `<header class="cab-diario"><div class="cab-l1">${esc(l1)}</div>${l2 ? `<div class="cab-l2">${esc(l2)}</div>` : ""}</header>`;
-}
-function juntarCapitulo(meta, ordem, corpo) {
-  const chaves = ["status", "capitulo", "titulo", "subtitulo", "onde", "quando", "quem_escreve"];
-  ordem.forEach((k) => { if (!chaves.includes(k)) chaves.push(k); });
-  return "---\n" + chaves.map((k) => `${k}: ${meta[k] ?? ""}`.trimEnd()).join("\n") + "\n---\n\n" + corpo;
-}
 
 VISTAS.capitulo = async (caminho) => {
   const a = estado.arvore || (await atualizarArvore());
@@ -369,6 +252,7 @@ VISTAS.capitulo = async (caminho) => {
       <div class="direita">
         <button class="botao pequeno" data-ouvir="#f-previa" title="Ler o capítulo em voz alta">🔊 Ouvir</button>
         <button class="botao pequeno" id="romantizar-cap" title="Reescreve este capítulo como num livro de romance, no nosso jeito">📖 Romantizar</button>
+        <button class="botao pequeno" id="exportar-cap" title="Este capítulo em PDF ou Word">⇩ Exportar</button>
         <button class="botao pequeno" id="alternar">Leitura</button>
         <button class="botao pequeno primario" id="salvar">Salvar</button>
       </div>
@@ -467,6 +351,7 @@ VISTAS.capitulo = async (caminho) => {
     abrirRomantizar({ caminho, n: +(meta.capitulo || (caminho.match(/cap-(\d+)/) || [])[1] || 0), titulo: meta.titulo, status: statusAtual });
   };
   $("#voltar").onclick = (e) => { e.preventDefault(); ir("capitulos"); };
+  $("#exportar-cap").onclick = async () => { if (estado.sujo) await salvar(); exportarLivro([caminho]); };
   $("#alternar").onclick = () => {
     const lendo = ta.style.display !== "none";
     ta.style.display = lendo ? "none" : "";

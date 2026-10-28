@@ -5,6 +5,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.print.PrintAttributes
+import android.print.PrintManager
+import android.util.Base64
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.view.View
@@ -15,6 +18,7 @@ import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
@@ -23,21 +27,27 @@ import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
+import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.util.Locale
 
 /**
  * Contos de Ynana no celular.
  *
- * O app abre a Escrivaninha que está rodando no computador, pelo Wi-Fi de casa: todas as telas
- * e o Claude continuam no computador; o celular é a janela. Na primeira vez pede o endereço e o
- * código que aparecem no computador, em Opções › Celular.
+ * Dois jeitos:
+ *  - Ler minhas histórias: o leitor que vem dentro do app (assets/leitor). Funciona sem o
+ *    computador: baixa a história de um dos 4 slots online, lê, edita, salva no slot e exporta
+ *    o livro em PDF ou Word.
+ *  - Abrir o computador: a Escrivaninha que está rodando no computador, pelo Wi-Fi de casa
+ *    (todas as telas e o Claude). Pede o endereço e o código de Opções › Celular.
  *
- * Do celular vêm: escolher imagens da galeria, a voz do "Ouvir" (motor de voz do Android) e o
- * botão voltar.
+ * Do celular vêm: escolher imagens da galeria, a voz do "Ouvir" (motor de voz do Android),
+ * imprimir/salvar em PDF, compartilhar o Word e o botão voltar.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -52,6 +62,10 @@ class MainActivity : AppCompatActivity() {
     private var polyfillNoInicio: String? = null
     private var escolherArquivos: ValueCallback<Array<Uri>>? = null
     private val prefs by lazy { getSharedPreferences("escrivaninha", MODE_PRIVATE) }
+    private val leitor by lazy {
+        WebViewAssetLoader.Builder().addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this)).build()
+    }
+    private var impressao: WebView? = null
 
     private val seletor = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val cb = escolherArquivos ?: return@registerForActivityResult
@@ -75,6 +89,7 @@ class MainActivity : AppCompatActivity() {
         aviso = findViewById(R.id.aviso)
 
         findViewById<Button>(R.id.conectar).setOnClickListener { conectar() }
+        findViewById<Button>(R.id.ler).setOnClickListener { abrirLeitor() }
         campoCodigo.setOnEditorActionListener { _, acao, _ ->
             if (acao == EditorInfo.IME_ACTION_GO) { conectar(); true } else false
         }
@@ -94,6 +109,8 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
+                    web.visibility == View.VISIBLE && modoLeitor() ->
+                        web.evaluateJavascript("window.__voltarLeitor && window.__voltarLeitor()") { r -> if (r != "true") finish() }
                     web.visibility == View.VISIBLE && web.canGoBack() -> web.goBack()
                     painel.visibility == View.VISIBLE && prefs.getString("base", null) != null && web.url != null -> mostrarWeb()
                     else -> finish()
@@ -102,11 +119,13 @@ class MainActivity : AppCompatActivity() {
         })
 
         val base = prefs.getString("base", null)
-        if (base == null) {
-            mostrarPainel(null)
-        } else {
-            campoEndereco.setText(base.removePrefix("http://"))
-            abrir(base)
+        when {
+            prefs.getString("modo", "") == "leitor" -> abrirLeitor()
+            base == null -> mostrarPainel(null)
+            else -> {
+                campoEndereco.setText(base.removePrefix("http://"))
+                abrir(base)
+            }
         }
     }
 
@@ -135,9 +154,13 @@ class MainActivity : AppCompatActivity() {
                 polyfillNoInicio?.let { view.evaluateJavascript(it, null) }
             }
 
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
+                leitor.shouldInterceptRequest(request.url)
+
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val base = prefs.getString("base", "") ?: ""
                 val u = request.url
+                if (u.host == LEITOR_HOST) return false
                 if (u.scheme != "http" && u.scheme != "https") return true
                 if (base.isNotEmpty() && u.toString().startsWith(base)) return false
                 // link para fora da Escrivaninha: abre no navegador do celular
@@ -146,7 +169,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                if (request.isForMainFrame) {
+                if (request.isForMainFrame && request.url.host != LEITOR_HOST) {
                     mostrarPainel(
                         "Não achei a Escrivaninha em ${prefs.getString("base", "")}. " +
                             "Confira: o computador está ligado com a Escrivaninha aberta, o acesso pelo celular " +
@@ -191,9 +214,16 @@ class MainActivity : AppCompatActivity() {
         }
         if (!e.startsWith("http://") && !e.startsWith("https://")) e = "http://$e"
         if (!Regex(":\\d+$").containsMatchIn(e.substringAfter("://"))) e = "$e:8800"
-        prefs.edit().putString("base", e).apply()
+        prefs.edit().putString("base", e).putString("modo", "computador").apply()
         aviso.text = ""
         abrir(if (c.isNotEmpty()) "$e/celular?codigo=${Uri.encode(c)}" else e)
+    }
+
+    private fun modoLeitor() = web.url?.startsWith(LEITOR_URL) == true
+
+    private fun abrirLeitor() {
+        prefs.edit().putString("modo", "leitor").apply()
+        abrir(LEITOR_URL)
     }
 
     private fun abrir(url: String) {
@@ -226,6 +256,46 @@ class MainActivity : AppCompatActivity() {
         CookieManager.getInstance().flush()
     }
 
+    /** O livro em PDF: abre a página do livro escondida e chama a impressão do Android ("Salvar como PDF"). */
+    private fun imprimir(titulo: String, html: String) {
+        runOnUiThread {
+            val w = WebView(this)
+            w.settings.javaScriptEnabled = false
+            w.webViewClient = object : WebViewClient() {
+                override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
+                    leitor.shouldInterceptRequest(request.url)
+
+                override fun onPageFinished(view: WebView, url: String?) {
+                    // um respiro para as fontes carregarem
+                    view.postDelayed({
+                        val pm = getSystemService(PRINT_SERVICE) as PrintManager
+                        val atributos = PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A5).build()
+                        pm.print(titulo, view.createPrintDocumentAdapter(titulo), atributos)
+                    }, 600)
+                }
+            }
+            impressao = w
+            w.loadDataWithBaseURL(LEITOR_URL, html, "text/html", "utf-8", null)
+        }
+    }
+
+    /** O livro em Word: grava no celular e abre o "Compartilhar" (WhatsApp, Drive, e-mail, Arquivos…). */
+    private fun compartilhar(nome: String, tipo: String, base64: String) {
+        runCatching {
+            val pasta = File(cacheDir, "exportados").apply { mkdirs() }
+            pasta.listFiles()?.forEach { it.delete() }
+            val arquivo = File(pasta, nome.replace(Regex("[^\\p{L}\\p{N} ._()-]"), "").ifBlank { "livro.docx" })
+            arquivo.writeBytes(Base64.decode(base64, Base64.DEFAULT))
+            val uri = FileProvider.getUriForFile(this, "$packageName.arquivos", arquivo)
+            val envio = Intent(Intent.ACTION_SEND).apply {
+                type = tipo
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            runOnUiThread { startActivity(Intent.createChooser(envio, "Compartilhar o livro")) }
+        }
+    }
+
     override fun onDestroy() {
         tts?.shutdown()
         web.destroy()
@@ -236,6 +306,12 @@ class MainActivity : AppCompatActivity() {
     inner class Ponte {
         @JavascriptInterface
         fun trocarComputador() = mostrarPainel(null)
+
+        @JavascriptInterface
+        fun imprimirHtml(titulo: String, html: String) = imprimir(titulo, html)
+
+        @JavascriptInterface
+        fun compartilharArquivo(nome: String, tipo: String, base64: String) = compartilhar(nome, tipo, base64)
 
         @JavascriptInterface
         fun vozes(): String {
@@ -273,3 +349,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 }
+
+private const val LEITOR_HOST = WebViewAssetLoader.DEFAULT_DOMAIN
+private const val LEITOR_URL = "https://$LEITOR_HOST/assets/leitor/celular.html"

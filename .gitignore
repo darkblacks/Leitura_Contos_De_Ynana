@@ -7,3 +7,7 @@ ui/escrivaninha-go/escrivaninha
 
 # histórico do chat da Escrivaninha (fica só no computador do autor)
 conversas/
+
+# cópias de segurança dos slots e livros exportados (ficam só no computador do autor)
+copias/
+exportados/

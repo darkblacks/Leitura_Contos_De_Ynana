@@ -15,8 +15,13 @@ import json
 import mimetypes
 mimetypes.add_type("font/woff2", ".woff2")
 import re
+import secrets
+import shutil
+import subprocess
 import sys
+import tempfile
 import threading
+import time
 import urllib.request
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -428,6 +433,152 @@ def enviar_arquivo(pasta, nome, dados_b64):
     return alvo.relative_to(RAIZ).as_posix()
 
 
+# ---------------------------------------------------------------- pacote (slots) e exportar
+
+PASTAS_PACOTE = ["capitulos", "biblia", "continuidade", "estilo"]
+MAX_COPIAS = 10
+LIVROS = {}  # código → página do livro, só enquanto o PDF é gerado
+PORTA = [8765]
+SEM_JANELA = "--sem-navegador" in sys.argv
+
+
+def arquivos_do_pacote():
+    out = {}
+    for pasta in PASTAS_PACOTE:
+        base = RAIZ / pasta
+        if not base.exists():
+            continue
+        for p in base.rglob("*"):
+            rel = p.relative_to(RAIZ).as_posix()
+            if any(parte.startswith(".") for parte in p.relative_to(RAIZ).parts) or not p.is_file():
+                continue
+            if p.suffix.lower() in EXT_TEXTO | EXT_IMAGEM:
+                out[rel] = p
+    return out
+
+
+def montar_pacote():
+    arquivos = {}
+    for rel, p in arquivos_do_pacote().items():
+        if p.suffix.lower() in EXT_TEXTO:
+            arquivos[rel] = {"t": p.read_bytes().decode("utf-8", "replace")}
+        else:
+            arquivos[rel] = {"b": base64.b64encode(p.read_bytes()).decode("ascii")}
+    return {"formato": "contos-de-ynana-slot", "versao": 1, "criado": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "arquivos": arquivos}
+
+
+def aplicar_pacote(pacote):
+    if not isinstance(pacote, dict) or pacote.get("formato") != "contos-de-ynana-slot":
+        raise ValueError("isso não é um salvamento da Escrivaninha")
+    arqs = pacote.get("arquivos") or {}
+    if not arqs:
+        raise ValueError("o salvamento está vazio")
+    novos = {}
+    for rel, v in arqs.items():
+        rel = rel.replace("\\", "/")
+        if not any(rel.startswith(p + "/") for p in PASTAS_PACOTE):
+            raise PermissionError("caminho fora da história: " + rel)
+        if Path(rel).suffix.lower() not in EXT_TEXTO | EXT_IMAGEM:
+            raise PermissionError("tipo de arquivo não aceito: " + rel)
+        caminho_seguro(rel)
+        if isinstance(v, dict) and isinstance(v.get("t"), str):
+            novos[rel] = v["t"].encode("utf-8")
+        elif isinstance(v, dict) and isinstance(v.get("b"), str):
+            try:
+                novos[rel] = base64.b64decode(v["b"], validate=True)
+            except Exception:  # noqa: BLE001
+                raise ValueError(f"imagem estragada no salvamento: {rel}")
+        else:
+            raise ValueError(f"arquivo sem conteúdo no salvamento: {rel}")
+    atuais = arquivos_do_pacote()
+    copia = "copias/" + time.strftime("%Y%m%d-%H%M%S")
+    try:
+        for rel, p in atuais.items():
+            destino = RAIZ / copia / rel
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            destino.write_bytes(p.read_bytes())
+    except OSError as e:
+        raise ValueError(f"não consegui guardar a cópia de segurança ({e}); nada foi trocado")
+    for rel, p in atuais.items():
+        if rel not in novos:
+            p.unlink(missing_ok=True)
+    for rel, dados in novos.items():
+        p = caminho_seguro(rel)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_bytes(dados)
+    copias = sorted(d for d in (RAIZ / "copias").iterdir() if d.is_dir())
+    for velha in copias[:-MAX_COPIAS]:
+        shutil.rmtree(velha, ignore_errors=True)
+    return copia
+
+
+def nome_exportado(nome, ext):
+    nome = re.sub(r"[^\w ._()-]+", "", Path(str(nome).replace("\\", "/")).name).strip()
+    nome = nome[: -len(Path(nome).suffix)] if Path(nome).suffix else nome
+    if not nome or nome == ".":
+        nome = "livro"
+    pasta = RAIZ / "exportados"
+    pasta.mkdir(parents=True, exist_ok=True)
+    p = pasta / (nome + ext)
+    i = 2
+    while p.exists():
+        p = pasta / f"{nome} ({i}){ext}"
+        i += 1
+    return p
+
+
+def mostrar_na_pasta(p):
+    if SEM_JANELA:
+        return
+    try:
+        if sys.platform.startswith("win"):
+            subprocess.Popen(["explorer", "/select,", str(p)])
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", "-R", str(p)])
+        else:
+            subprocess.Popen(["xdg-open", str(p.parent)])
+    except OSError:
+        pass
+
+
+def navegador_pdf():
+    import os
+    if os.environ.get("ESCRIVANINHA_NAVEGADOR"):
+        return os.environ["ESCRIVANINHA_NAVEGADOR"]
+    if sys.platform.startswith("win"):
+        for v in ("ProgramFiles(x86)", "ProgramFiles", "LocalAppData"):
+            for rel in (r"Microsoft\Edge\Application\msedge.exe", r"Google\Chrome\Application\chrome.exe"):
+                if os.environ.get(v) and (Path(os.environ[v]) / rel).exists():
+                    return str(Path(os.environ[v]) / rel)
+        return ""
+    for n in ("microsoft-edge", "google-chrome", "chromium", "chromium-browser", "chrome"):
+        if shutil.which(n):
+            return shutil.which(n)
+    return ""
+
+
+def gerar_pdf(html, destino):
+    nav = navegador_pdf()
+    if not nav:
+        raise ValueError("sem navegador para gerar o PDF")
+    codigo = secrets.token_hex(16)
+    LIVROS[codigo] = html
+    perfil = tempfile.mkdtemp(prefix="ynana-pdf-")
+    try:
+        raiz_linux = ["--no-sandbox"] if not sys.platform.startswith("win") and hasattr(__import__("os"), "geteuid") and __import__("os").geteuid() == 0 else []
+        subprocess.run([nav, *raiz_linux, "--headless", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
+                        "--user-data-dir=" + perfil, "--no-pdf-header-footer", "--print-to-pdf-no-header",
+                        "--virtual-time-budget=8000", "--print-to-pdf=" + str(destino),
+                        f"http://127.0.0.1:{PORTA[0]}/livro/{codigo}"], capture_output=True, timeout=90)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    finally:
+        LIVROS.pop(codigo, None)
+        shutil.rmtree(perfil, ignore_errors=True)
+    if not destino.exists() or destino.stat().st_size == 0:
+        raise ValueError("o navegador não conseguiu gerar o PDF")
+
+
 # ---------------------------------------------------------------- HTTP
 
 class Manipulador(BaseHTTPRequestHandler):
@@ -503,6 +654,18 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json(contexto_capitulo(int(q.get("n") or 1)))
             if url.path == "/api/busca":
                 return self._json(busca(q.get("q", "")))
+            if url.path == "/api/pacote":
+                return self._json(montar_pacote())
+            if url.path.startswith("/livro/"):
+                html = LIVROS.get(url.path[len("/livro/"):])
+                if html is None:
+                    return self.send_error(404)
+                dados = html.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(dados)))
+                self.end_headers()
+                return self.wfile.write(dados)
             if url.path.startswith("/repo/"):
                 p = caminho_seguro(unquote(url.path[len("/repo/"):]))
                 return self._arquivo(p)
@@ -534,6 +697,19 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json({"ok": True})
             if url.path == "/api/novo":
                 return self._json({"caminho": criar(d.get("tipo"), d.get("nome"))})
+            if url.path == "/api/pacote":
+                return self._json({"ok": True, "copia": aplicar_pacote(d.get("pacote"))})
+            if url.path in ("/api/exportar", "/api/exportar-pdf"):
+                ext = ".pdf" if url.path == "/api/exportar-pdf" else Path(d.get("nome", "")).suffix.lower()
+                if ext not in (".docx", ".pdf"):
+                    raise ValueError("só .docx ou .pdf")
+                p = nome_exportado(d.get("nome", ""), ext)
+                if url.path == "/api/exportar-pdf":
+                    gerar_pdf(d.get("html", ""), p)
+                else:
+                    p.write_bytes(base64.b64decode(d.get("dados", ""), validate=True))
+                mostrar_na_pasta(p)
+                return self._json({"caminho": p.relative_to(RAIZ).as_posix(), "pasta": str(p.parent)})
             if url.path == "/api/decidir":
                 resolver_decisao(d["caminho"], d["linha"], d["resposta"])
                 return self._json({"ok": True})
@@ -578,6 +754,7 @@ def main():
         endereco = f"http://127.0.0.1:{porta}"
         try:
             servidor = ThreadingHTTPServer(("127.0.0.1", porta), Manipulador)
+            PORTA[0] = porta
             break
         except OSError:
             if eh_nossa(endereco):

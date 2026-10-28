@@ -1,0 +1,47 @@
+# Gera o app do celular (APK) sozinho, a cada mudança na main que mexe no app ou no leitor.
+# O arquivo fica em Releases › "App do celular" (link fixo:
+# releases/download/android/ContosDeYnana.apk).
+name: App do celular (APK)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sync/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Montar o APK
+        working-directory: sync/EscrivaninhaAndroid
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/ContosDeYnana.apk"
+      - name: Publicar em Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTA="App do celular Contos de Ynana. Baixe ContosDeYnana.apk no celular e instale (permita instalar de fontes desconhecidas). Gerado em $(date -u '+%d/%m/%Y %H:%M') UTC, commit ${GITHUB_SHA::7}."
+          if gh release view android >/dev/null 2>&1; then
+            gh release upload android ContosDeYnana.apk --clobber
+            gh release edit android --notes "$NOTA"
+          else
+            gh release create android ContosDeYnana.apk --title "App do celular" --notes "$NOTA" --latest=false
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ContosDeYnana-apk
+          path: ContosDeYnana.apk

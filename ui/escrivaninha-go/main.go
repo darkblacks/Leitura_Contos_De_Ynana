@@ -75,6 +75,7 @@ func main() {
 			}
 		case "--sem-navegador":
 			modo = "nenhum"
+			semJanela = true
 		case "--navegador":
 			modo = "navegador"
 		case "--reiniciado":

@@ -8,6 +8,7 @@
 set -e
 AQUI="$(cd "$(dirname "$0")" && pwd)"
 RAIZ="$(cd "$AQUI/../.." && pwd)"
+sh "$RAIZ/sync/atualizar-android.sh"
 "$AQUI/build.sh"
 VERSAO="$(tr -d " \n" < "$AQUI/VERSAO")"
 SHA="$(sha256sum "$RAIZ/dist/Escrivaninha.exe" | cut -d' ' -f1)"

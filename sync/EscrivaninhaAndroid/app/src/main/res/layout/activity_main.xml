@@ -36,6 +36,34 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
+                android:text="@string/instrucoes_leitor"
+                android:textColor="@color/tinta2"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/ler"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:backgroundTint="@color/vermelho"
+                android:text="@string/ler"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="34dp"
+                android:text="@string/titulo_computador"
+                android:textColor="@color/tinta"
+                android:textSize="20sp"
+                android:fontFamily="serif"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="@string/instrucoes"
                 android:textColor="@color/tinta2"
                 android:textSize="15sp" />

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contos de Ynana</title>
+<link rel="stylesheet" href="fontes.css">
+<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="temas.css">
+<link rel="stylesheet" href="celular.css">
+<script>
+  try {
+    var r = document.documentElement;
+    r.setAttribute("data-paleta", localStorage.getItem("paleta") || "limpo");
+    var t = localStorage.getItem("leitura-tam"); if (t) r.setAttribute("data-leitura-tam", t);
+    var f = localStorage.getItem("leitura-fonte"); if (f) r.setAttribute("data-leitura-fonte", f);
+  } catch (e) {}
+</script>
+</head>
+<body class="leitor-cel">
+<header class="cel-topo">
+  <button class="cel-voltar" id="voltar" aria-label="Voltar" hidden>‹</button>
+  <div class="cel-titulo" id="titulo">Contos de Ynana</div>
+  <div class="cel-acoes" id="acoes"></div>
+</header>
+<main class="cel-vista" id="vista"></main>
+<div class="toast" id="toast"></div>
+<div class="modal" id="modal"><div class="modal-caixa" id="modal-caixa"></div></div>
+<script src="comum.js"></script>
+<script src="livro.js"></script>
+<script src="slots.js"></script>
+<script src="celular.js"></script>
+</body>
+</html>

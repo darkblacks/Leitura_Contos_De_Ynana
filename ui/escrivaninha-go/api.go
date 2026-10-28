@@ -512,6 +512,7 @@ func novoRoteador(estatico fs.FS) http.Handler {
 	rotasClaude(mux)
 	rotasAtualizacao(mux)
 	rotasCelular(mux)
+	rotasPacote(mux)
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()

@@ -23,7 +23,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
+      # as máquinas do GitHub já têm o Android SDK (ANDROID_HOME); o Gradle baixa o que faltar
       - name: Montar o APK
         working-directory: sync/EscrivaninhaAndroid
         run: |

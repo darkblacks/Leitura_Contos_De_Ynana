@@ -188,8 +188,10 @@ async function desenharSlotsCel(caixa, config = false) {
   let slots;
   try { slots = await listarSlots(); }
   catch (e) {
-    caixa.innerHTML = `<div class="sub">${esc(e.message)}</div><div class="cel-botoes"><button class="botao pequeno" id="sl-de-novo">Tentar de novo</button><button class="botao pequeno" id="sl-mudar">Mudar a chave</button></div>`;
-    $("#sl-de-novo", caixa).onclick = () => desenharSlotsCel(caixa);
+    if (!erroSlots) guardarErroSlots(e);
+    caixa.innerHTML = `${htmlErroSlots()}<div class="cel-botoes"><button class="botao pequeno" id="sl-de-novo">Tentar de novo</button><button class="botao pequeno" id="sl-mudar">Mudar a chave</button></div>`;
+    $("#sl-de-novo", caixa).onclick = () => { guardarErroSlots(null); desenharSlotsCel(caixa); };
+    ligarFecharErro(caixa, () => desenharSlotsCel(caixa));
     $("#sl-mudar", caixa).onclick = () => desenharSlotsCel(caixa, true);
     return;
   }

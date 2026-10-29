@@ -10,7 +10,7 @@
    no meio, o slot continua com o salvamento antigo. */
 
 const SLOTS = 4;
-const PEDACO = 100000;
+const PEDACO = 60000;
 const PREF_SLOTS = "slots-config";
 
 function slotsConfig() {
@@ -75,7 +75,7 @@ async function testarSlots() {
 let erroSlots = null;
 const guardarErroSlots = (e) => { erroSlots = e ? { msg: e.message, detalhe: e.detalhe || "" } : null; };
 const htmlErroSlots = () => erroSlots ? `<div class="aviso erro-slots" style="margin-bottom:12px"><b>Não deu certo.</b> ${esc(erroSlots.msg)}
-  ${erroSlots.detalhe ? `<div class="sub" style="margin-top:6px">Resposta do Back4App: ${esc(erroSlots.detalhe)}</div>` : ""}
+  ${erroSlots.detalhe ? `<div class="sub" style="margin-top:6px">Detalhe: ${esc(erroSlots.detalhe)}</div>` : ""}
   <div style="margin-top:6px"><a href="#" data-fechar-erro>fechar</a></div></div>` : "";
 function ligarFecharErro(caixa, redesenhar) {
   const a = caixa.querySelector("[data-fechar-erro]");
@@ -110,25 +110,37 @@ async function emParalelo(itens, n, fn) {
 }
 
 /* Salva o pacote no slot n. aoAndar(feito, total) mostra o progresso. */
+/* Marca em que etapa o erro aconteceu (aparece no aviso, para achar o problema). */
+async function etapa(nome, fn) {
+  try { return await fn(); }
+  catch (e) { e.detalhe = `${nome}${e.detalhe ? " · " + e.detalhe : e.message ? " · " + e.message : ""}`; throw e; }
+}
+/* Um pedido que falhou por rede tenta mais uma vez antes de desistir. */
+async function comNovaTentativa(fn) {
+  try { return await fn(); }
+  catch (e) { if (e.detalhe) throw e; await new Promise((ok) => setTimeout(ok, 1500)); return fn(); }
+}
+
 async function salvarNoSlot(n, nome, pacote, aoAndar = () => {}) {
-  const { texto, tamanho } = await comprimirPacote(pacote);
+  const { texto, tamanho } = await etapa("comprimindo a história", () => comprimirPacote(pacote));
   const versao = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const pedacos = [];
   for (let i = 0; i < texto.length; i += PEDACO) pedacos.push(texto.slice(i, i + PEDACO));
   let feitos = 0;
   aoAndar(0, pedacos.length + 1);
-  await emParalelo(pedacos, 3, async (dados, ordem) => {
-    await parse("/classes/SlotParte", { metodo: "POST", corpo: { versao, ordem, dados } });
+  await etapa(`enviando as partes (${pedacos.length} de até ${PEDACO / 1000} mil letras)`, () => emParalelo(pedacos, 2, async (dados, ordem) => {
+    await comNovaTentativa(() => parse("/classes/SlotParte", { metodo: "POST", corpo: { versao, ordem, dados } }));
     aoAndar(++feitos, pedacos.length + 1);
-  });
-  const atual = (await listarSlots())[n - 1];
+  }));
+  const atual = (await etapa("lendo os slots", () => listarSlots()))[n - 1];
   const info = {
     numero: n, nome: nome || `Slot ${n}`, aparelho: pacote.aparelho || "", quando: new Date().toISOString(),
     tamanho, partes: pedacos.length, versao,
     capitulos: Object.keys(pacote.arquivos).filter((c) => /^capitulos\/cap-\d+\.md$/.test(c)).length,
   };
-  if (atual.objectId) await parse("/classes/Slot/" + atual.objectId, { metodo: "PUT", corpo: info });
-  else await parse("/classes/Slot", { metodo: "POST", corpo: info });
+  await etapa("gravando o slot", () => atual.objectId
+    ? parse("/classes/Slot/" + atual.objectId, { metodo: "PUT", corpo: info })
+    : parse("/classes/Slot", { metodo: "POST", corpo: info }));
   aoAndar(pedacos.length + 1, pedacos.length + 1);
   // o salvamento antigo sai depois que o novo já vale (se falhar, só sobra lixo, nada se perde)
   if (atual.versao) apagarPartes(atual.versao).catch(() => {});

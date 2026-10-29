@@ -50,6 +50,7 @@
 
 - Formato: `"— Fala." Disse ela, …` (aspas, travessão dentro, e quem disse depois).
 - **As falas ficam no meio do parágrafo**, junto da ação. Várias falas seguidas, de pessoas diferentes, podem correr no mesmo parágrafo; quando a troca é rápida e clara, nem precisa de "disse" em todas (`"— O que é isto?" "— Minha mala."`).
+- **Quem fala na cena, fala de verdade** (guardrail 28): nada de "Ela disse que me viu na festa de gala". Escreva a fala: `"— Lembro de você na festa de gala." Ri do comentário.` Contar o que alguém disse é para recado de outro dia, numa frase.
 - **Fala em parágrafo próprio só para dar ênfase**: a frase que tem de pesar, a que muda a cena.
 - Verbo de dizer simples (disse, perguntou, respondeu); o jeito vem do gesto ou do comentário dela, não de advérbio.
 - Informação aos poucos: a conversa dá voltas, alguém foge do assunto, o outro insiste. Ninguém explica a trama para o outro (guardrail 10). Cada um fala do seu jeito (ficha › Voz).

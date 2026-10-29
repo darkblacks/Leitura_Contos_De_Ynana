@@ -95,6 +95,7 @@ CLASSES = [
     ("Vocabulário artificial", ("palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto", "advérbio redundante")),
     ("Exagero e efeito", ("linguagem grandiosa", "gancho artificial", "explicação do óbvio")),
     ("Emoção e corpo", ("emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou")),
+    ("Cena e diálogo", ("fala contada",)),
     ("Formato", ()),
 ]
 
@@ -206,6 +207,7 @@ def checar(caminho, cfg):
         "advérbio redundante (26)": compilar(cfg.get("adverbios_redundantes", [])),
         "explicação do óbvio (27)": compilar(cfg.get("explicacao_obvia", [])),
     }
+    fala_contada = compilar(cfg.get("fala_contada", []))
     sussurros = compilar(cfg.get("sussurros", []))
     max_comp = cfg.get("max_comparacoes_por_paragrafo", 1)
     max_suss = cfg.get("max_sussurros_por_capitulo", 3)
@@ -237,6 +239,13 @@ def checar(caminho, cfg):
             for r in regs:
                 for m in r.finditer(texto):
                     add(num, cat, trecho(texto, m.start(), m.end()), m.span())
+        # fala contada só fora das falas (o personagem pode contar algo dentro da própria fala)
+        fora_das_falas = sem_protegidos(texto, FALA_ENTRE_ASPAS)
+        for r in fala_contada:
+            for m in r.finditer(fora_das_falas):
+                if m.end() < len(texto) and (texto[m.end()].isalnum() or texto[m.end()] == "_"):
+                    continue
+                add(num, "fala contada em vez de diálogo (28)", trecho(texto, m.start(), m.end()), m.span())
         for r in CONTRASTE:
             for m in r.finditer(texto):
                 add(num, "contraste falso (1)", trecho(texto, m.start(), m.end()), m.span())

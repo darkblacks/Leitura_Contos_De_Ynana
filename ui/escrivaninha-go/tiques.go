@@ -174,6 +174,7 @@ var classesTique = []struct {
 	{"Vocabulário artificial", []string{"palavra-assinatura", "conectivo de redação", "gerúndio de comentário", "linguagem de folheto", "advérbio redundante"}},
 	{"Exagero e efeito", []string{"linguagem grandiosa", "gancho artificial", "explicação do óbvio"}},
 	{"Emoção e corpo", []string{"emoção nomeada", "clichê físico", "personagem terapeutizado", "sussurrou"}},
+	{"Cena e diálogo", []string{"fala contada"}},
 	{"Formato", nil},
 }
 
@@ -393,6 +394,10 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 		{"advérbio redundante (26)", lista("adverbios_redundantes", true)},
 		{"explicação do óbvio (27)", lista("explicacao_obvia", true)},
 	}
+	falaContada := lista("fala_contada", true)
+	for i := range falaContada {
+		falaContada[i].pos = true
+	}
 	sussurros := lista("sussurros", true)
 	var onomatopeias []padrao
 	for _, o := range cfg.lista("onomatopeias") {
@@ -461,6 +466,14 @@ func checar(caminho string, cfg config) ([]ocorrencia, []int) {
 					s := s
 					add(num, g.cat, trecho(texto, s[0], s[1], 30), &s)
 				}
+			}
+		}
+		// fala contada só fora das falas (o personagem pode contar algo dentro da própria fala)
+		foraDasFalas := semProtegidos(texto, reFalaEntreAspas)
+		for _, p := range falaContada {
+			for _, s := range p.casamentos(foraDasFalas) {
+				s := s
+				add(num, "fala contada em vez de diálogo (28)", trecho(texto, s[0], s[1], 30), &s)
 			}
 		}
 		for _, p := range contraste {

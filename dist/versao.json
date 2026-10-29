@@ -1,8 +1,7 @@
 {
-  "versao": "2.18.0",
-  "sha256": "07e3865a8b3188ad52a57d6fb4182824ba586e7a7deda89ebd85988256e00eaa",
+  "versao": "2.18.1",
+  "sha256": "625201085e504791b253c71cac16bdf9441cd187588c1fb156a17e21d29b75d8",
   "notas": [
-    "Exportar em PDF agora baixa direto (sem abrir a impressão), no computador e no celular",
-    "Capa do livro em Opções: a imagem abre o PDF e o Word exportados"
+    "Novo tique: fala contada no lugar da fala (\"Ela disse que me viu na festa\" vira \"— Lembro de você na festa de gala.\"); o Claude evita e a revisão aponta"
   ]
 }

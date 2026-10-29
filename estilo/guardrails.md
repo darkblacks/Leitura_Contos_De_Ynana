@@ -186,3 +186,10 @@ O script pega abertura repetida e ritmo monótono; o molde de cena (todo parágr
 **Errado:** "O som que descia das nuvens estava tão alto que machucava meu ouvido." / "Não era o som da nuvem, era o maior barulho de todos." / "O que significava que ela sabia."
 **Reescrita:** "O som que descia das nuvens estava alto." / "O som descia das nuvens." / deixe o leitor concluir que ela sabia pelo que ela faz.
 O script pega "tão X que", "que machucava/doía…", "a ponto de", "de tão…", "o maior … de todos" e "não era X, era o maior…"; o resto fica com o revisor.
+
+## 28. Fala contada no lugar da fala `[script]`
+
+**Faça:** quando alguém fala na cena, escreva a fala, do jeito do autor: `"— …" Disse…`. O livro mostra a cena; não é relatório ("o indivíduo usou a arma e bateu").
+**Errado:** `Seraphine Dreya apareceu com um vestido de veludo e um broche verde "— Ynana Merx!" "— Seraphine." Ela disse que me viu na festa de gala, e eu ri.` / "Ele perguntou se eu ia." / "A mãe pediu para eu guardar o baralho."
+**Reescrita:** `Seraphine Dreya apareceu com um vestido de veludo e um broche verde "— Ynana Merx!" "— Seraphine." "— Lembro de você na festa de gala." Ri do comentário.` / `"— Você vai?" Perguntou ele.` / `"— Guarda esse baralho." Disse a mãe.`
+Contar a fala só vale quando ela não aconteceu na cena (um recado de dias atrás, numa frase) ou dentro da fala de um personagem (`"— A mãe disse que você vinha."`). Na dúvida, vira fala.

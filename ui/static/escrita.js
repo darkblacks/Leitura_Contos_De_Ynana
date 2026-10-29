@@ -667,6 +667,7 @@ const EXPLICA_TIQUE = [
   ["parágrafos seguidos abrindo", () => "Três parágrafos seguidos começando com a mesma palavra: fica um molde repetido. Comece um pela fala, outro pelo detalhe ou pela lembrança."],
   ["ritmo monótono", () => "Seis frases seguidas quase do mesmo tamanho: o ritmo fica de máquina. Junte duas, alongue uma, quebre outra."],
   ["advérbio redundante", () => "Um advérbio repete o que a palavra já diz (“calmamente, claro”, “sussurrou baixinho”, “subi para cima”). Deixe só a palavra forte: “Claro.”"],
+  ["fala contada", () => "Alguém fala na cena, mas o texto conta o que foi dito (“Ela disse que me viu na festa”). Escreva a fala: “— Lembro de você na festa de gala.” Ri do comentário."],
   ["explicação do óbvio", () => "Você completou o que o leitor já entendeu (“tão alto que machucava meu ouvido”). Diga uma vez: “estava alto”."],
   ["palavra-assinatura", () => "Palavras típicas de texto gerado por máquina (tapeçaria, sinfonia, ecoou, palpável…)."],
   ["conectivo de redação", () => "Conectivo de redação escolar (além disso, no entanto, contudo…). Num diário soa artificial."],

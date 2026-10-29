@@ -17,6 +17,7 @@ O autor quer o capítulo **mais real, mais parecido com um livro de verdade, no 
 - **Cabeçalho**: o mesmo (título, subtítulo, onde, quando, quem escreve); `status: rascunho`.
 - **Voz**: a de quem escreve a entrada, em primeira pessoa, como na escrita dele (`estilo/escritas/`). Só use 3ª pessoa se o autor escolher.
 - **Confiar no leitor** (`estilo/romance.md` §1): diga uma vez; sem advérbio que sobra ("Claro." e não "Calmamente, claro."), sem frase de propaganda ("o maior … de todos", "não era X, era…"), sem completar o óbvio ("alto", e não "tão alto que machucava meu ouvido"). Guardrails 26 e 27.
+- **Fala de verdade, não contada** (guardrail 28): "Ela disse que me viu na festa" vira `"— Lembro de você na festa de gala."`. Todo "disse que", "perguntou se", "pediu para" de alguém que está na cena vira fala.
 - **Diálogo no jeito do autor**: falas no meio do parágrafo, várias seguidas no mesmo parágrafo quando a troca é rápida; parágrafo só da fala quando é para dar ênfase.
 - **Técnica** (`estilo/romance.md`): mostre as cenas que o texto só resumia (lugar, hora, quem está, o que cada um quer), diálogo com gesto e silêncio entre as falas, o comentário de quem escreve, apresentação de personagem por traços marcantes, detalhe concreto, ritmo que alterna cena lenta e rápida, fecho em imagem ou ação.
 - **Nosso jeito por cima**: diálogo `"— Texto." Disse ela, …` (aspas com travessão dentro), onomatopeia entre asteriscos (`*TOC*`, `*CHUA*`, `*VUC*`) quando o som importa, parágrafo como momento inteiro, todos os guardrails.

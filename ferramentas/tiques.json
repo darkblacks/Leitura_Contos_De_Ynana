@@ -58,6 +58,13 @@
     "a ponto de", "de tão \\w+",
     "(o que|isso) (significava|queria dizer) que"
   ],
+  "fala_contada": [
+    "(disse|diz|dizia|disseram|falou|falava|falaram|contou|contava|contaram|comentou|explicou|avisou|gritou|sussurrou|murmurou|reclamou|admitiu|confessou|garantiu|jurou|insistiu|repetiu|respondeu|respondia|afirmou|declarou|anunciou|prometeu|perguntou|perguntava|perguntaram|pediu|pedia|mandou)(-me|-lhe|-nos|-te)?\\s+(que|se|para|pra)",
+    "(perguntou|perguntava|perguntaram|quis saber)(-me|-lhe|-nos|-te)?\\s+(se|quem|onde|quando|como|qual|quanto|quantos|quantas|por que|porque|o que)",
+    "(tinha|tinham|havia|haviam|tinha me|tinha lhe|tinha nos|tinha te|havia me|havia lhe)\\s+(dito|falado|contado|perguntado|pedido|avisado|explicado|prometido|garantido|jurado)\\s+(que|se|para|pra)"
+  ],
+  "_fala_contada": "Guardrail 28: fala contada (discurso indireto) no lugar da fala: 'Ela disse que me viu na festa'. Vira fala de verdade: '— Lembro de você na festa de gala.' O que está entre aspas (dentro da fala) não conta.",
+
   "_explicacao_obvia": "Guardrail 27: completar o que o leitor já entendeu ('alto que machucava meu ouvido').",
 
   "emocao_nomeada": [

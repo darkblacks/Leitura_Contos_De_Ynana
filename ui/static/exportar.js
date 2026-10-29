@@ -3,39 +3,40 @@
 
 const androidPonte = () => window.EscrivaninhaAndroid || null;
 
+/* A capa guardada em Opções › Capa do livro (biblia/capa-do-livro.jpg), ou null. */
+async function capaDoLivro() {
+  try {
+    const r = await fetch(urlRepo(CAMINHO_CAPA), { cache: "no-store" });
+    if (!r.ok) return null;
+    const url = URL.createObjectURL(await r.blob());
+    const c = await imagemParaJpeg(url);
+    return { ...c, url };
+  } catch { return null; }
+}
+
 async function exportarLivro(selecionados) {
   const a = estado.arvore || (await atualizarArvore());
   const caps = a.capitulos.map((c) => ({ chave: c.caminho, meta: { ...c.meta, capitulo: c.meta.capitulo || c.nome.replace("cap-", "") } }));
   if (!caps.length) { toast("Ainda não há capítulos para exportar.", true); return; }
-  abrirExportarLivro(caps, selecionados, async ({ titulo, subtitulo, chaves, formato }) => {
+  const capa = await capaDoLivro();
+  abrirExportarLivro(caps, selecionados, async ({ titulo, subtitulo, chaves, formato, comCapa }) => {
     document.body.classList.add("carregando");
+    setSalvamento(formato === "pdf" ? "gerando o PDF…" : "gerando o Word…", true);
     try {
       const lidos = [];
       for (const k of chaves) { const { meta, corpo } = separarCapitulo(await lerArquivo(k)); lidos.push({ meta, corpo }); }
-      const livro = { titulo, subtitulo, caps: lidos };
-      const ponte = androidPonte();
-      if (formato === "docx") {
-        const bytes = docxDoLivro(livro), nome = nomeDoLivro(titulo, "docx");
-        if (ponte && ponte.compartilharArquivo) { ponte.compartilharArquivo(nome, TIPO_DOCX, bytesParaBase64(bytes)); return; }
-        try {
-          const r = await api("/api/exportar", { nome, dados: bytesParaBase64(bytes) });
-          toast(`Pronto: ${r.caminho}`);
-        } catch { baixarNoNavegador(nome, bytes, TIPO_DOCX); }
-        return;
-      }
-      const baseAqui = new URL(".", location.href).href;
-      if (ponte && ponte.imprimirHtml) { ponte.imprimirHtml(titulo, livroHtml(livro, baseAqui)); return; }
-      toast("Gerando o PDF…");
-      try {
-        const r = await api("/api/exportar-pdf", { nome: nomeDoLivro(titulo, "pdf"), html: livroHtml(livro, "/") });
-        toast(`Pronto: ${r.caminho}`);
-      } catch {
-        // sem Edge/Chrome para gerar sozinho: abre a impressão, com "Salvar como PDF"
-        imprimirLivroNoNavegador(livroHtml(livro, baseAqui));
-      }
-    } catch (e) { toast(e.message, true); }
-    finally { document.body.classList.remove("carregando"); }
-  });
+      const livro = { titulo, subtitulo, caps: lidos }, aCapa = comCapa ? capa : null;
+      const [bytes, tipo] = formato === "docx" ? [docxDoLivro(livro, aCapa), TIPO_DOCX] : [await pdfDoLivro(livro, aCapa), TIPO_PDF];
+      const nome = nomeDoLivro(titulo, formato);
+      const aviso = await entregarArquivo(nome, tipo, bytes, async (n, b64) => `Pronto: ${(await api("/api/exportar", { nome: n, dados: b64 })).caminho}`);
+      setSalvamento("livro pronto ✓");
+      toast(aviso);
+    } catch (e) {
+      registrar("exportar", e.stack || e.message);
+      setSalvamento("erro ao exportar", true);
+      toast(e.message, true);
+    } finally { document.body.classList.remove("carregando"); }
+  }, { capa: capa && capa.url });
 }
 
 /* ------------------------------------------------------------ slots (Opções) */
@@ -116,4 +117,33 @@ async function carregarSlotPC(s, caixa) {
     guardarErroSlots(null);
   } catch (e) { setSalvamento("erro no slot", true); guardarErroSlots(e); toast("O slot não foi carregado: veja o aviso em Slots online.", true); }
   desenharSlots(caixa);
+}
+
+/* ------------------------------------------------------------ capa do livro (Opções) */
+
+async function desenharCapa(caixa) {
+  if (!caixa) return;
+  const capa = await capaDoLivro();
+  caixa.innerHTML = `<div class="capa-opcoes">
+      <div class="capa-previa">${capa ? `<img src="${esc(capa.url)}" alt="Capa do livro">` : `<span class="sub">sem capa</span>`}</div>
+      <div><div style="margin-bottom:10px">A imagem que abre o livro quando você exporta em PDF ou Word. Fica bonita em pé (retrato), como capa de livro. Vai junto nos slots.</div>
+        <div class="opcoes-linha" style="margin:0"><label class="botao pequeno primario" style="cursor:pointer">${capa ? "Trocar imagem" : "Escolher imagem"}<input type="file" accept="image/*" id="capa-arquivo" hidden></label>
+          ${capa ? `<button class="botao pequeno" id="capa-tirar">Tirar a capa</button>` : ""}</div></div></div>`;
+  $("#capa-arquivo", caixa).onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const url = URL.createObjectURL(f);
+      const { dados } = await imagemParaJpeg(url);
+      URL.revokeObjectURL(url);
+      await api("/api/capa", { dados: dados.split(",")[1] });
+      toast("Capa guardada ✓");
+    } catch (err) { registrar("capa", err.message); toast(err.message, true); }
+    desenharCapa(caixa);
+  };
+  if ($("#capa-tirar", caixa)) $("#capa-tirar", caixa).onclick = async () => {
+    if (!confirm("Tirar a imagem de capa? O livro volta a sair só com a folha de rosto.")) return;
+    try { await api("/api/capa", { apagar: true }); toast("Capa tirada"); } catch (err) { toast(err.message, true); }
+    desenharCapa(caixa);
+  };
 }

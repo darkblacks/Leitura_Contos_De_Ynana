@@ -56,7 +56,7 @@ O GitHub monta o APK sozinho a cada versão nova. No celular, abra
 
 - Android 8.0 ou mais novo (minSdk 26), compileSdk/targetSdk 34, Kotlin, AGP 8.5, Gradle 8.7, JDK 17.
 - Uma tela só (`MainActivity`) com um WebView. "Ler minhas histórias" abre `assets/leitor/celular.html` (servido como `https://appassets.androidplatform.net/assets/leitor/`, pelo `WebViewAssetLoader`); a história fica no IndexedDB do app. "Abrir o computador" abre `http://<computador>:8800`. Na primeira vez abre `/celular?codigo=…`; o computador confere o código e entrega um cookie, guardado pelo app.
-- Ponte `EscrivaninhaAndroid`: `imprimirHtml` (PDF pela impressão do Android, em A5), `compartilharArquivo` (Word pelo Compartilhar, via FileProvider), `trocarComputador`.
+- Ponte `EscrivaninhaAndroid`: `salvarArquivo` (o PDF e o Word, gerados na página, vão para Downloads/Contos de Ynana; Android 8 e 9: Compartilhar), `imprimirHtml` (impressão do Android, em A5), `compartilharArquivo` (Word pelo Compartilhar, via FileProvider), `trocarComputador`.
 - O APK é montado por `.github/workflows/android.yml` e publicado em Releases › "App do celular".
 - `assets/tts.js` troca a voz do navegador pela do Android (`TextToSpeech`), para o "Ouvir".
 - O acesso pela rede vale só na rede de casa e só com o código; é o computador que liga, desliga e troca o código.

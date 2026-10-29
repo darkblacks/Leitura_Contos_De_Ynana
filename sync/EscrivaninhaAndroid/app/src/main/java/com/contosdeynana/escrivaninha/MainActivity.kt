@@ -1,10 +1,14 @@
 package com.contosdeynana.escrivaninha
 
 import android.annotation.SuppressLint
+import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.print.PrintAttributes
 import android.print.PrintManager
 import android.util.Base64
@@ -24,6 +28,7 @@ import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -279,6 +284,35 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** O livro (PDF ou Word) direto na pasta Downloads/Contos de Ynana e já abre. Android 8 e 9: Compartilhar. */
+    private fun salvar(nome: String, tipo: String, base64: String): String {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            compartilhar(nome, tipo, base64)
+            return "ok compartilhar"
+        }
+        return try {
+            val dados = Base64.decode(base64, Base64.DEFAULT)
+            val limpo = nome.replace(Regex("[^\\p{L}\\p{N} ._()-]"), "").ifBlank { "livro" }
+            val valores = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, limpo)
+                put(MediaStore.Downloads.MIME_TYPE, tipo)
+                put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Contos de Ynana")
+            }
+            val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, valores)
+                ?: return "erro: o Android não deixou criar o arquivo em Downloads"
+            contentResolver.openOutputStream(uri)?.use { it.write(dados) } ?: return "erro: não consegui escrever em Downloads"
+            runOnUiThread {
+                Toast.makeText(this, "Salvo em Downloads/Contos de Ynana", Toast.LENGTH_LONG).show()
+                runCatching {
+                    startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, tipo).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                }
+            }
+            "ok Download/Contos de Ynana/$limpo"
+        } catch (e: Exception) {
+            "erro: ${e.message}"
+        }
+    }
+
     /** O livro em Word: grava no celular e abre o "Compartilhar" (WhatsApp, Drive, e-mail, Arquivos…). */
     private fun compartilhar(nome: String, tipo: String, base64: String) {
         runCatching {
@@ -309,6 +343,9 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun imprimirHtml(titulo: String, html: String) = imprimir(titulo, html)
+
+        @JavascriptInterface
+        fun salvarArquivo(nome: String, tipo: String, base64: String): String = salvar(nome, tipo, base64)
 
         @JavascriptInterface
         fun compartilharArquivo(nome: String, tipo: String, base64: String) = compartilhar(nome, tipo, base64)

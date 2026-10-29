@@ -158,6 +158,8 @@ TELAS.inicio = () => {
       <div class="campo"><label>Cores</label><div class="chips-escolha">${PALETAS.map(([k, n]) => `<button class="chip ${k === (pref("paleta", "limpo") || "limpo") ? "sel" : ""}" data-paleta="${k}">${n}</button>`).join("")}</div></div>
       <div class="campo"><label>Tamanho da letra</label><div class="chips-escolha">${TAMANHOS.map(([k, n]) => `<button class="chip ${k === pref("leitura-tam") ? "sel" : ""}" data-tam="${k}">${n}</button>`).join("")}</div></div>
     </section>
+    <h3 class="cel-sec">Capa do livro</h3>
+    <section class="cartao" id="capa"></section>
     <h3 class="cel-sec">Registro de erros</h3>
     <section class="cartao" id="registro"></section>
     ${ponte && ponte.trocarComputador ? `<h3 class="cel-sec">Computador</h3><section class="cartao"><div class="sub" style="margin-bottom:8px">Para escrever com o Claude, abra a Escrivaninha do computador pelo Wi-Fi de casa.</div>
@@ -172,6 +174,7 @@ TELAS.inicio = () => {
   $$("[data-tam]", vista).forEach((b) => (b.onclick = () => { prefSet("leitura-tam", b.dataset.tam); aplicarOpcoes(); TELAS.inicio(); }));
   desenharSlotsCel($("#slots"));
   desenharRegistro($("#registro"));
+  desenharCapaCel($("#capa"));
 };
 
 async function desenharSlotsCel(caixa, config = false) {
@@ -338,21 +341,57 @@ TELAS["editar-ficha"] = (caminho) => {
 };
 
 /* ------------------------------------------------------------ exportar */
-function exportar(selecionados) {
+/* A capa guardada na história (biblia/capa-do-livro.jpg), ou null. */
+async function capaDoCelular() {
+  const a = est.pacote && est.pacote.arquivos[CAMINHO_CAPA];
+  if (!a || !a.b) return null;
+  const url = "data:image/jpeg;base64," + a.b;
+  try { return { ...(await imagemParaJpeg(url)), url }; } catch { return null; }
+}
+
+async function exportar(selecionados) {
   const caps = capitulos();
   if (!caps.length) { toast("Ainda não há capítulos para exportar.", true); return; }
-  abrirExportarLivro(caps.map((c) => ({ chave: c.caminho, meta: c.meta })), selecionados, ({ titulo, subtitulo, chaves, formato }) => {
-    const livro = { titulo, subtitulo, caps: caps.filter((c) => chaves.includes(c.caminho)) };
-    if (formato === "docx") {
-      const bytes = docxDoLivro(livro), nome = nomeDoLivro(titulo, "docx");
-      if (ponte && ponte.compartilharArquivo) ponte.compartilharArquivo(nome, TIPO_DOCX, bytesParaBase64(bytes));
-      else baixarNoNavegador(nome, bytes, TIPO_DOCX);
-      return;
-    }
-    const html = livroHtml(livro, new URL(".", location.href).href);
-    if (ponte && ponte.imprimirHtml) ponte.imprimirHtml(titulo, html);
-    else imprimirLivroNoNavegador(html);
-  });
+  const capa = await capaDoCelular();
+  abrirExportarLivro(caps.map((c) => ({ chave: c.caminho, meta: c.meta })), selecionados, async ({ titulo, subtitulo, chaves, formato, comCapa }) => {
+    const livro = { titulo, subtitulo, caps: caps.filter((c) => chaves.includes(c.caminho)) }, aCapa = comCapa ? capa : null;
+    toast(formato === "pdf" ? "Gerando o PDF…" : "Gerando o Word…");
+    try {
+      const [bytes, tipo] = formato === "docx" ? [docxDoLivro(livro, aCapa), TIPO_DOCX] : [await pdfDoLivro(livro, aCapa), TIPO_PDF];
+      toast(await entregarArquivo(nomeDoLivro(titulo, formato), tipo, bytes));
+    } catch (e) { registrar("exportar", e.stack || e.message); toast(e.message, true); }
+  }, { capa: capa && capa.url });
+}
+
+/* Escolher a capa aqui no celular: vai para a história do celular (e para o slot, ao salvar). */
+async function desenharCapaCel(caixa) {
+  const capa = est.pacote ? await capaDoCelular() : null;
+  caixa.innerHTML = !est.pacote ? `<span class="sub">Baixe a história de um slot para escolher a capa.</span>` : `<div class="capa-opcoes">
+      <div class="capa-previa">${capa ? `<img src="${capa.url}" alt="Capa">` : `<span class="sub">sem capa</span>`}</div>
+      <div><div class="sub" style="margin-bottom:10px">A imagem que abre o livro ao exportar. Em pé fica melhor.</div>
+        <div class="cel-botoes" style="margin:0"><label class="botao pequeno primario">${capa ? "Trocar" : "Escolher imagem"}<input type="file" accept="image/*" id="capa-arquivo" hidden></label>
+        ${capa ? `<button class="botao pequeno" id="capa-tirar">Tirar</button>` : ""}</div></div></div>`;
+  if (!est.pacote) return;
+  $("#capa-arquivo", caixa).onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    try {
+      const url = URL.createObjectURL(f);
+      const { dados } = await imagemParaJpeg(url);
+      URL.revokeObjectURL(url);
+      est.pacote.arquivos[CAMINHO_CAPA] = { b: dados.split(",")[1] };
+      est.info = { ...(est.info || {}), mudado: true };
+      await gravarNoCelular();
+      toast("Capa guardada no celular ✓");
+    } catch (err) { registrar("capa", err.message); toast(err.message, true); }
+    desenharCapaCel(caixa);
+  };
+  if ($("#capa-tirar", caixa)) $("#capa-tirar", caixa).onclick = async () => {
+    delete est.pacote.arquivos[CAMINHO_CAPA];
+    est.info = { ...(est.info || {}), mudado: true };
+    await gravarNoCelular();
+    desenharCapaCel(caixa);
+  };
 }
 
 /* ------------------------------------------------------------ começo */

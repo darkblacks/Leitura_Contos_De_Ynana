@@ -10,4 +10,5 @@ for f in celular.html celular.js celular.css comum.js livro.js livro.css registr
   cp "$DE/$f" "$PARA/$f"
 done
 cp "$DE"/fontes/*.woff2 "$PARA/fontes/"
+mkdir -p "$PARA/vendor" && cp "$DE"/vendor/* "$PARA/vendor/"
 echo "leitor copiado para o app Android"

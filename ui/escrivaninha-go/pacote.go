@@ -302,6 +302,43 @@ func rotasPacote(mux *http.ServeMux) {
 		responder(w, 200, item{"ok": true, "copia": copia})
 	})
 
+	// a capa do livro (Opções › Capa do livro): sempre JPEG, em biblia/capa-do-livro.jpg
+	mux.HandleFunc("/api/capa", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || !origemOK(r) {
+			responder(w, 403, item{"erro": "origem não permitida"})
+			return
+		}
+		var d struct {
+			Dados  string
+			Apagar bool
+		}
+		if err := json.NewDecoder(io.LimitReader(r.Body, 40*1024*1024)).Decode(&d); err != nil {
+			responder(w, 400, item{"erro": "JSON inválido"})
+			return
+		}
+		p := filepath.Join(raiz, "biblia", "capa-do-livro.jpg")
+		if d.Apagar {
+			os.Remove(p)
+			responder(w, 200, item{"ok": true})
+			return
+		}
+		dados, err := base64.StdEncoding.DecodeString(d.Dados)
+		if err != nil || len(dados) < 3 || dados[0] != 0xFF || dados[1] != 0xD8 {
+			responderErro(w, errors.New("a imagem da capa precisa ser JPEG"))
+			return
+		}
+		if len(dados) > 15*1024*1024 {
+			responderErro(w, errors.New("imagem maior que 15 MB"))
+			return
+		}
+		os.MkdirAll(filepath.Dir(p), 0o755)
+		if err := os.WriteFile(p, dados, 0o644); err != nil {
+			responderErro(w, err)
+			return
+		}
+		responder(w, 200, item{"ok": true, "caminho": "biblia/capa-do-livro.jpg"})
+	})
+
 	mux.HandleFunc("/api/exportar", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || !origemOK(r) {
 			responder(w, 403, item{"erro": "origem não permitida"})

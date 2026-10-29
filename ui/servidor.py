@@ -701,6 +701,19 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json({"caminho": criar(d.get("tipo"), d.get("nome"))})
             if url.path == "/api/pacote":
                 return self._json({"ok": True, "copia": aplicar_pacote(d.get("pacote"))})
+            if url.path == "/api/capa":
+                p = RAIZ / "biblia" / "capa-do-livro.jpg"
+                if d.get("apagar"):
+                    p.unlink(missing_ok=True)
+                    return self._json({"ok": True})
+                dados = base64.b64decode(d.get("dados", ""), validate=True)
+                if dados[:2] != b"\xff\xd8":
+                    raise ValueError("a imagem da capa precisa ser JPEG")
+                if len(dados) > 15 * 1024 * 1024:
+                    raise ValueError("imagem maior que 15 MB")
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(dados)
+                return self._json({"ok": True, "caminho": "biblia/capa-do-livro.jpg"})
             if url.path in ("/api/exportar", "/api/exportar-pdf"):
                 ext = ".pdf" if url.path == "/api/exportar-pdf" else Path(d.get("nome", "")).suffix.lower()
                 if ext not in (".docx", ".pdf"):

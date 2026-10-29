@@ -274,6 +274,10 @@ func gerarPDF(html, destino string) error {
 }
 
 func rotasPacote(mux *http.ServeMux) {
+	mux.HandleFunc("/api/log", func(w http.ResponseWriter, r *http.Request) {
+		responder(w, 200, item{"versao": versao, "sistema": runtime.GOOS, "linhas": linhasDoLog()})
+	})
+
 	mux.HandleFunc("/api/pacote", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			responder(w, 200, montarPacote())

@@ -1,7 +1,7 @@
 {
-  "versao": "2.17.2",
-  "sha256": "94622daecd4a164ccf921bbc5c7ad5e905076ce8ee37885e83739d97095c495f",
+  "versao": "2.17.3",
+  "sha256": "5935da50a90c74a6e8773c41904561908791f56b98c8b6973cd84510169da7f1",
   "notas": [
-    "Slots: o aviso de erro mostra em que etapa parou e a resposta do Back4App; partes menores e uma nova tentativa automática"
+    "Registro de erros em Opções (e no celular): mostra cada passo dos slots e os erros, com botão Copiar"
   ]
 }

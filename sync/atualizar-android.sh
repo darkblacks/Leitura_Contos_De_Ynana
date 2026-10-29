@@ -6,7 +6,7 @@ AQUI="$(cd "$(dirname "$0")" && pwd)"
 DE="$AQUI/../ui/static"
 PARA="$AQUI/EscrivaninhaAndroid/app/src/main/assets/leitor"
 rm -rf "$PARA" && mkdir -p "$PARA/fontes"
-for f in celular.html celular.js celular.css comum.js livro.js livro.css slots.js estilo.css temas.css fontes.css; do
+for f in celular.html celular.js celular.css comum.js livro.js livro.css registro.js slots.js estilo.css temas.css fontes.css; do
   cp "$DE/$f" "$PARA/$f"
 done
 cp "$DE"/fontes/*.woff2 "$PARA/fontes/"

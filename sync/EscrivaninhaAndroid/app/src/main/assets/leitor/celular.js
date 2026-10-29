@@ -158,6 +158,8 @@ TELAS.inicio = () => {
       <div class="campo"><label>Cores</label><div class="chips-escolha">${PALETAS.map(([k, n]) => `<button class="chip ${k === (pref("paleta", "limpo") || "limpo") ? "sel" : ""}" data-paleta="${k}">${n}</button>`).join("")}</div></div>
       <div class="campo"><label>Tamanho da letra</label><div class="chips-escolha">${TAMANHOS.map(([k, n]) => `<button class="chip ${k === pref("leitura-tam") ? "sel" : ""}" data-tam="${k}">${n}</button>`).join("")}</div></div>
     </section>
+    <h3 class="cel-sec">Registro de erros</h3>
+    <section class="cartao" id="registro"></section>
     ${ponte && ponte.trocarComputador ? `<h3 class="cel-sec">Computador</h3><section class="cartao"><div class="sub" style="margin-bottom:8px">Para escrever com o Claude, abra a Escrivaninha do computador pelo Wi-Fi de casa.</div>
       <button class="botao" id="ir-pc">Abrir a Escrivaninha do computador</button></section>` : ""}`;
   if ($("#ir-caps")) {
@@ -169,6 +171,7 @@ TELAS.inicio = () => {
   $$("[data-paleta]", vista).forEach((b) => (b.onclick = () => { prefSet("paleta", b.dataset.paleta); aplicarOpcoes(); TELAS.inicio(); }));
   $$("[data-tam]", vista).forEach((b) => (b.onclick = () => { prefSet("leitura-tam", b.dataset.tam); aplicarOpcoes(); TELAS.inicio(); }));
   desenharSlotsCel($("#slots"));
+  desenharRegistro($("#registro"));
 };
 
 async function desenharSlotsCel(caixa, config = false) {

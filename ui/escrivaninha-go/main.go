@@ -34,6 +34,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -54,7 +55,28 @@ const (
 // saida recebe as mensagens. No Windows o programa não tem console; vai para um arquivo de log.
 var saida io.Writer = os.Stdout
 
-func logar(formato string, a ...any) { fmt.Fprintf(saida, formato+"\n", a...) }
+// As últimas mensagens também ficam na memória, para a tela Opções › Registro de erros.
+var (
+	logMu     sync.Mutex
+	logLinhas []string
+)
+
+func logar(formato string, a ...any) {
+	msg := fmt.Sprintf(formato, a...)
+	fmt.Fprintln(saida, msg)
+	logMu.Lock()
+	logLinhas = append(logLinhas, time.Now().Format("02/01 15:04:05")+"  "+msg)
+	if len(logLinhas) > 300 {
+		logLinhas = logLinhas[len(logLinhas)-300:]
+	}
+	logMu.Unlock()
+}
+
+func linhasDoLog() []string {
+	logMu.Lock()
+	defer logMu.Unlock()
+	return append([]string{}, logLinhas...)
+}
 
 func main() {
 	args := os.Args[1:]

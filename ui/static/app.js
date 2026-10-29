@@ -20,7 +20,10 @@ async function api(rota, corpo) {
     }
   }
   const d = await r.json().catch(() => ({ erro: "resposta inválida do servidor" }));
-  if (!r.ok || d.erro) throw new Error(d.erro || r.statusText);
+  if (!r.ok || d.erro) {
+    if (typeof registrar === "function") registrar("programa", `${corpo ? "POST" : "GET"} ${rota.split("?")[0]} → ${r.status}: ${d.erro || r.statusText}`);
+    throw new Error(d.erro || r.statusText);
+  }
   return d;
 }
 /* Leituras guardadas na memória: um arquivo que está na árvore só é lido de novo quando a data

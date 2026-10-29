@@ -656,6 +656,8 @@ class Manipulador(BaseHTTPRequestHandler):
                 return self._json(busca(q.get("q", "")))
             if url.path == "/api/pacote":
                 return self._json(montar_pacote())
+            if url.path == "/api/log":
+                return self._json({"versao": "python", "sistema": sys.platform, "linhas": []})
             if url.path.startswith("/livro/"):
                 html = LIVROS.get(url.path[len("/livro/"):])
                 if html is None:

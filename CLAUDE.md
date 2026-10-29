@@ -72,6 +72,7 @@ Este repositório é um ambiente de escrita de ficção. Eu (o autor) escrevo mi
 | `ui/` | Escrivaninha: interface local (`abrir-escrivaninha.bat` ou `.sh`) |
 | `dist/Escrivaninha.exe` | A Escrivaninha num executável para Windows; instala-se em `C:\Os_Contos_De_Ynana` (código em `ui/escrivaninha-go/`) |
 | `sync/EscrivaninhaAndroid/` | **App do celular** (projeto Android Studio): **Ler minhas histórias** (o leitor `ui/static/celular.html`, copiado para `assets/leitor` por `sync/atualizar-android.sh`: baixa um slot, lê, edita à mão, salva no slot, exporta) ou abre a Escrivaninha do computador pelo Wi-Fi, com código (Opções › Celular). O GitHub monta o APK (`.github/workflows/android.yml`, Releases › "App do celular"). Não vai para dentro do exe |
+| `ui/static/registro.js` | **Registro de erros** (Opções › Registro de erros, e no celular): anota erros da página e cada passo dos slots (sem chaves nem texto da história); botão Copiar para o autor colar na conversa. No computador inclui as últimas mensagens do programa (`/api/log`) |
 | `copias/`, `exportados/` | Cópias de segurança feitas ao carregar um slot (as 10 últimas) e os livros exportados em PDF e Word. Ficam só no computador do autor |
 
 ## Ficha de personagem

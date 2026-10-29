@@ -27,17 +27,27 @@ async function parse(rota, { metodo = "GET", corpo, consulta } = {}) {
   const servidor = (c.servidor || "https://parseapi.back4app.com").replace(/\/+$/, "");
   const q = consulta ? "?" + Object.entries(consulta).map(([k, v]) => `${k}=${encodeURIComponent(typeof v === "string" ? v : JSON.stringify(v))}`).join("&") : "";
   let r;
+  const inicio = Date.now(), json = corpo ? JSON.stringify(corpo) : undefined;
+  // no registro: método, endereço (sem chaves) e tamanho do envio; nunca o conteúdo
+  const sobre = `${metodo} ${rota}${consulta && consulta.where ? " where " + JSON.stringify(consulta.where) : ""}${json ? ` (${Math.round(json.length / 1024)} KB)` : ""}`;
   try {
     r = await fetch(servidor + rota + q, {
       method: metodo,
       headers: { "X-Parse-Application-Id": c.appId, "X-Parse-REST-API-Key": c.chave, ...(corpo ? { "Content-Type": "application/json" } : {}) },
-      body: corpo ? JSON.stringify(corpo) : undefined,
+      body: json,
     });
-  } catch { throw new Error("Sem internet (ou o Back4App não respondeu). Os slots precisam de internet; o resto continua funcionando."); }
-  const d = await r.json().catch(() => ({}));
+  } catch (e) {
+    registrar("slots", `${sobre} → falhou sem resposta depois de ${Date.now() - inicio} ms: ${e.message} (internet caiu, demorou demais, ou o navegador bloqueou)`);
+    throw new Error("Sem internet (ou o Back4App não respondeu). Os slots precisam de internet; o resto continua funcionando.");
+  }
+  const bruto = await r.text().catch(() => "");
+  let d = {};
+  try { d = bruto ? JSON.parse(bruto) : {}; } catch { d = { error: "resposta que não é JSON: " + bruto.slice(0, 200) }; }
   if (!r.ok) {
+    registrar("slots", `${sobre} → ERRO ${r.status} em ${Date.now() - inicio} ms: ${bruto.slice(0, 300) || r.statusText}`);
     throw erroDoBack4App(r.status, d);
   }
+  if (metodo !== "GET") registrar("slots", `${sobre} → ok ${r.status} em ${Date.now() - inicio} ms`);
   return d;
 }
 
@@ -73,7 +83,10 @@ async function testarSlots() {
 
 /* O último erro dos slots fica na tela (o aviso rápido some antes de dar para ler). */
 let erroSlots = null;
-const guardarErroSlots = (e) => { erroSlots = e ? { msg: e.message, detalhe: e.detalhe || "" } : null; };
+const guardarErroSlots = (e) => {
+  erroSlots = e ? { msg: e.message, detalhe: e.detalhe || "" } : null;
+  if (e) registrar("slots", `AVISO: ${e.message}${e.detalhe ? " | " + e.detalhe : ""}`);
+};
 const htmlErroSlots = () => erroSlots ? `<div class="aviso erro-slots" style="margin-bottom:12px"><b>Não deu certo.</b> ${esc(erroSlots.msg)}
   ${erroSlots.detalhe ? `<div class="sub" style="margin-top:6px">Detalhe: ${esc(erroSlots.detalhe)}</div>` : ""}
   <div style="margin-top:6px"><a href="#" data-fechar-erro>fechar</a></div></div>` : "";
@@ -104,8 +117,13 @@ async function descomprimirPacote(texto) {
 }
 
 async function emParalelo(itens, n, fn) {
-  let i = 0;
-  const trabalhador = async () => { while (i < itens.length) { const k = i++; await fn(itens[k], k); } };
+  let i = 0, parou = false;
+  const trabalhador = async () => {
+    while (i < itens.length && !parou) {
+      const k = i++;
+      try { await fn(itens[k], k); } catch (e) { parou = true; throw e; }
+    }
+  };
   await Promise.all(Array.from({ length: Math.min(n, itens.length) }, trabalhador));
 }
 
@@ -127,6 +145,7 @@ async function salvarNoSlot(n, nome, pacote, aoAndar = () => {}) {
   const pedacos = [];
   for (let i = 0; i < texto.length; i += PEDACO) pedacos.push(texto.slice(i, i + PEDACO));
   let feitos = 0;
+  registrar("slots", `salvar no slot ${n}: história de ${Math.round(tamanho / 1024)} KB, comprimida ${Math.round(texto.length / 1024)} KB, ${pedacos.length} partes`);
   aoAndar(0, pedacos.length + 1);
   await etapa(`enviando as partes (${pedacos.length} de até ${PEDACO / 1000} mil letras)`, () => emParalelo(pedacos, 2, async (dados, ordem) => {
     await comNovaTentativa(() => parse("/classes/SlotParte", { metodo: "POST", corpo: { versao, ordem, dados } }));
@@ -142,6 +161,7 @@ async function salvarNoSlot(n, nome, pacote, aoAndar = () => {}) {
     ? parse("/classes/Slot/" + atual.objectId, { metodo: "PUT", corpo: info })
     : parse("/classes/Slot", { metodo: "POST", corpo: info }));
   aoAndar(pedacos.length + 1, pedacos.length + 1);
+  registrar("slots", `slot ${n} salvo ✓`);
   // o salvamento antigo sai depois que o novo já vale (se falhar, só sobra lixo, nada se perde)
   if (atual.versao) apagarPartes(atual.versao).catch(() => {});
   return info;

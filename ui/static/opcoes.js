@@ -47,12 +47,15 @@ VISTAS.opcoes = async () => {
     <div class="opcoes-linha">${FONTES.map(([k, n]) => `<button class="chip ${k === fonte ? "sel" : ""}" data-fonte="${k}">${n}</button>`).join("")}</div>
     <h3>Slots online</h3>
     <div id="opc-slots" class="cartao"><span class="sub">…</span></div>
+    <h3>Registro de erros</h3>
+    <div id="opc-registro" class="cartao"></div>
     <h3>Celular</h3>
     <div id="opc-celular" class="cartao celular-cartao"><span class="sub">…</span></div>
     <h3>Prévia da leitura</h3>
     <div class="leitura-amostra">Hoje acordei cedo. O sol ainda nem tinha subido, e o porto já fazia barulho lá embaixo. <i>Chua</i>, fez a chuva no telhado.<br>"— Bom dia, Ynana." Disse ele, sem levantar os olhos.</div>`;
   desenharCelular($("#opc-celular"));
   desenharSlots($("#opc-slots"));
+  desenharRegistro($("#opc-registro"));
   $$("[data-tema]").forEach((b) => (b.onclick = () => { prefSet("paleta", b.dataset.tema); aplicarOpcoes(); VISTAS.opcoes(); }));
   $$("[data-tam]").forEach((b) => (b.onclick = () => { prefSet("leitura-tam", b.dataset.tam); aplicarOpcoes(); VISTAS.opcoes(); }));
   $$("[data-fonte]").forEach((b) => (b.onclick = () => { prefSet("leitura-fonte", b.dataset.fonte); aplicarOpcoes(); VISTAS.opcoes(); }));
